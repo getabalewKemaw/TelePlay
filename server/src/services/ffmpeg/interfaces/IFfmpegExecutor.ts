@@ -22,15 +22,15 @@ export interface IFfmpegExecutor {
    */
   execute(options: FFmpegCommandOptions, timeout?: number): Promise<FFmpegExecutionResult>;
 
-  /**
-   * Check if FFmpeg is available in the system
-   * @returns Promise resolving to true if FFmpeg is available
-   */
-  isAvailable(): Promise<boolean>;
+  // /**
+  //  * Check if FFmpeg is available in the system
+  //  * @returns Promise resolving to true if FFmpeg is available
+  //  */
+  // isAvailable(): Promise<boolean>;
 
-  /**
-   * Get FFmpeg version information
-   * @returns Promise resolving to version string
-   */
-  getVersion(): Promise<string>;
+  // /**
+  //  * Get FFmpeg version information
+  //  * @returns Promise resolving to version string
+  //  */
+  // getVersion(): Promise<string>;
 }
