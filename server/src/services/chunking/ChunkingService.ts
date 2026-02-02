@@ -1,10 +1,11 @@
+
 /**
  * Chunking Service - Time-Based Media Control
  * Splits media files into time-based chunks for fast-forward, rewind, and streaming
  */
 
-import type { IChunkingService } from './interfaces/IChunkingService.js';
-import type { IMediaMetadataProvider } from './interfaces/IMediaMetadataProvider.js';
+import type { IChunkingService } from '../../interfaces/ffmpeg/IChunkingService.js';
+import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 import type {
   ChunkingResult,
   ChunkMetadata,
@@ -12,10 +13,9 @@ import type {
   SeekResult,
   ChunkingOptions,
   ChunkingConfig
-} from './types/ChunkingTypes.js';
-import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from './errors/ChunkingErrors.js';
+} from '../../types/chunking/ChunkingTypes.js';
+import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
 import { FFprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
-import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';
 
@@ -23,25 +23,10 @@ import path from 'path';
  * Default chunk duration in seconds (2 minutes)
  */
 const DEFAULT_CHUNK_DURATION = 120;
-
-/**
- * Chunking Service Implementation
- * 
- * Responsibilities:
- * - Generate time-based chunks for media files
- * - Support random access (seek, fast-forward, rewind)
- * - Generate chunk metadata
- * - Codec-agnostic and format-independent
- */
 export class ChunkingService implements IChunkingService {
   private readonly metadataProvider: IMediaMetadataProvider;
   private readonly defaultChunkDuration: number;
 
-  /**
-   * Constructor with dependency injection
-   * @param metadataProvider - Metadata provider implementation
-   * @param defaultChunkDuration - Default chunk duration in seconds
-   */
   constructor(
     metadataProvider?: IMediaMetadataProvider,
     defaultChunkDuration: number = DEFAULT_CHUNK_DURATION
@@ -49,12 +34,7 @@ export class ChunkingService implements IChunkingService {
     this.metadataProvider = metadataProvider ?? new FFprobeMetadataProvider();
     this.defaultChunkDuration = defaultChunkDuration;
   }
-
-  /**
-   * Generate chunks for a media file
-   */
   async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
-    // Validate file exists
     if (!existsSync(filePath)) {
       throw new ChunkingFileError(`Media file does not exist: ${filePath}`, filePath);
     }
@@ -82,7 +62,7 @@ export class ChunkingService implements IChunkingService {
       totalChunks: chunks.length,
       totalDuration: config.totalDuration,
       chunkDuration: config.chunkDuration,
-      lastChunkDuration: chunks.length > 0 ? chunks[chunks.length - 1].duration : 0
+      lastChunkDuration: chunks.length > 0 ? chunks[chunks.length - 1]!.duration : 0
     };
   }
 
@@ -99,20 +79,20 @@ export class ChunkingService implements IChunkingService {
       );
     }
 
-    return result.chunks[chunkIndex];
+    const chunk = result.chunks[chunkIndex] ?? null;
+    if (chunk === null) {
+      throw new ChunkingValidationError(
+        `Chunk at index ${chunkIndex} is null or undefined`,
+        'chunkIndex'
+      );
+    }
+    return chunk;
   }
-
-  /**
-   * Get all chunks for a media file
-   */
   async getAllChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkMetadata[]> {
     const result = await this.generateChunks(filePath, options);
     return result.chunks;
   }
 
-  /**
-   * Seek to a specific time position
-   */
   async seek(filePath: string, params: SeekParams, options?: ChunkingOptions): Promise<SeekResult> {
     const result = await this.generateChunks(filePath, options);
 
@@ -126,14 +106,12 @@ export class ChunkingService implements IChunkingService {
 
     // Find the chunk containing this time
     const chunk = this.findChunkAtTime(result.chunks, params.time, params.exact ?? false);
-
     if (!chunk) {
       throw new ChunkingSeekError(
         `Could not find chunk for time ${params.time}s`,
         params.time
       );
     }
-
     const offsetInChunk = params.time - chunk.startTime;
     const exact = params.time >= chunk.startTime && params.time < chunk.endTime;
 
@@ -236,12 +214,10 @@ export class ChunkingService implements IChunkingService {
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
       const chunk = chunks[mid];
-
-      if (time >= chunk.startTime && time < chunk.endTime) {
+      if (chunk && time >= chunk.startTime && time < chunk.endTime) {
         return chunk;
       }
-
-      if (time < chunk.startTime) {
+      if (chunk && time < chunk.startTime) {
         right = mid - 1;
       } else {
         left = mid + 1;
@@ -253,15 +229,15 @@ export class ChunkingService implements IChunkingService {
       return null;
     }
 
-    // Otherwise, return nearest chunk
+    // Otherwise, return nearest chunk or null
     if (left > 0 && left <= chunks.length) {
-      return chunks[left - 1];
+      return typeof chunks[left - 1] !== 'undefined' ? chunks[left - 1]! : null;
     }
     if (right >= 0 && right < chunks.length) {
-      return chunks[right];
+      return typeof chunks[right] !== 'undefined' ? chunks[right]! : null;
     }
 
-    return chunks[0] || null;
+    return typeof chunks[0] !== 'undefined' ? chunks[0]! : null;
   }
 
   /**

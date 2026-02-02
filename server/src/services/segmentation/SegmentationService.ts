@@ -3,8 +3,8 @@
  * Groups time-based chunks into logical segments for efficient network delivery
  */
 
-import type { ISegmentationService } from './interfaces/ISegmentationService.js';
-import type { IChunkingService } from './interfaces/IChunkingService.js';
+import type { ISegmentationService } from '../../interfaces/segementation/ISegmentationService.js';
+import type { IChunkingService } from '../../interfaces/segementation/IChunkingService.js';
 import type {
   SegmentationResult,
   SegmentMetadata,
@@ -14,10 +14,10 @@ import type {
   PlaybackState,
   BufferingRecommendation,
   SegmentationStrategy
-} from './types/SegmentationTypes.js';
+} from '../../types/segementation/SegmentationTypes.js';
 import { SegmentationStrategyFactory } from './strategies/SegmentationStrategyFactory.js';
-import { SegmentationValidationError, SegmentationBufferingError } from './errors/SegmentationErrors.js';
-import { SegmentPriority } from './types/SegmentationTypes.js';
+import { SegmentationValidationError, SegmentationBufferingError } from '../../errors/segmentation/SegmentationErrors.js';
+import { SegmentPriority } from '../../types/segementation/SegmentationTypes.js';
 
 /**
  * Default segmentation configuration

@@ -6,8 +6,8 @@
 export { TranscodingService } from './TranscodingService.js';
 
 // Export interfaces
-export type { ITranscodingService } from './interfaces/ITranscodingService.js';
-export type { IFfmpegService } from './interfaces/IFfmpegService.js';
+export type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
+export type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
 
 // Export types
 export type {
@@ -22,7 +22,7 @@ export type {
   TranscodingOptions,
   TranscodingPipelineStage,
   CodecCompatibility
-} from './types/TranscodingTypes.js';
+} from '../../types/transcoding/TranscodingTypes.js';
 
 // Export errors
 export {
@@ -31,4 +31,5 @@ export {
   TranscodingCodecError,
   TranscodingFileError,
   TranscodingChunkError
-} from './errors/TranscodingErrors.js';
+} from '../../errors/transcoding/TranscodingErrors.js';
+

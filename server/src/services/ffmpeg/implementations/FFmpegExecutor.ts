@@ -1,10 +1,12 @@
 // FFmpeg Executor Implementation
 // we use spawn from child_process to execute ffmpeg commands asynchronously, capturing stdout and stderr
 import { spawn } from 'child_process';
-import type { IFfmpegExecutor } from '../interfaces/IFfmpegExecutor.js';
-import type { FFmpegCommandOptions, FFmpegExecutionResult } from '../types/FFmpegTypes.js';
-import { FFmpegExecutionError, FFmpegTimeoutError } from '../errors/FFmpegErrors.js';
-import { FFMPEG_EXECUTABLE,DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
+import type { IFfmpegExecutor } from '../../../interfaces/ffmpeg/IFfmpegExecutor.js';
+
+
+import type { FFmpegCommandOptions, FFmpegExecutionResult } from '../../../types/ffmpeg/FFmpegTypes.js';
+import { FFmpegExecutionError, FFmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
+import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
 /**
  * FFmpeg Executor implementation
  * Handles actual FFmpeg process execution with proper error handling and metrics
@@ -12,11 +14,11 @@ import { FFMPEG_EXECUTABLE,DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/ind
 export class FFmpegExecutor implements IFfmpegExecutor {
   private readonly executable: string;
   private readonly defaultTimeout: number;
-    constructor(executable: string = FFMPEG_EXECUTABLE, defaultTimeout: number = DEFAULT_TIMEOUT) {
+  constructor(executable: string = FFMPEG_EXECUTABLE, defaultTimeout: number = DEFAULT_TIMEOUT) {
     this.executable = executable;
     this.defaultTimeout = defaultTimeout;
   }
-//  Execute FFmpeg command
+  //  Execute FFmpeg command
   async execute(
     options: FFmpegCommandOptions,
     timeout: number = this.defaultTimeout
@@ -103,7 +105,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
       });
     });
   }
-    private buildCommandArgs(options: FFmpegCommandOptions): string[] {
+  private buildCommandArgs(options: FFmpegCommandOptions): string[] {
     const args: string[] = [];
     if (options.additionalArgs) {
       args.push(...options.additionalArgs);
@@ -129,7 +131,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
     args.push(options.output);
     return args;
   }
-// Map internal codec names to FFmpeg codec names
+  // Map internal codec names to FFmpeg codec names
   private mapCodecToFFmpeg(codec: string): string {
     const codecMap: Record<string, string> = {
       g711: 'pcm_mulaw', // G.711 μ-law

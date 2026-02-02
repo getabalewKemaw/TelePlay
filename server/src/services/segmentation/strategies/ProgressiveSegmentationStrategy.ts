@@ -5,9 +5,9 @@
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../types/SegmentationTypes.js';
-import { SegmentPriority } from '../types/SegmentationTypes.js';
+import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
+import { SegmentPriority } from '../../../types/segementation/SegmentationTypes.js';
 
 /**
  * Progressive segmentation strategy
@@ -33,10 +33,10 @@ export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
 
     while (chunkIndex < chunks.length) {
       // Calculate chunks for this segment (increases with each segment)
-      const multiplier = segmentIndex === 0 
-        ? initialMultiplier 
+      const multiplier = segmentIndex === 0
+        ? initialMultiplier
         : 1 + (segmentIndex * 0.1); // Gradually increase
-      
+
       const chunksForSegment = Math.max(
         1,
         Math.floor(baseChunksPerSegment * multiplier)
@@ -51,8 +51,8 @@ export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
         break;
       }
 
-      const startTime = segmentChunks[0].startTime;
-      const endTime = segmentChunks[segmentChunks.length - 1].endTime;
+      const startTime = segmentChunks[0]!.startTime;
+      const endTime = segmentChunks[segmentChunks.length - 1]!.endTime;
       const duration = endTime - startTime;
       const isCritical = optimizeForLowLatency && segmentIndex === 0;
 

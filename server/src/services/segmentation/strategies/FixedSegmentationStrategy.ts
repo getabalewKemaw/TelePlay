@@ -4,9 +4,9 @@
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../types/SegmentationTypes.js';
-import { SegmentPriority } from '../types/SegmentationTypes.js';
+import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
+import { SegmentPriority } from '../../../types/segementation/SegmentationTypes.js';
 
 /**
  * Fixed segmentation strategy
@@ -28,8 +28,8 @@ export class FixedSegmentationStrategy implements ISegmentationStrategy {
 
     for (let i = 0; i < chunks.length; i += chunksPerSegment) {
       const segmentChunks = chunks.slice(i, i + chunksPerSegment);
-      const startTime = segmentChunks[0].startTime;
-      const endTime = segmentChunks[segmentChunks.length - 1].endTime;
+      const startTime = segmentChunks[0]!.startTime;
+      const endTime = segmentChunks[segmentChunks.length - 1]!.endTime;
       const duration = endTime - startTime;
 
       const segmentIndex = segments.length;

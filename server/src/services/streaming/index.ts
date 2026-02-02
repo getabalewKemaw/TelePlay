@@ -6,11 +6,11 @@
 export { StreamingPreparationService } from './StreamingPreparationService.js';
 
 // Export interfaces
-export type { IStreamingPreparationService } from './interfaces/IStreamingPreparationService.js';
-export type { IChunkingService } from './interfaces/IChunkingService.js';
-export type { ISegmentationService } from './interfaces/ISegmentationService.js';
-export type { ITranscodingService } from './interfaces/ITranscodingService.js';
-export type { ICompressionService } from './interfaces/ICompressionService.js';
+export type { IStreamingPreparationService } from '../../interfaces/streaming/IStreamingPreparationService.js';
+export type { IChunkingService } from '../../interfaces/streaming/IChunkingService.js';
+export type { ISegmentationService } from '../../interfaces/streaming/ISegmentationService.js';
+export type { ITranscodingService } from '../../interfaces/streaming/ITranscodingService.js';
+export type { ICompressionService } from '../../interfaces/streaming/ICompressionService.js';
 
 // Export types
 export type {
@@ -27,7 +27,7 @@ export type {
   StreamingPreparationOptions,
   StreamMetadata,
   StreamEndpoint
-} from './types/StreamingTypes.js';
+} from '../../types/streaming/StreamingTypes.js';
 
 // Export errors
 export {
@@ -36,4 +36,5 @@ export {
   StreamingSessionError,
   StreamingPlaybackError,
   StreamingPreparationError
-} from './errors/StreamingErrors.js';
+} from '../../errors/streaming/StreamingErrors.js';
+

@@ -4,12 +4,12 @@
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { SegmentationStrategy } from '../types/SegmentationTypes.js';
+import type { SegmentationStrategy } from '../../../types/segementation/SegmentationTypes.js';
 import { FixedSegmentationStrategy } from './FixedSegmentationStrategy.js';
 import { AdaptiveSegmentationStrategy } from './AdaptiveSegmentationStrategy.js';
 import { ProgressiveSegmentationStrategy } from './ProgressiveSegmentationStrategy.js';
 import { LowLatencySegmentationStrategy } from './LowLatencySegmentationStrategy.js';
-import { SegmentationStrategyError } from '../errors/SegmentationErrors.js';
+import { SegmentationStrategyError } from '../../../errors/segmentation/SegmentationErrors.js';
 
 /**
  * Factory for creating segmentation strategies

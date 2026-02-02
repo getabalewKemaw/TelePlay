@@ -9,8 +9,8 @@ export { CompressionService } from './CompressionService.js';
 export { COMPRESSION_PRESETS, getPreset, getDefaultPreset } from './presets/CompressionPresets.js';
 
 // Export interfaces
-export type { ICompressionService } from './interfaces/ICompressionService.js';
-export type { IFfmpegService } from './interfaces/IFfmpegService.js';
+export type { ICompressionService } from '../../interfaces/compression/ICompressionService.js';
+export type { IFfmpegService } from '../../interfaces/compression/IFfmpegService.js';
 
 // Export types
 export type {
@@ -23,7 +23,7 @@ export type {
   CompressionPreset,
   CompressionMetrics,
   CompressionRecommendation
-} from './types/CompressionTypes.js';
+} from '../../types/compression/CompressionTypes.js';
 
 // Export errors
 export {
@@ -32,7 +32,6 @@ export {
   CompressionFileError,
   CompressionOperationError,
   CompressionPresetError
-} from './errors/CompressionErrors.js';
-
+} from '../../errors/compression/CompressionErrors.js';
 // Export validators
-export { CompressionValidator } from './validators/CompressionValidator.js';
+export { CompressionValidator } from '../../validator/compression/CompressionValidator.js';

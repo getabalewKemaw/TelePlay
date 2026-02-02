@@ -4,29 +4,15 @@
  */
 
 import { spawn } from 'child_process';
-import type { IMediaMetadataProvider } from '../interfaces/IMediaMetadataProvider.js';
-import type { MediaMetadata } from '../types/ChunkingTypes.js';
-import { ChunkingMetadataError } from '../errors/ChunkingErrors.js';
-
-/**
- * Default FFprobe executable name
- */
+import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
+import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import { ChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 const FFPROBE_EXECUTABLE = 'ffprobe';
-
-/**
- * FFprobe Metadata Provider
- * Extracts media metadata using FFprobe
- */
 export class FFprobeMetadataProvider implements IMediaMetadataProvider {
   private readonly executable: string;
-
-  constructor(executable: string = FFPROBE_EXECUTABLE) {
+ constructor(executable: string = FFPROBE_EXECUTABLE) {
     this.executable = executable;
   }
-
-  /**
-   * Get metadata for a media file
-   */
   async getMetadata(filePath: string): Promise<MediaMetadata> {
     return new Promise<MediaMetadata>((resolve, reject) => {
       const process = spawn(
@@ -42,10 +28,8 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
           stdio: ['ignore', 'pipe', 'pipe']
         }
       );
-
       let stdout = '';
       let stderr = '';
-
       if (process.stdout) {
         process.stdout.on('data', (data: Buffer) => {
           stdout += data.toString();
@@ -57,7 +41,6 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
           stderr += data.toString();
         });
       }
-
       process.on('close', (exitCode) => {
         if (exitCode !== 0) {
           reject(
@@ -81,7 +64,6 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
           );
         }
       });
-
       process.on('error', (error: Error) => {
         reject(
           new ChunkingMetadataError(
@@ -92,33 +74,6 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
       });
     });
   }
-
-  /**
-   * Check if FFprobe is available
-   */
-  async isAvailable(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      const process = spawn(this.executable, ['-version'], {
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-
-      const timeoutId = setTimeout(() => {
-        process.kill('SIGTERM');
-        resolve(false);
-      }, 5000);
-
-      process.on('close', (exitCode) => {
-        clearTimeout(timeoutId);
-        resolve(exitCode === 0);
-      });
-
-      process.on('error', () => {
-        clearTimeout(timeoutId);
-        resolve(false);
-      });
-    });
-  }
-
   /**
    * Parse FFprobe JSON output
    */

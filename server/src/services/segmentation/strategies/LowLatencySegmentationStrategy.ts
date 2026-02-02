@@ -5,9 +5,9 @@
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../types/SegmentationTypes.js';
-import { SegmentPriority } from '../types/SegmentationTypes.js';
+import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
+import { SegmentPriority } from '../../../types/segementation/SegmentationTypes.js';
 
 /**
  * Low-latency segmentation strategy
@@ -30,7 +30,7 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
 
     const segments: SegmentMetadata[] = [];
     let currentChunks: ChunkMetadata[] = [];
-    let currentStartTime = chunks[0].startTime;
+    let currentStartTime = chunks[0]!.startTime;
     let currentDuration = 0;
     let segmentIndex = 0;
 
@@ -39,8 +39,8 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
       const newDuration = currentDuration + chunkDuration;
 
       // For first segment, use even smaller size
-      const effectiveTarget = segmentIndex === 0 
-        ? targetDuration * 0.5 
+      const effectiveTarget = segmentIndex === 0
+        ? targetDuration * 0.5
         : targetDuration;
 
       // Check if adding this chunk would exceed max duration
@@ -98,7 +98,7 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
     startTime: number,
     optimizeForLowLatency: boolean
   ): SegmentMetadata {
-    const endTime = chunks[chunks.length - 1].endTime;
+    const endTime = chunks[chunks.length - 1]!.endTime;
     const duration = endTime - startTime;
     const isCritical = index < 3; // First 3 segments are critical
 

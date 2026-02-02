@@ -1,12 +1,12 @@
 /**
  * Adaptive Segmentation Strategy
- * Creates segments with variable sizes based on target duration
+
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../types/SegmentationTypes.js';
-import { SegmentPriority } from '../types/SegmentationTypes.js';
+import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
+import { SegmentPriority } from '../../../types/segementation/SegmentationTypes.js';
 
 /**
  * Adaptive segmentation strategy
@@ -29,7 +29,7 @@ export class AdaptiveSegmentationStrategy implements ISegmentationStrategy {
 
     const segments: SegmentMetadata[] = [];
     let currentChunks: ChunkMetadata[] = [];
-    let currentStartTime = chunks[0].startTime;
+    let currentStartTime = chunks[0]!.startTime;
     let currentDuration = 0;
     let segmentIndex = 0;
 
@@ -92,7 +92,7 @@ export class AdaptiveSegmentationStrategy implements ISegmentationStrategy {
     startTime: number,
     optimizeForLowLatency: boolean
   ): SegmentMetadata {
-    const endTime = chunks[chunks.length - 1].endTime;
+    const endTime = chunks[chunks.length - 1]!.endTime;
     const duration = endTime - startTime;
     const isCritical = optimizeForLowLatency && index === 0;
 

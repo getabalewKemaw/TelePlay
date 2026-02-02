@@ -1,16 +1,11 @@
 /**
- * Chunking Service - Public API
  * Main entry point for Chunking service
  */
 
 export { ChunkingService } from './ChunkingService.js';
 export { FFprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
-
-// Export interfaces
-export type { IChunkingService } from './interfaces/IChunkingService.js';
-export type { IMediaMetadataProvider } from './interfaces/IMediaMetadataProvider.js';
-
-// Export types
+export type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
+export type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 export type {
   ChunkMetadata,
   ChunkingConfig,
@@ -19,13 +14,11 @@ export type {
   SeekResult,
   MediaMetadata,
   ChunkingOptions
-} from './types/ChunkingTypes.js';
-
-// Export errors
+} from '../../types/chunking/ChunkingTypes.js';
 export {
   ChunkingError,
   ChunkingValidationError,
   ChunkingFileError,
   ChunkingMetadataError,
   ChunkingSeekError
-} from './errors/ChunkingErrors.js';
+} from '../../errors/chunking/ChunkingErrors.js';

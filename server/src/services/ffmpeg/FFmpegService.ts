@@ -1,14 +1,14 @@
- // FFmpeg Service - Core Execution Layer
-import type { IFfmpegService } from './interfaces/IFfmpegService.js';
-import type { IFfmpegExecutor } from './interfaces/IFfmpegExecutor.js';
+// FFmpeg Service - Core Execution Layer
+import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
+import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type {
   DecodeParams,
   EncodeParams,
   TranscodeParams,
   FFmpegExecutionResult
-} from './types/FFmpegTypes.js';
-import { FFmpegValidator } from './validators/FFmpegValidator.js';
-import { FFmpegFileError, FFmpegValidationError } from './errors/FFmpegErrors.js';
+} from '../../types/ffmpeg/FFmpegTypes.js';
+import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
+import { FFmpegFileError, FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
 
 export class FFmpegService implements IFfmpegService {
@@ -23,7 +23,7 @@ export class FFmpegService implements IFfmpegService {
     await FFmpegValidator.validateOutputPath(params.output.path);
     if (params.codec) {
       FFmpegValidator.validateCodec(params.codec);
-      
+
       // For telecom codecs, validate sampleRate and channels are provided
       if (params.codec === 'g711' || params.codec === 'g726' || params.codec === 'g728') {
         if (!params.sampleRate) {
@@ -40,7 +40,7 @@ export class FFmpegService implements IFfmpegService {
         }
         FFmpegValidator.validateSampleRate(params.sampleRate);
         FFmpegValidator.validateChannels(params.channels);
-        
+
         // G.726 requires bitrate
         if (params.codec === 'g726' && !params.bitrate) {
           throw new FFmpegValidationError(
@@ -67,7 +67,7 @@ export class FFmpegService implements IFfmpegService {
     // Build command options
     // For decoding, we need to specify input format/codec before -i
     const additionalArgs: string[] = [];
-    
+
     // For telecom codecs, we need to specify input format and parameters BEFORE -i
     if (params.codec && (params.codec === 'g711' || params.codec === 'g726' || params.codec === 'g728')) {
       // Map codec to input format
@@ -76,12 +76,12 @@ export class FFmpegService implements IFfmpegService {
         g726: 'g726',
         g728: 'g728'
       };
-      
-if (params.codec && params.codec in inputFormatMap) {
-  const format = inputFormatMap[params.codec as keyof typeof inputFormatMap];
-  additionalArgs.push('-f', format);
-}
-      
+
+      if (params.codec && params.codec in inputFormatMap) {
+        const format = inputFormatMap[params.codec as keyof typeof inputFormatMap];
+        additionalArgs.push('-f', format);
+      }
+
       // For G.726, specify bitrate before input (required for decoding)
       if (params.codec === 'g726' && params.bitrate) {
         // G.726 bitrate must be specified before -i for input
@@ -114,7 +114,7 @@ if (params.codec && params.codec in inputFormatMap) {
     // Validate input
     FFmpegValidator.validateFilePath(params.input.path, 'input');
     FFmpegValidator.validateFilePath(params.output.path, 'output');
-    
+
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
     FFmpegValidator.validateEncodingParams(params.encoding);
@@ -146,7 +146,7 @@ if (params.codec && params.codec in inputFormatMap) {
     // Validate input
     FFmpegValidator.validateFilePath(params.input.path, 'input');
     FFmpegValidator.validateFilePath(params.output.path, 'output');
-    
+
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
     FFmpegValidator.validateEncodingParams(params.sourceEncoding);

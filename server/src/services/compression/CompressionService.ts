@@ -3,8 +3,9 @@
  * Reduces media size before network transmission or storage
  */
 
-import type { ICompressionService } from './interfaces/ICompressionService.js';
-import type { IFfmpegService } from './interfaces/IFfmpegService.js';
+import type { ICompressionService } from '../../interfaces/compression/ICompressionService.js';
+
+import type { IFfmpegService } from '../../interfaces/compression/IFfmpegService.js';
 import type {
   CompressionResult,
   CompressionOptions,
@@ -14,14 +15,14 @@ import type {
   CompressionRecommendation,
   CompressionLevel,
   CompressionStrategy
-} from './types/CompressionTypes.js';
-import { CompressionValidator } from './validators/CompressionValidator.js';
-import { CompressionValidationError, CompressionFileError, CompressionPresetError } from './errors/CompressionErrors.js';
+} from '../../types/compression/CompressionTypes.js';
+import { CompressionValidator } from '../../validator/compression/CompressionValidator.js';
+import { CompressionValidationError, CompressionFileError, CompressionPresetError } from '../../errors/compression/CompressionErrors.js';
 import { COMPRESSION_PRESETS, getPreset, getDefaultPreset } from './presets/CompressionPresets.js';
 import { promises as fs } from 'fs';
-import { existsSync } from 'fs';
+
 import path from 'path';
-import type { AudioCodec, SampleRate, ChannelConfig } from '../../ffmpeg/types/FFmpegTypes.js';
+import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 
 /**
  * Default compression configuration
@@ -354,7 +355,7 @@ export class CompressionService implements ICompressionService {
       targetBitrate: options?.targetBitrate,
       targetSize: options?.targetSize,
       mode: options?.mode ?? this.defaultConfig.mode,
-      codec: options?.codec ?? this.defaultConfig.codec,
+      codec: (options?.codec ?? this.defaultConfig.codec ?? 'aac') as string,
       preserveOriginal: options?.preserveOriginal ?? this.defaultConfig.preserveOriginal
     };
   }

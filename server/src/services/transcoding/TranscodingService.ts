@@ -3,8 +3,8 @@
  * Converts PCM and telecom codecs into browser-playable formats
  */
 
-import type { ITranscodingService } from './interfaces/ITranscodingService.js';
-import type { IFfmpegService } from './interfaces/IFfmpegService.js';
+import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
+import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
 import type {
   TranscodingResult,
   TranscodingOptions,
@@ -12,12 +12,12 @@ import type {
   TranscodingConfig,
   SourceCodec,
   TargetCodec
-} from './types/TranscodingTypes.js';
-import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from './errors/TranscodingErrors.js';
+} from '../../types/transcoding/TranscodingTypes.js';
+import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';
-import type { AudioCodec, SampleRate, ChannelConfig } from '../../ffmpeg/types/FFmpegTypes.js';
+import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 
 /**
  * Default target codec (browser-playable)
@@ -380,7 +380,7 @@ export class TranscodingService implements ITranscodingService {
     const dir = path.dirname(inputPath);
     const ext = path.extname(inputPath);
     const baseName = path.basename(inputPath, ext);
-    
+
     const codecExtensions: Record<TargetCodec, string> = {
       aac: '.aac',
       mp3: '.mp3',
@@ -389,7 +389,7 @@ export class TranscodingService implements ITranscodingService {
     };
 
     const outputExt = codecExtensions[targetCodec] || '.aac';
-    
+
     return path.join(dir, `${baseName}_${targetCodec}${outputExt}`);
   }
 }

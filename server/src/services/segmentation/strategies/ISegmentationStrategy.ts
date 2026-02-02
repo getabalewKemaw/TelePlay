@@ -3,8 +3,8 @@
  * Defines the contract for different segmentation strategies
  */
 
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../types/SegmentationTypes.js';
+import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
 
 /**
  * Interface for segmentation strategies

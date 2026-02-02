@@ -5,11 +5,11 @@
 
 export { FFmpegService } from './FFmpegService.js';
 export { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
-export { FFmpegValidator } from './validators/FFmpegValidator.js';
+export { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
 
 // Export interfaces
-export type { IFfmpegService } from './interfaces/IFfmpegService.js';
-export type { IFfmpegExecutor } from './interfaces/IFfmpegExecutor.js';
+export type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
+export type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 
 // Export types
 export type {
@@ -25,7 +25,7 @@ export type {
   ConvertParams,
   FFmpegExecutionResult,
   FFmpegCommandOptions
-} from './types/FFmpegTypes.js';
+} from '../../types/ffmpeg/FFmpegTypes.js';
 
 // Export errors
 export {
@@ -35,4 +35,5 @@ export {
   FFmpegFileError,
   FFmpegCodecError,
   FFmpegTimeoutError
-} from './errors/FFmpegErrors.js';
+} from '../../errors/ffmpeg/FFmpegErrors.js';
+

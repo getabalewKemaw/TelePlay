@@ -3,11 +3,11 @@
  * Prepares processed chunks for network streaming with playback controls
  */
 
-import type { IStreamingPreparationService } from './interfaces/IStreamingPreparationService.js';
-import type { IChunkingService } from './interfaces/IChunkingService.js';
-import type { ISegmentationService } from './interfaces/ISegmentationService.js';
-import type { ITranscodingService } from './interfaces/ITranscodingService.js';
-import type { ICompressionService } from './interfaces/ICompressionService.js';
+import type { IStreamingPreparationService } from '../../interfaces/streaming/IStreamingPreparationService.js';
+import type { IChunkingService } from '../../interfaces/streaming/IChunkingService.js';
+import type { ISegmentationService } from '../../interfaces/streaming/ISegmentationService.js';
+import type { ITranscodingService } from '../../interfaces/streaming/ITranscodingService.js';
+import type { ICompressionService } from '../../interfaces/streaming/ICompressionService.js';
 import type {
   StreamingSession,
   PreparedChunk,
@@ -19,8 +19,8 @@ import type {
   StreamEndpoint,
   PlaybackState,
   TransportProtocol
-} from './types/StreamingTypes.js';
-import { StreamingSessionError, StreamingPlaybackError, StreamingValidationError } from './errors/StreamingErrors.js';
+} from '../../types/streaming/StreamingTypes.js';
+import { StreamingSessionError, StreamingPlaybackError, StreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
@@ -204,16 +204,16 @@ export class StreamingPreparationService implements IStreamingPreparationService
         if (request.targetTime !== undefined) {
           newTime = request.targetTime;
           newState = 'seeking';
-          
+
           // Get chunks/segments for new position
           const result = await this.getChunksForTime(sessionId, newTime);
           chunksToLoad = result;
-          
+
           // Get segments containing these chunks
           segmentsToLoad = session.preparedSegments.filter(seg =>
             seg.chunks.some(c => chunksToLoad.includes(c))
           );
-          
+
           newState = 'ready';
         }
         break;
@@ -225,10 +225,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
             await this.getTotalDuration(sessionId)
           );
           newState = 'seeking';
-          
+
           const result = await this.getChunksForTime(sessionId, newTime);
           chunksToLoad = result;
-          
+
           newState = 'ready';
         }
         break;
@@ -237,10 +237,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
         if (request.amount) {
           newTime = Math.max(0, session.currentTime - request.amount);
           newState = 'seeking';
-          
+
           const result = await this.getChunksForTime(sessionId, newTime);
           chunksToLoad = result;
-          
+
           newState = 'ready';
         }
         break;
@@ -296,10 +296,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
     // If chunks not prepared, prepare them
     if (targetChunks.length === 0) {
       const chunks = await this.chunkingService.getAllChunks(session.filePath);
-      const chunkAtTime = chunks.find(c => 
+      const chunkAtTime = chunks.find(c =>
         c.startTime <= time && c.endTime > time
       );
-      
+
       if (chunkAtTime) {
         const prepared = await this.prepareSingleChunk(session, chunkAtTime);
         return [prepared];
@@ -364,7 +364,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
 
     // Get chunks to determine duration
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
-    const duration = chunks.length > 0 ? chunks[chunks.length - 1].endTime : 0;
+    const duration = chunks.length > 0 ? chunks[chunks.length - 1]!.endTime : 0;
 
     return {
       streamId: sessionId,
@@ -509,6 +509,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
   private async getTotalDuration(sessionId: string): Promise<number> {
     const session = this.getSession(sessionId);
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
-    return chunks.length > 0 ? chunks[chunks.length - 1].endTime : 0;
+    return chunks.length > 0 ? chunks[chunks.length - 1]!.endTime : 0;
   }
 }
