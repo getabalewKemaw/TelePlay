@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
 import type { IFfmpegExecutor } from '../interfaces/IFfmpegExecutor.js';
 import type { FFmpegCommandOptions, FFmpegExecutionResult } from '../types/FFmpegTypes.js';
 import { FFmpegExecutionError, FFmpegTimeoutError } from '../errors/FFmpegErrors.js';
-import { FFMPEG_EXECUTABLE,DEFAULT_TIMEOUT } from '../../../constants/index.js';
+import { FFMPEG_EXECUTABLE,DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
 /**
  * FFmpeg Executor implementation
  * Handles actual FFmpeg process execution with proper error handling and metrics

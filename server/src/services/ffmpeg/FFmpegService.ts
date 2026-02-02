@@ -1,54 +1,26 @@
-/**
- * FFmpeg Service - Core Execution Layer
- * Single, safe, controlled interface to FFmpeg
- * Production-ready service following SOLID principles
- */
-
+ // FFmpeg Service - Core Execution Layer
 import type { IFfmpegService } from './interfaces/IFfmpegService.js';
 import type { IFfmpegExecutor } from './interfaces/IFfmpegExecutor.js';
 import type {
   DecodeParams,
   EncodeParams,
   TranscodeParams,
-  ConvertParams,
   FFmpegExecutionResult
 } from './types/FFmpegTypes.js';
 import { FFmpegValidator } from './validators/FFmpegValidator.js';
 import { FFmpegFileError, FFmpegValidationError } from './errors/FFmpegErrors.js';
 import { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
 
-/**
- * FFmpeg Service Implementation
- * 
- * Responsibilities:
- * - Single gateway to FFmpeg execution
- * - Parameter validation
- * - High-level operation orchestration
- * - Error handling and transformation
- * - Safe concurrent execution
- */
 export class FFmpegService implements IFfmpegService {
   private readonly executor: IFfmpegExecutor;
-
-  /**
-   * Constructor with dependency injection
-   * @param executor - FFmpeg executor implementation (defaults to FFmpegExecutor)
-   */
   constructor(executor?: IFfmpegExecutor) {
     this.executor = executor ?? new FFmpegExecutor();
   }
-
-  /**
-   * Decode audio file
-   */
   async decode(params: DecodeParams): Promise<FFmpegExecutionResult> {
-    // Validate input
     FFmpegValidator.validateFilePath(params.input.path, 'input');
     FFmpegValidator.validateFilePath(params.output.path, 'output');
-    
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
-
     if (params.codec) {
       FFmpegValidator.validateCodec(params.codec);
       
@@ -105,7 +77,10 @@ export class FFmpegService implements IFfmpegService {
         g728: 'g728'
       };
       
-      additionalArgs.push('-f', inputFormatMap[params.codec]);
+if (params.codec && params.codec in inputFormatMap) {
+  const format = inputFormatMap[params.codec as keyof typeof inputFormatMap];
+  additionalArgs.push('-f', format);
+}
       
       // For G.726, specify bitrate before input (required for decoding)
       if (params.codec === 'g726' && params.bitrate) {
@@ -135,10 +110,6 @@ export class FFmpegService implements IFfmpegService {
       throw error;
     }
   }
-
-  /**
-   * Encode audio file
-   */
   async encode(params: EncodeParams): Promise<FFmpegExecutionResult> {
     // Validate input
     FFmpegValidator.validateFilePath(params.input.path, 'input');
@@ -206,54 +177,6 @@ export class FFmpegService implements IFfmpegService {
     }
   }
 
-  /**
-   * Convert audio file format
-   */
-  async convert(params: ConvertParams): Promise<FFmpegExecutionResult> {
-    // Validate input
-    FFmpegValidator.validateFilePath(params.input.path, 'input');
-    FFmpegValidator.validateFilePath(params.output.path, 'output');
-    
-    await FFmpegValidator.validateInputFile(params.input.path);
-    await FFmpegValidator.validateOutputPath(params.output.path);
-
-    if (params.encoding) {
-      FFmpegValidator.validateEncodingParams(params.encoding);
-    }
-
-    // Build command options
-    const commandOptions = {
-      input: params.input.path,
-      output: params.output.path,
-      format: params.targetFormat,
-      codec: params.encoding?.codec,
-      sampleRate: params.encoding?.sampleRate,
-      channels: params.encoding?.channels,
-      bitrate: params.encoding?.bitrate,
-      additionalArgs: params.input.format ? ['-f', params.input.format] : undefined
-    };
-
-    try {
-      return await this.executor.execute(commandOptions);
-    } catch (error) {
-      this.handleExecutionError(error, params.input.path, params.output.path);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if FFmpeg is available
-   */
-  async isAvailable(): Promise<boolean> {
-    return this.executor.isAvailable();
-  }
-
-  /**
-   * Get FFmpeg version
-   */
-  async getVersion(): Promise<string> {
-    return this.executor.getVersion();
-  }
 
   /**
    * Handle execution errors and transform them appropriately
@@ -272,11 +195,6 @@ export class FFmpegService implements IFfmpegService {
       );
     }
   }
-
-  /**
-   * Map internal codec names to FFmpeg codec names
-   * (Delegated to executor, but kept for service-level mapping if needed)
-   */
   private mapCodecToFFmpeg(codec: string): string {
     const codecMap: Record<string, string> = {
       g711: 'pcm_mulaw',

@@ -37,22 +37,9 @@ export interface IFfmpegService {
    */
   transcode(params: TranscodeParams): Promise<FFmpegExecutionResult>;
 
-  /**
-   * Convert audio file format
-   * @param params - Convert parameters
-   * @returns Promise resolving to execution result
-   */
-  convert(params: ConvertParams): Promise<FFmpegExecutionResult>;
 
-  /**
-   * Check if FFmpeg is available
-   * @returns Promise resolving to true if available
-   */
-  isAvailable(): Promise<boolean>;
+  // convert(params: ConvertParams): Promise<FFmpegExecutionResult>;
 
-  /**
-   * Get FFmpeg version
-   * @returns Promise resolving to version string
-   */
-  getVersion(): Promise<string>;
+
+
 }

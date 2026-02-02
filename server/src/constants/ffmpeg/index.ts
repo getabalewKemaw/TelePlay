@@ -1,0 +1,26 @@
+import type { AudioCodec ,SampleRate,ChannelConfig,AudioEncodingParams} from '../../services/ffmpeg/index.js';
+const FFMPEG_EXECUTABLE = 'ffmpeg';// Default ffmpeg executable name
+const DEFAULT_TIMEOUT = 30 * 60 * 1000;
+export {
+    FFMPEG_EXECUTABLE,
+    DEFAULT_TIMEOUT
+}
+export const SUPPORTED_CODECS: ReadonlySet<AudioCodec> = new Set([
+  'g711',
+  'g726',
+  'g728',
+  'pcm_s16le',
+  'pcm_s24le',
+  'aac',
+  'mp3',
+  'opus'
+]);
+ 
+export const SUPPORTED_SAMPLE_RATES: ReadonlySet<SampleRate> = new Set([
+  8000, 16000, 22050, 44100, 48000
+]);
+
+/**
+ * Supported channel configurations
+ */
+export const SUPPORTED_CHANNELS: ReadonlySet<ChannelConfig> = new Set([1, 2]);

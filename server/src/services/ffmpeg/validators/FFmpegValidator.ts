@@ -1,47 +1,19 @@
+
 /**
  * FFmpeg Parameter Validators
  * Validates input parameters before FFmpeg execution
  */
-
 import type { AudioCodec, SampleRate, ChannelConfig, AudioEncodingParams } from '../types/FFmpegTypes.js';
 import { FFmpegValidationError } from '../errors/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
+import { SUPPORTED_CHANNELS,SUPPORTED_CODECS,SUPPORTED_SAMPLE_RATES } from '../../../constants/ffmpeg/index.js';
 import path from 'path';
-
-/**
- * Supported codecs mapping
- */
-const SUPPORTED_CODECS: ReadonlySet<AudioCodec> = new Set([
-  'g711',
-  'g726',
-  'g728',
-  'pcm_s16le',
-  'pcm_s24le',
-  'aac',
-  'mp3',
-  'opus'
-]);
-
-/**
- * Supported sample rates
- */
-const SUPPORTED_SAMPLE_RATES: ReadonlySet<SampleRate> = new Set([
-  8000, 16000, 22050, 44100, 48000
-]);
-
-/**
- * Supported channel configurations
- */
-const SUPPORTED_CHANNELS: ReadonlySet<ChannelConfig> = new Set([1, 2]);
 
 /**
  * Validator class for FFmpeg parameters
  */
 export class FFmpegValidator {
-  /**
-   * Validates audio codec
-   */
   static validateCodec(codec: string): asserts codec is AudioCodec {
     if (!SUPPORTED_CODECS.has(codec as AudioCodec)) {
       throw new FFmpegValidationError(
@@ -50,10 +22,6 @@ export class FFmpegValidator {
       );
     }
   }
-
-  /**
-   * Validates sample rate
-   */
   static validateSampleRate(sampleRate: number): asserts sampleRate is SampleRate {
     if (!SUPPORTED_SAMPLE_RATES.has(sampleRate as SampleRate)) {
       throw new FFmpegValidationError(
@@ -62,10 +30,6 @@ export class FFmpegValidator {
       );
     }
   }
-
-  /**
-   * Validates channel configuration
-   */
   static validateChannels(channels: number): asserts channels is ChannelConfig {
     if (!SUPPORTED_CHANNELS.has(channels as ChannelConfig)) {
       throw new FFmpegValidationError(
@@ -75,9 +39,6 @@ export class FFmpegValidator {
     }
   }
 
-  /**
-   * Validates bitrate )
-   */
   static validateBitrate(bitrate: number | undefined): void {
     if (bitrate !== undefined) {
       if (bitrate <= 0 || bitrate > 10000) {
@@ -88,10 +49,6 @@ export class FFmpegValidator {
       }
     }
   }
-
-  /**
-   * Validates audio encoding parameters
-   */
   static validateEncodingParams(params: AudioEncodingParams): void {
     this.validateCodec(params.codec);
     this.validateSampleRate(params.sampleRate);
@@ -123,17 +80,12 @@ export class FFmpegValidator {
       );
     }
   }
-
-  /**
-   * Validates output directory exists and is writable
-   */
   static async validateOutputPath(filePath: string): Promise<void> {
     if (!filePath || typeof filePath !== 'string') {
       throw new FFmpegValidationError('Output file path is required and must be a string', 'output');
     }
-
     const outputDir = path.dirname(filePath);
-    
+  
     if (!existsSync(outputDir)) {
       throw new FFmpegValidationError(
         `Output directory does not exist: ${outputDir}`,
@@ -164,12 +116,10 @@ export class FFmpegValidator {
 
     if (path.isAbsolute(filePath) && !filePath.match(/^[a-zA-Z]:/)) {
       // Basic validation for absolute paths
-      if (!filePath.startsWith('/') && !filePath.match(/^[a-zA-Z]:/)) {
         throw new FFmpegValidationError(
           `Invalid file path format: ${filePath}`,
           fieldName
         );
-      }
     }
   }
 }
