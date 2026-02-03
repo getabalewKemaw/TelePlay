@@ -70,24 +70,43 @@ export class FFmpegService implements IFfmpegService {
 
     // For telecom codecs, we need to specify input format and parameters BEFORE -i
     if (params.codec && (params.codec === 'g711' || params.codec === 'g726' || params.codec === 'g728')) {
-      // Map codec to input format
+      // Map codec to input format/demuxer
       const inputFormatMap: Record<string, string> = {
         g711: 'mulaw',
         g726: 'g726',
         g728: 'g728'
       };
 
-      if (params.codec && params.codec in inputFormatMap) {
-        const format = inputFormatMap[params.codec as keyof typeof inputFormatMap];
+      if (params.codec in inputFormatMap) {
+        const format = inputFormatMap[params.codec];
         if (format) {
           additionalArgs.push('-f', format);
         }
       }
 
-      // For G.726, specify bitrate before input (required for decoding)
       if (params.codec === 'g726' && params.bitrate) {
-        // G.726 bitrate must be specified before -i for input
-        additionalArgs.push('-b:a', `${params.bitrate}k`);
+        // G.726 raw demuxer uses code_size to determine bits per sample
+        // 16kbps = 2 bits, 24kbps = 3 bits, 32kbps = 4 bits, 40kbps = 5 bits
+        const codeSize = Math.floor(params.bitrate / 8);
+        additionalArgs.push('-code_size', codeSize.toString());
+        additionalArgs.push('-acodec', 'g726');
+
+        // raw demuxer also uses -sample_rate
+        if (params.sampleRate) {
+          additionalArgs.push('-sample_rate', params.sampleRate.toString());
+        }
+      } else if (params.codec === 'g711') {
+        additionalArgs.push('-acodec', 'pcm_mulaw');
+      } else if (params.codec === 'g728') {
+        additionalArgs.push('-acodec', 'g728');
+      }
+
+      // POSSIBLY CRITICAL: For raw streams, sample rate and channels MUST be before -i
+      if (params.sampleRate && params.codec !== 'g726') { // G.726 uses -sample_rate for demuxer
+        additionalArgs.push('-ar', params.sampleRate.toString());
+      }
+      if (params.channels) {
+        additionalArgs.push('-ac', params.channels.toString());
       }
     } else if (params.input.format) {
       additionalArgs.push('-f', params.input.format);
@@ -97,10 +116,11 @@ export class FFmpegService implements IFfmpegService {
       input: params.input.path,
       output: params.output.path,
       // For decoding, we don't set output codec, let FFmpeg auto-detect or use format
-      codec: undefined, // Don't set output codec for decoding
-      sampleRate: params.sampleRate,
-      channels: params.channels,
-      bitrate: undefined, // Bitrate is only for input in decode, handled in additionalArgs
+      codec: undefined,
+      // For raw streams, we already added these to additionalArgs (before -i)
+      sampleRate: params.codec && ['g711', 'g726', 'g728'].includes(params.codec) ? undefined : params.sampleRate,
+      channels: params.codec && ['g711', 'g726', 'g728'].includes(params.codec) ? undefined : params.channels,
+      bitrate: undefined,
       format: params.output.format || 'wav', // Default to WAV for output
       startTime: params.startTime,
       duration: params.duration,

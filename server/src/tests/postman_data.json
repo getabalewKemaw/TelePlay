@@ -5,7 +5,7 @@
     },
     "endpoints": {
         "ffmpeg": {
-            "decode": {
+            "decode_g711": {
                 "method": "POST",
                 "url": "/api/ffmpeg/decode",
                 "payload": {
@@ -14,11 +14,46 @@
                         "format": "mulaw"
                     },
                     "output": {
-                        "path": "processed/audio.wav",
+                        "path": "processed/audio_g711.wav",
                         "format": "wav"
                     },
                     "codec": "g711",
                     "sampleRate": 8000,
+                    "channels": 1
+                }
+            },
+            "decode_g726": {
+                "method": "POST",
+                "url": "/api/ffmpeg/decode",
+                "payload": {
+                    "input": {
+                        "path": "uploads/audio.g726",
+                        "format": "g726"
+                    },
+                    "output": {
+                        "path": "processed/audio_g726.wav",
+                        "format": "wav"
+                    },
+                    "codec": "g726",
+                    "sampleRate": 8000,
+                    "channels": 1,
+                    "bitrate": 32
+                }
+            },
+            "decode_g728": {
+                "method": "POST",
+                "url": "/api/ffmpeg/decode",
+                "payload": {
+                    "input": {
+                        "path": "uploads/audio.g728",
+                        "format": "g728"
+                    },
+                    "output": {
+                        "path": "processed/audio_g728.wav",
+                        "format": "wav"
+                    },
+                    "codec": "g728",
+                    "sampleRate": 16000,
                     "channels": 1
                 }
             },
