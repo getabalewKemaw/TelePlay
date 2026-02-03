@@ -107,10 +107,23 @@ export class FFmpegExecutor implements IFfmpegExecutor {
   }
   private buildCommandArgs(options: FFmpegCommandOptions): string[] {
     const args: string[] = [];
+
+    // Start time must be specified BEFORE input for fast seeking or AFTER for accurate seeking.
+    // Generally, before -i is faster.
+    if (options.startTime !== undefined) {
+      args.push('-ss', options.startTime.toString());
+    }
+
     if (options.additionalArgs) {
       args.push(...options.additionalArgs);
     }
     args.push('-i', options.input);
+
+    // Duration should be specified after input
+    if (options.duration !== undefined) {
+      args.push('-t', options.duration.toString());
+    }
+
     if (options.codec) {
       args.push('-acodec', this.mapCodecToFFmpeg(options.codec));
     }

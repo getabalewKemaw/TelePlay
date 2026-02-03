@@ -33,7 +33,6 @@ export class ChunkingController {
             next(error);
         }
     };
-
     /**
      * GET /api/chunks/at-time
      * Query params: filePath, time
@@ -42,11 +41,9 @@ export class ChunkingController {
         try {
             const filePath = req.query.filePath as string;
             const time = parseFloat(req.query.time as string);
-
             if (!filePath || isNaN(time)) {
                 return res.status(400).json({ success: false, message: 'filePath and valid time are required' });
             }
-
             const chunk = await this.chunkingService.getChunkAtTime(filePath, time);
             res.status(200).json({
                 success: true,
@@ -56,4 +53,5 @@ export class ChunkingController {
             next(error);
         }
     };
+    
 }

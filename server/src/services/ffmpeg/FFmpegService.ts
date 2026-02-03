@@ -79,7 +79,9 @@ export class FFmpegService implements IFfmpegService {
 
       if (params.codec && params.codec in inputFormatMap) {
         const format = inputFormatMap[params.codec as keyof typeof inputFormatMap];
-        additionalArgs.push('-f', format);
+        if (format) {
+          additionalArgs.push('-f', format);
+        }
       }
 
       // For G.726, specify bitrate before input (required for decoding)
@@ -100,6 +102,8 @@ export class FFmpegService implements IFfmpegService {
       channels: params.channels,
       bitrate: undefined, // Bitrate is only for input in decode, handled in additionalArgs
       format: params.output.format || 'wav', // Default to WAV for output
+      startTime: params.startTime,
+      duration: params.duration,
       additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined
     };
 
@@ -128,6 +132,8 @@ export class FFmpegService implements IFfmpegService {
       channels: params.encoding.channels,
       bitrate: params.encoding.bitrate,
       format: params.output.format,
+      startTime: params.startTime,
+      duration: params.duration,
       additionalArgs: params.input.format ? ['-f', params.input.format] : undefined
     };
 
@@ -161,6 +167,8 @@ export class FFmpegService implements IFfmpegService {
       channels: params.targetEncoding.channels,
       bitrate: params.targetEncoding.bitrate,
       format: params.output.format,
+      startTime: params.startTime,
+      duration: params.duration,
       additionalArgs: [
         ...(params.input.format ? ['-f', params.input.format] : []),
         '-acodec', this.mapCodecToFFmpeg(params.sourceEncoding.codec),

@@ -4,7 +4,7 @@
  * Splits media files into time-based chunks for fast-forward, rewind, and streaming
  */
 
-import type { IChunkingService } from '../../interfaces/ffmpeg/IChunkingService.js';
+import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 import type {
   ChunkingResult,
@@ -15,8 +15,9 @@ import type {
   ChunkingConfig
 } from '../../types/chunking/ChunkingTypes.js';
 import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
+import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import { FFprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
 /**
@@ -25,13 +26,16 @@ import path from 'path';
 const DEFAULT_CHUNK_DURATION = 120;
 export class ChunkingService implements IChunkingService {
   private readonly metadataProvider: IMediaMetadataProvider;
+  private readonly ffmpegService: IFfmpegService;
   private readonly defaultChunkDuration: number;
 
   constructor(
     metadataProvider?: IMediaMetadataProvider,
+    ffmpegService?: IFfmpegService,
     defaultChunkDuration: number = DEFAULT_CHUNK_DURATION
   ) {
     this.metadataProvider = metadataProvider ?? new FFprobeMetadataProvider();
+    this.ffmpegService = ffmpegService as any; // This will be injected via DI or passed in
     this.defaultChunkDuration = defaultChunkDuration;
   }
   async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
@@ -54,8 +58,26 @@ export class ChunkingService implements IChunkingService {
     // Validate config
     this.validateConfig(config);
 
-    // Generate chunks
+    // Generate meta-chunks
     const chunks = this.calculateChunks(config);
+
+    // Physically split data if requested
+    if (config.generateFiles && config.outputDirectory) {
+      if (!existsSync(config.outputDirectory)) {
+        mkdirSync(config.outputDirectory, { recursive: true });
+      }
+
+      for (const chunk of chunks) {
+        if (chunk.filePath) {
+          await this.ffmpegService.decode({
+            input: { path: filePath },
+            output: { path: chunk.filePath },
+            startTime: chunk.startTime,
+            duration: chunk.duration
+          });
+        }
+      }
+    }
 
     return {
       chunks,

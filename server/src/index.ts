@@ -1,11 +1,32 @@
+import 'dotenv/config';
 import express from 'express';
 import type { Request, Response } from 'express';
 import apiRoutes from './routes/index.js';
 
 import { errorHandler } from './middleware/errorHandler.js';
 
+import { FileService } from './services/file/FileService.js';
+import { ChunkingService } from './services/chunking/ChunkingService.js';
+import path from 'path';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize services for background discovery
+const fileService = new FileService(new ChunkingService() as any);
+const uploadsDir = path.resolve(process.env.UPLOADS_DIR || './uploads');
+
+// Startup Discovery
+fileService.discoverFiles(uploadsDir).then(() => {
+    console.log('Initial file discovery completed');
+}).catch(err => {
+    console.error('Initial discovery failed:', err);
+});
+
+// Periodic Discovery (every 5 minutes)
+setInterval(() => {
+    fileService.discoverFiles(uploadsDir).catch(err => console.error('Periodic discovery failed:', err));
+}, 5 * 60 * 1000);
 
 // Body parsing middleware
 app.use(express.json());

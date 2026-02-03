@@ -25,9 +25,11 @@ export interface DecodeParams {
   input: FileConfig;
   output: FileConfig;
   codec?: AudioCodec;
-  sampleRate?: SampleRate; 
-  channels?: ChannelConfig; 
+  sampleRate?: SampleRate;
+  channels?: ChannelConfig;
   bitrate?: number; // Required for G.726 (8, 16, 24, 32 kbps)
+  startTime?: number;
+  duration?: number;
 }
 
 /**
@@ -37,18 +39,24 @@ export interface EncodeParams {
   input: FileConfig;
   output: FileConfig;
   encoding: AudioEncodingParams;
+  startTime?: number;
+  duration?: number;
 }
 export interface TranscodeParams {
   input: FileConfig;
   output: FileConfig;
   sourceEncoding: AudioEncodingParams;
   targetEncoding: AudioEncodingParams;
+  startTime?: number;
+  duration?: number;
 }
 export interface ConvertParams {
   input: FileConfig;
   output: FileConfig;
   targetFormat: string;
   encoding?: AudioEncodingParams; // Optional encoding params
+  startTime?: number;
+  duration?: number;
 }
 export interface FFmpegExecutionResult {
   success: boolean;
@@ -66,5 +74,7 @@ export interface FFmpegCommandOptions {
   channels?: ChannelConfig;
   bitrate?: number;
   format?: string;
+  startTime?: number;
+  duration?: number;
   additionalArgs?: string[]; // For extensibility
 }

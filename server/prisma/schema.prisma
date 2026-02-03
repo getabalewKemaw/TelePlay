@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model MediaFile {
+  id             String          @id @default(uuid())
+  filename       String
+  originalPath   String
+  duration       Float
+  fileSize       BigInt?
+  format         String?
+  codec          String?
+  bitrate        Int?
+  status         String          @default("pending")
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  streamSessions StreamSession[]
+
+  @@map("media_files")
+}
+
+model StreamSession {
+  id           String    @id @default(uuid())
+  mediaFileId  String
+  status       String    @default("active")
+  startTime    DateTime  @default(now())
+  lastActivity DateTime  @updatedAt
+  mediaFile    MediaFile @relation(fields: [mediaFileId], references: [id])
+
+  @@map("stream_sessions")
+}
