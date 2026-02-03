@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@theme {
+    --color-coffee-50: #FDF8F5;
+    --color-coffee-100: #F3E5D8;
+    --color-coffee-200: #E7D4C1;
+    --color-coffee-300: #D2B48C;
+    --color-coffee-400: #A67B5B;
+    --color-coffee-500: #8B5E3C;
+    --color-coffee-600: #6F4E37;
+    --color-coffee-Dark: #3C2A21;
+    --color-coffee-Accent: #ECB176;
+}
+
+:root {
+    background-color: var(--color-coffee-50);
+    color: var(--color-coffee-Dark);
+}
+
+@layer base {
+    body {
+        @apply antialiased;
+    }
+}
