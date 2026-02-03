@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CompressionService } from '../CompressionService.js';
-import type { IFfmpegService } from '../interfaces/IFfmpegService.js';
-import type { FFmpegExecutionResult } from '../../../ffmpeg/types/FFmpegTypes.js';
-import { CompressionValidationError, CompressionPresetError } from '../errors/CompressionErrors.js';
+import { CompressionService } from '../../services/compression/CompressionService.js';
+import type { IFfmpegService } from '../../interfaces/compression/IFfmpegService.js';
+import type { FFmpegExecutionResult } from '../../types/ffmpeg/FFmpegTypes.js';
+import { CompressionValidationError, CompressionPresetError } from '../../errors/compression/CompressionErrors.js';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';

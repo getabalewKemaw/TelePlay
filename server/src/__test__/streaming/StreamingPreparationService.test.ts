@@ -4,12 +4,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StreamingPreparationService } from '../StreamingPreparationService.js';
-import type { IChunkingService } from '../interfaces/IChunkingService.js';
-import type { ISegmentationService } from '../interfaces/ISegmentationService.js';
-import type { ITranscodingService } from '../interfaces/ITranscodingService.js';
-import type { ICompressionService } from '../interfaces/ICompressionService.js';
-import { StreamingSessionError, StreamingPlaybackError } from '../errors/StreamingErrors.js';
+import { StreamingPreparationService } from '../../services/streaming/StreamingPreparationService.js';
+import type { IChunkingService } from '../../interfaces/streaming/IChunkingService.js';
+import type { ISegmentationService } from '../../interfaces/streaming/ISegmentationService.js';
+import type { ITranscodingService } from '../../interfaces/streaming/ITranscodingService.js';
+import type { ICompressionService } from '../../interfaces/streaming/ICompressionService.js';
+import { StreamingSessionError, StreamingPlaybackError } from '../../errors/streaming/StreamingErrors.js';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';

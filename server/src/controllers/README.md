@@ -1,0 +1,53 @@
+
+# I-Player Controller Layer
+
+This directory contains the Implementation of the **Controller Layer** for the I-Player media processing backend.
+
+## Architecture Overview
+
+The controller layer follows the **Clean Architecture** principles, ensuring that the API layer is decoupled from the business logic (services).
+
+### Key Components
+
+1.  **Controllers (`src/controllers/`)**:
+    *   **Thin Layer**: Controllers only handle request parsing, validation (delegated to DTOs), and response structuring.
+    *   **Service Integration**: Controllers interface with existing core services (`FFmpegService`, `ChunkingService`, etc.) via their respective interfaces.
+    *   **Non-Blocking**: All controller methods are asynchronous.
+
+2.  **Routes (`src/routes/`)**:
+    *   Modular routing using Express Router.
+    *   RESTful API design following resource-based paths.
+
+3.  **DTOs (`src/dto/`)**:
+    *   Data Transfer Objects define the contract for the API.
+    *   Ensure type safety for incoming requests.
+
+4.  **Middleware (`src/middleware/`)**:
+    *   **Global Error Handler**: Captures and formats errors from all services into a consistent JSON response.
+
+## API Endpoints
+
+### FFmpeg Operations
+*   `POST /api/ffmpeg/decode`: Decode audio files.
+*   `POST /api/ffmpeg/encode`: Encode audio files.
+*   `POST /api/ffmpeg/transcode`: Transcode between formats.
+
+### Media Processing
+*   `POST /api/compress`: Compress media using presets.
+*   `GET /api/chunks`: Get all metadata for file chunks.
+*   `GET /api/chunks/at-time`: Seek a specific chunk by timestamp.
+*   `GET /api/segments`: Get all adaptive segments.
+*   `GET /api/segments/range`: Get segments for a specific time range.
+
+### Streaming Sessions
+*   `POST /api/streaming/sessions`: Initialize a streaming session.
+*   `POST /api/streaming/sessions/:sessionId/prepare-chunks`: Trigger chunk preparation.
+*   `POST /api/streaming/sessions/:sessionId/playback`: Control playback (Play/Pause/Seek).
+*   `GET /api/streaming/sessions/:sessionId/metadata`: Retrieve stream metadata.
+*   `DELETE /api/streaming/sessions/:sessionId`: Cleanup session resources.
+
+## Implementation Details
+
+*   **TypeScript**: Full type safety with strict type-only imports for `verbatimModuleSyntax` compatibility.
+*   **Modular**: Each service has a dedicated controller and route file, making the system easy to extend.
+*   **Performance**: Utilizes existing high-performance services without adding overhead.

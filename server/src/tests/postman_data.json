@@ -1,0 +1,89 @@
+{
+    "info": {
+        "name": "I-Player API Test Data",
+        "description": "JSON payloads for testing the I-Player Backend API"
+    },
+    "endpoints": {
+        "ffmpeg": {
+            "decode": {
+                "method": "POST",
+                "url": "/api/ffmpeg/decode",
+                "payload": {
+                    "input": {
+                        "path": "uploads/audio.g711",
+                        "format": "mulaw"
+                    },
+                    "output": {
+                        "path": "processed/audio.wav",
+                        "format": "wav"
+                    },
+                    "codec": "g711",
+                    "sampleRate": 8000,
+                    "channels": 1
+                }
+            },
+            "encode": {
+                "method": "POST",
+                "url": "/api/ffmpeg/encode",
+                "payload": {
+                    "input": {
+                        "path": "processed/audio.wav"
+                    },
+                    "output": {
+                        "path": "processed/audio.mp3",
+                        "format": "mp3"
+                    },
+                    "encoding": {
+                        "codec": "mp3",
+                        "sampleRate": 44100,
+                        "channels": 2,
+                        "bitrate": 192
+                    }
+                }
+            }
+        },
+        "compression": {
+            "compress": {
+                "method": "POST",
+                "url": "/api/compress",
+                "payload": {
+                    "inputPath": "processed/audio.wav",
+                    "options": {
+                        "level": "medium",
+                        "preset": "balanced"
+                    }
+                }
+            }
+        },
+        "streaming": {
+            "createSession": {
+                "method": "POST",
+                "url": "/api/streaming/sessions",
+                "payload": {
+                    "filePath": "processed/audio.wav",
+                    "options": {
+                        "transport": "http",
+                        "mode": "file-based",
+                        "preTranscode": true
+                    }
+                }
+            },
+            "playback": {
+                "method": "POST",
+                "url": "/api/streaming/sessions/{{sessionId}}/playback",
+                "payload": {
+                    "action": "seek",
+                    "targetTime": 45.5
+                }
+            }
+        },
+        "error_example": {
+            "description": "Trigger a validation error",
+            "payload": {
+                "input": {
+                    "path": ""
+                }
+            }
+        }
+    }
+}

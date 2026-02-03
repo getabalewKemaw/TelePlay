@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { COMPRESSION_PRESETS, getPreset, getDefaultPreset } from '../presets/CompressionPresets.js';
+import { COMPRESSION_PRESETS, getPreset, getDefaultPreset } from '../../services/compression/presets/CompressionPresets.js';
 
 describe('CompressionPresets', () => {
   describe('COMPRESSION_PRESETS', () => {

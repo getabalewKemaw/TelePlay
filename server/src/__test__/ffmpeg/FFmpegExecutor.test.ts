@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FFmpegExecutor } from '../implementations/FFmpegExecutor.js';
-import { FFmpegExecutionError, FFmpegTimeoutError } from '../errors/FFmpegErrors.js';
-import type { FFmpegCommandOptions } from '../types/FFmpegTypes.js';
+import { FFmpegExecutor } from '../../services/ffmpeg/implementations/FFmpegExecutor.js';
+import { FFmpegExecutionError, FFmpegTimeoutError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import type { FFmpegCommandOptions } from '../../types/ffmpeg/FFmpegTypes.js';
 import { spawn } from 'child_process';
 
 // Mock child_process

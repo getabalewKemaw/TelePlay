@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FFprobeMetadataProvider } from '../implementations/FFprobeMetadataProvider.js';
-import { ChunkingMetadataError } from '../errors/ChunkingErrors.js';
+import { FFprobeMetadataProvider } from '../../services/chunking/implementations/FFprobeMetadataProvider.js';
+import { ChunkingMetadataError } from '../../errors/chunking/ChunkingErrors.js';
 import { spawn } from 'child_process';
 
 // Mock child_process

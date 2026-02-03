@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TranscodingService } from '../TranscodingService.js';
-import type { IFfmpegService } from '../interfaces/IFfmpegService.js';
-import type { FFmpegExecutionResult } from '../../../ffmpeg/types/FFmpegTypes.js';
-import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../errors/TranscodingErrors.js';
+import { TranscodingService } from '../../services/transcoding/TranscodingService.js';
+import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
+import type { FFmpegExecutionResult } from '../../types/ffmpeg/FFmpegTypes.js';
+import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';

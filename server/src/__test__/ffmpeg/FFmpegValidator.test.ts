@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { FFmpegValidator } from '../validators/FFmpegValidator.js';
-import { FFmpegValidationError } from '../errors/FFmpegErrors.js';
+import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
+import { FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';

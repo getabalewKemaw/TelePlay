@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CompressionValidator } from '../validators/CompressionValidator.js';
-import { CompressionValidationError } from '../errors/CompressionErrors.js';
+import { CompressionValidator } from '../../validator/compression/CompressionValidator.js';
+import { CompressionValidationError } from '../../errors/compression/CompressionErrors.js';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';

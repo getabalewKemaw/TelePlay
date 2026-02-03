@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FFmpegService } from '../FFmpegService.js';
-import type { IFfmpegExecutor } from '../interfaces/IFfmpegExecutor.js';
-import type { FFmpegExecutionResult } from '../types/FFmpegTypes.js';
-import { FFmpegValidationError, FFmpegExecutionError } from '../errors/FFmpegErrors.js';
+import { FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
+import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
+import type { FFmpegExecutionResult } from '../../types/ffmpeg/FFmpegTypes.js';
+import { FFmpegValidationError, FFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';

@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FFmpegService } from '../FFmpegService.js';
-import { FFmpegValidationError, FFmpegExecutionError } from '../errors/FFmpegErrors.js';
+import { FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
+import { FFmpegValidationError, FFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';

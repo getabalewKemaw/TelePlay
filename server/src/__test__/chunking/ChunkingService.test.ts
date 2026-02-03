@@ -8,8 +8,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ChunkingService } from '../../services/chunking/ChunkingService.js';
 
 import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
-import type { MediaMetadata } from '../types/ChunkingTypes.js';
-import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from '../errors/ChunkingErrors.js';
+
+import type { MediaMetadata } from '../../types/chunking/ChunkingTypes.js';
+
+import { ChunkingFileError,ChunkingSeekError,ChunkingValidationError } from '../../errors/chunking/ChunkingErrors.js';
 import { existsSync } from 'fs';
 import path from 'path';
 
@@ -29,7 +31,7 @@ describe('ChunkingService', () => {
   beforeEach(() => {
     mockMetadataProvider = {
       getMetadata: vi.fn(),
-      isAvailable: vi.fn().mockResolvedValue(true)
+
     };
 
     chunkingService = new ChunkingService(mockMetadataProvider, 120);
@@ -83,7 +85,7 @@ describe('ChunkingService', () => {
 
       expect(result.totalChunks).toBe(5); // 300s / 60s = 5
       expect(result.chunkDuration).toBe(60);
-      expect(result.chunks[0].duration).toBe(60);
+      expect(result.chunks[0]!.duration).toBe(60);
     });
 
     it('should generate file paths when generateFiles is true', async () => {
@@ -102,8 +104,8 @@ describe('ChunkingService', () => {
       // Use path.join for cross-platform compatibility
       const expectedPath0 = path.join('/output', 'test_chunk_0000.mp3');
       const expectedPath1 = path.join('/output', 'test_chunk_0001.mp3');
-      expect(result.chunks[0].filePath).toBe(expectedPath0);
-      expect(result.chunks[1].filePath).toBe(expectedPath1);
+      expect(result.chunks[0]!.filePath).toBe(expectedPath0);
+      expect(result.chunks[1]!.filePath).toBe(expectedPath1);
     });
 
     it('should throw error if file does not exist', async () => {

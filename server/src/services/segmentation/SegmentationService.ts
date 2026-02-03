@@ -273,11 +273,11 @@ export class SegmentationService implements ISegmentationService {
       const mid = Math.floor((left + right) / 2);
       const segment = segments[mid];
 
-      if (time >= segment.startTime && time < segment.endTime) {
+      if (time >= segment!.startTime && time < segment.endTime) {
         return segment;
       }
 
-      if (time < segment.startTime) {
+      if (time < segment!.startTime) {
         right = mid - 1;
       } else {
         left = mid + 1;

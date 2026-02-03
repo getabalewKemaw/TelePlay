@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SegmentationService } from '../SegmentationService.js';
-import type { IChunkingService } from '../interfaces/IChunkingService.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import { SegmentationValidationError } from '../errors/SegmentationErrors.js';
+import { SegmentationService } from '../../services/segmentation/SegmentationService.js';
+import type { IChunkingService } from '../../interfaces/segementation/IChunkingService.js';
+import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
+import { SegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
 
 describe('SegmentationService', () => {
   let mockChunkingService: IChunkingService;

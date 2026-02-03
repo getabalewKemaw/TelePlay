@@ -4,12 +4,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { FixedSegmentationStrategy } from '../strategies/FixedSegmentationStrategy.js';
-import { AdaptiveSegmentationStrategy } from '../strategies/AdaptiveSegmentationStrategy.js';
-import { ProgressiveSegmentationStrategy } from '../strategies/ProgressiveSegmentationStrategy.js';
-import { LowLatencySegmentationStrategy } from '../strategies/LowLatencySegmentationStrategy.js';
-import type { ChunkMetadata } from '../../chunking/types/ChunkingTypes.js';
-import { SegmentPriority } from '../types/SegmentationTypes.js';
+import { FixedSegmentationStrategy } from '../../services/segmentation/strategies/FixedSegmentationStrategy.js';
+import { AdaptiveSegmentationStrategy } from '../../services/segmentation/strategies/AdaptiveSegmentationStrategy.js';
+import { ProgressiveSegmentationStrategy } from '../../services/segmentation/strategies/ProgressiveSegmentationStrategy.js';
+import { LowLatencySegmentationStrategy } from '../../services/segmentation/strategies/LowLatencySegmentationStrategy.js';
+import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
+import { SegmentPriority } from '../../types/segementation/SegmentationTypes.js';
 
 // Helper to create mock chunks
 const createChunks = (count: number, chunkDuration: number = 10): ChunkMetadata[] => {
@@ -179,7 +179,7 @@ describe('LowLatencySegmentationStrategy', () => {
 
 describe('SegmentationStrategyFactory', () => {
   it('should create correct strategy for each type', async () => {
-    const { SegmentationStrategyFactory } = await import('../strategies/SegmentationStrategyFactory.js');
+    const { SegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
 
     expect(SegmentationStrategyFactory.create('fixed').getName()).toBe('fixed');
     expect(SegmentationStrategyFactory.create('adaptive').getName()).toBe('adaptive');
@@ -188,7 +188,7 @@ describe('SegmentationStrategyFactory', () => {
   });
 
   it('should throw error for unknown strategy', async () => {
-    const { SegmentationStrategyFactory } = await import('../strategies/SegmentationStrategyFactory.js');
+    const { SegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
 
     expect(() => {
       SegmentationStrategyFactory.create('unknown' as any);
