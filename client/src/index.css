@@ -9,16 +9,73 @@
     --color-coffee-500: #8B5E3C;
     --color-coffee-600: #6F4E37;
     --color-coffee-Dark: #3C2A21;
-    --color-coffee-Accent: #ECB176;
+    --color-coffee-accent: #ECB176;
+
+    --animate-music-bar: music-bar 1.2s ease-in-out infinite;
+    --animate-fade-in: fade-in 0.5s ease-out forwards;
+    --animate-slide-up: slide-up 0.5s ease-out forwards;
+
+    @keyframes music-bar {
+
+        0%,
+        100% {
+            height: 10px;
+        }
+
+        50% {
+            height: 30px;
+        }
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes slide-up {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 }
 
 :root {
     background-color: var(--color-coffee-50);
     color: var(--color-coffee-Dark);
+    scrollbar-color: var(--color-coffee-200) transparent;
+    scrollbar-width: thin;
 }
 
 @layer base {
     body {
-        @apply antialiased;
+        @apply antialiased overflow-hidden;
     }
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-coffee-200);
+    border-radius: 10px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-coffee-300);
 }
