@@ -5,14 +5,16 @@
 
 
 
-import type {    StreamingSession,
+import type {
+  StreamingSession,
   PreparedChunk,
   PreparedSegment,
   PlaybackControlRequest,
   PlaybackControlResponse,
   StreamingPreparationOptions,
   StreamMetadata,
-  StreamEndpoint} from '../../types/streaming/StreamingTypes.js';
+  StreamEndpoint
+} from '../../types/streaming/StreamingTypes.js';
 /**
  * Main streaming preparation service interface
  * Prepares processed chunks for network streaming
@@ -72,6 +74,13 @@ export interface IStreamingPreparationService {
    * @returns Promise resolving to stream metadata
    */
   getStreamMetadata(sessionId: string): Promise<StreamMetadata>;
+
+  /**
+   * Get session by ID
+   * @param sessionId - Session ID
+   * @returns Promise resolving to session or undefined if not found
+   */
+  getSession(sessionId: string): Promise<StreamingSession | undefined>;
 
   /**
    * Cleanup session

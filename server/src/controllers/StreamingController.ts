@@ -4,6 +4,7 @@ import { StreamingPreparationService } from '../services/streaming/StreamingPrep
 import type { CreateSessionRequestDto, PlaybackControlRequestDto, PrepareItemsRequestDto } from '../dto/streaming.dto.js';
 import type { IStreamingPreparationService } from '../interfaces/ffmpeg/IStreamingPreparationService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
+import path from 'path';
 
 export class StreamingController {
     private streamingService: IStreamingPreparationService;
@@ -78,6 +79,21 @@ export class StreamingController {
             const { sessionId } = req.params;
             await this.streamingService.cleanupSession(sessionId);
             res.status(204).send();
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    stream = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
+        try {
+            const { sessionId } = req.params;
+            const session = await this.streamingService.getSession(sessionId);
+
+            if (!session) {
+                return res.status(404).json({ success: false, message: 'Session not found' });
+            }
+
+            res.sendFile(path.resolve(session.filePath));
         } catch (error) {
             next(error);
         }

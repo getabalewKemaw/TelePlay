@@ -4,6 +4,7 @@ import { FFmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { DecodeRequestDto, EncodeRequestDto, TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { IFfmpegService } from '../interfaces/ffmpeg/IFfmpegService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
+import prisma from '../lib/prisma.js';
 
 export class FFmpegController {
     private ffmpegService: IFfmpegService;
@@ -14,7 +15,20 @@ export class FFmpegController {
 
     decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
-            const result = await this.ffmpegService.decode(req.body);
+            const { fileId, ...decodeParams } = req.body;
+            const result = await this.ffmpegService.decode(decodeParams);
+
+            // If we have a fileId, update the database with the decoded path
+            if (fileId && result.success && result.outputPath) {
+                await prisma.mediaFile.update({
+                    where: { id: fileId },
+                    data: {
+                        decodedPath: result.outputPath,
+                        status: 'ready'
+                    }
+                });
+            }
+
             const response: ApiResponse<any> = {
                 success: true,
                 data: result,

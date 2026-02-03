@@ -8,8 +8,15 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { FileService } from './services/file/FileService.js';
 import { ChunkingService } from './services/chunking/ChunkingService.js';
 import path from 'path';
+import cors from 'cors';
 
 const app = express();
+app.use(cors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 const PORT = process.env.PORT || 3000;
 
 // Initialize services for background discovery
@@ -45,4 +52,6 @@ app.use(errorHandler);
 app.listen(PORT, () => {
     console.log(`I-Player server is running on port http://localhost:${PORT}`);
 });
+
+
 

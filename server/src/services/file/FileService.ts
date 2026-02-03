@@ -14,7 +14,8 @@ export class FileService implements IFileService {
 
         const files = await fs.readdir(directoryPath);
         for (const file of files) {
-            if (file.endsWith('.g711') || file.endsWith('.g726') || file.endsWith('.pcm') || file.endsWith('.wav')) {
+            const ext = path.extname(file).toLowerCase();
+            if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav'].includes(ext)) {
                 const filePath = path.join(directoryPath, file);
                 await this.processFile(filePath);
             }

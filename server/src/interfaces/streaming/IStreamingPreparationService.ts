@@ -75,6 +75,13 @@ export interface IStreamingPreparationService {
   getStreamMetadata(sessionId: string): Promise<StreamMetadata>;
 
   /**
+   * Get session by ID
+   * @param sessionId - Session ID
+   * @returns Promise resolving to session or undefined if not found
+   */
+  getSession(sessionId: string): Promise<StreamingSession | undefined>;
+
+  /**
    * Cleanup session
    * @param sessionId - Session ID
    * @returns Promise resolving when cleanup is complete

@@ -22,6 +22,13 @@ export class FFmpegService implements IFfmpegService {
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
     if (params.codec) {
+      // Normalize codec aliases
+      if (params.codec === 'pcm_mulaw' || params.codec === 'pcm_alaw') {
+        params.codec = 'g711';
+      } else if (params.codec === 'adpcm_g726') {
+        params.codec = 'g726';
+      }
+
       FFmpegValidator.validateCodec(params.codec);
 
       // For telecom codecs, validate sampleRate and channels are provided

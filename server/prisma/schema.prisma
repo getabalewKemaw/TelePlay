@@ -10,6 +10,7 @@ model MediaFile {
   id             String          @id @default(uuid())
   filename       String
   originalPath   String
+  decodedPath    String?
   duration       Float
   fileSize       BigInt?
   format         String?

@@ -109,7 +109,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
     sessionId: string,
     chunkIndices?: number[]
   ): Promise<PreparedChunk[]> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     // Get chunks from chunking service
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
@@ -136,7 +136,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
     sessionId: string,
     segmentIndices?: number[]
   ): Promise<PreparedSegment[]> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     // Get segments from segmentation service
     const segments = await this.segmentationService.getAllSegments(session.filePath);
@@ -180,7 +180,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
     sessionId: string,
     request: PlaybackControlRequest
   ): Promise<PlaybackControlResponse> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     let newState: PlaybackState = session.state;
     let newTime = session.currentTime;
@@ -275,7 +275,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
    * Get chunks needed for current playback position
    */
   async getChunksForTime(sessionId: string, time: number): Promise<PreparedChunk[]> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     // Get chunk at time from chunking service
     const chunk = await this.chunkingService.getChunkAtTime(session.filePath, time);
@@ -313,7 +313,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
    * Get stream endpoint information
    */
   async getStreamEndpoint(sessionId: string, chunkIndex?: number): Promise<StreamEndpoint> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     // Build endpoint URL based on transport protocol
     let url: string;
@@ -360,7 +360,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
    * Get stream metadata
    */
   async getStreamMetadata(sessionId: string): Promise<StreamMetadata> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
 
     // Get chunks to determine duration
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
@@ -461,9 +461,16 @@ export class StreamingPreparationService implements IStreamingPreparationService
   }
 
   /**
+   * Get session by ID (Public interface)
+   */
+  async getSession(sessionId: string): Promise<StreamingSession | undefined> {
+    return this.sessions.get(sessionId);
+  }
+
+  /**
    * Get session (with error handling)
    */
-  private getSession(sessionId: string): StreamingSession {
+  private findSessionOrThrow(sessionId: string): StreamingSession {
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new StreamingSessionError(`Session not found: ${sessionId}`, sessionId);
@@ -507,7 +514,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
    * Get total duration
    */
   private async getTotalDuration(sessionId: string): Promise<number> {
-    const session = this.getSession(sessionId);
+    const session = this.findSessionOrThrow(sessionId);
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
     return chunks.length > 0 ? chunks[chunks.length - 1]!.endTime : 0;
   }

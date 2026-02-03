@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import type { IFileService } from '../interfaces/file/IFileService.js';
 import { FileService } from '../services/file/FileService.js';
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
+import path from 'path';
 
 export class FileController {
     private fileService: IFileService;
@@ -61,6 +62,27 @@ export class FileController {
                 message: 'Discovery completed',
                 meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
             });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    downloadFile = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.params;
+            const file = await this.fileService.getFileMetadata(id as string);
+
+            // Prefer decoded path if it exists
+            const filePath = file.decodedPath || file.originalPath;
+            const absolutePath = path.resolve(filePath);
+
+            // Format filename for download (ensure it has correct extension if decoded)
+            let downloadName = file.filename;
+            if (file.decodedPath && !downloadName.toLowerCase().endsWith('.wav')) {
+                downloadName = downloadName.split('.')[0] + '.wav';
+            }
+
+            res.download(absolutePath, downloadName);
         } catch (error) {
             next(error);
         }

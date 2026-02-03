@@ -18,6 +18,7 @@ export interface AudioEncodingParamsDto {
 }
 
 export interface DecodeRequestDto {
+    fileId?: string;
     input: FileConfigDto;
     output: FileConfigDto;
     codec?: AudioCodec;
