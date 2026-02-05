@@ -29,8 +29,17 @@ export const decodeFile = async (data: {
     channels: number;
     bitrate?: number;
 }) => {
-    const response = await api.post('/ffmpeg/decode', data);
-    return response.data.data;
+    try {
+        const response = await api.post('/ffmpeg/decode', data);
+        return response.data.data;
+    } catch (error: any) {
+        const status = error?.response?.status;
+        const payload = error?.response?.data;
+        if (status === 409 && payload?.data?.outputPath) {
+            return { outputPath: payload.data.outputPath, alreadyDecoded: true };
+        }
+        throw error;
+    }
 };
 
 export const createStreamingSession = async (filePath: string) => {

@@ -28,6 +28,7 @@ interface PlayerProps {
     duration: number
     playbackRate: number
     volume: number
+    outputFormat: 'wav' | 'mp3'
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
     canDirectPlay: boolean
@@ -41,6 +42,7 @@ interface PlayerProps {
     onSeek: (time: number) => void
     onSkip: (delta: number) => void
     onVolumeChange: (volume: number) => void
+    onOutputFormatChange: (format: 'wav' | 'mp3') => void
 }
 
 export function Player({
@@ -52,6 +54,7 @@ export function Player({
     duration,
     playbackRate,
     volume,
+    outputFormat,
     wavesurfer,
     waveformRef,
     canDirectPlay,
@@ -64,7 +67,8 @@ export function Player({
     onRateChange,
     onSeek,
     onSkip,
-    onVolumeChange
+    onVolumeChange,
+    onOutputFormatChange
 }: PlayerProps) {
     const [showSpeedMenu, setShowSpeedMenu] = useState(false)
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -107,7 +111,45 @@ export function Player({
                     </div>
                 </div>
 
-                <div className="pt-4 md:pt-0 flex items-center gap-4 z-10">
+                <div className="pt-4 md:pt-0 flex flex-col md:flex-row items-center gap-4 z-10 w-full md:w-auto">
+                    <div className="flex md:hidden w-full items-center justify-between bg-white/60 border border-coffee-100 rounded-2xl px-4 py-3">
+                        <div className="text-[9px] font-black text-coffee-400 uppercase tracking-[0.2em]">Output</div>
+                        <div className="flex items-center gap-2">
+                            {(['wav', 'mp3'] as const).map(fmt => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => onOutputFormatChange(fmt)}
+                                    className={cn(
+                                        'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors',
+                                        outputFormat === fmt
+                                            ? 'bg-coffee-Dark text-white'
+                                            : 'bg-white text-coffee-400 hover:text-coffee-600'
+                                    )}
+                                >
+                                    {fmt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="hidden md:flex flex-col items-end gap-2">
+                        <div className="text-[9px] font-black text-coffee-400 uppercase tracking-[0.2em]">Output Format</div>
+                        <div className="flex items-center gap-2 bg-white/60 border border-coffee-100 rounded-2xl px-3 py-2">
+                            {(['wav', 'mp3'] as const).map(fmt => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => onOutputFormatChange(fmt)}
+                                    className={cn(
+                                        'px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors',
+                                        outputFormat === fmt
+                                            ? 'bg-coffee-Dark text-white'
+                                            : 'bg-white text-coffee-400 hover:text-coffee-600'
+                                    )}
+                                >
+                                    {fmt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     <button
                         disabled={isDecoding}
                         onClick={onDecodeAndPlay}
@@ -124,7 +166,7 @@ export function Player({
                         ) : (
                             <>
                                 <Play size={18} fill="currentColor" />
-                                {selectedFile.decodedPath || canDirectPlay ? 'Play' : 'Decode & Play'}
+                                {selectedFile.decodedPath || canDirectPlay ? 'Play' : `Decode & Play (${outputFormat.toUpperCase()})`}
                             </>
                         )}
                     </button>

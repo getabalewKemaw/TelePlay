@@ -15,6 +15,7 @@ export default function App() {
   const [activeSession, setActiveSession] = useState<any>(null)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [volume, setVolume] = useState(0.9)
+  const [outputFormat, setOutputFormat] = useState<'wav' | 'mp3'>('wav')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDecoded, setFilterDecoded] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('filename')
@@ -103,6 +104,13 @@ export default function App() {
     return name.endsWith('.wav') || format === 'wav'
   }
 
+  const getDecodedFormat = (file: MediaFile) => {
+    const decodedPath = file.decodedPath?.toLowerCase() || ''
+    if (decodedPath.endsWith('.mp3')) return 'mp3'
+    if (decodedPath.endsWith('.wav')) return 'wav'
+    return undefined
+  }
+
   const handleFileSelect = (file: MediaFile) => {
     setSelectedFile(file)
     toast(`Focusing on ${file.filename}`, { icon: '🎯' })
@@ -113,23 +121,28 @@ export default function App() {
     const targetFile = fileOverride || selectedFile
     if (!targetFile) return
 
-    const directPlayable = isDirectPlayable(targetFile)
+    const decodedFormat = getDecodedFormat(targetFile)
+    const directPlayable = outputFormat === 'wav' && isDirectPlayable(targetFile)
     setIsDecoding(true)
     const toastId = toast.loading(
-      targetFile.decodedPath || directPlayable ? 'Starting playback...' : 'Decoding high-fidelity signal...'
+      (decodedFormat === outputFormat || directPlayable)
+        ? 'Starting playback...'
+        : `Converting to ${outputFormat.toUpperCase()}...`
     )
 
     try {
-      let finalPath = targetFile.decodedPath || (directPlayable ? targetFile.originalPath : undefined)
+      let finalPath = (decodedFormat === outputFormat)
+        ? targetFile.decodedPath
+        : (directPlayable ? targetFile.originalPath : undefined)
       if (!finalPath) {
         const outputDir = 'processed'
         const baseName = targetFile.filename.replace(/\.[^/.]+$/, '')
-        const outputFilename = `${baseName}_decoded.wav`
+        const outputFilename = `${baseName}_decoded.${outputFormat}`
 
         const decodeResult = await decodeFile({
           fileId: targetFile.id,
           input: { path: targetFile.originalPath },
-          output: { path: `${outputDir}/${outputFilename}`, format: 'wav' },
+          output: { path: `${outputDir}/${outputFilename}`, format: outputFormat },
           codec: targetFile.codec || 'g711',
           sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
           channels: 1,
@@ -380,22 +393,24 @@ export default function App() {
                 isPlaying={isPlaying}
                 currentTime={currentTime}
                 duration={duration}
-                playbackRate={playbackRate}
-                volume={volume}
-                wavesurfer={wavesurfer}
-                waveformRef={waveformRef}
-                canDirectPlay={isDirectPlayable(selectedFile)}
-                isWaveformReady={isWaveformReady}
+              playbackRate={playbackRate}
+              volume={volume}
+              outputFormat={outputFormat}
+              wavesurfer={wavesurfer}
+              waveformRef={waveformRef}
+              canDirectPlay={isDirectPlayable(selectedFile)}
+              isWaveformReady={isWaveformReady}
                 onDecodeAndPlay={() => handleDecodeAndPlay()}
                 onDownload={handleDownload}
                 onPlayPause={playPause}
                 onNext={handleNext}
-                onPrev={handlePrev}
-                onRateChange={handleRateChange}
-                onSeek={handleSeek}
-                onSkip={handleSkip}
-                onVolumeChange={handleVolumeChange}
-              />
+              onPrev={handlePrev}
+              onRateChange={handleRateChange}
+              onSeek={handleSeek}
+              onSkip={handleSkip}
+              onVolumeChange={handleVolumeChange}
+              onOutputFormatChange={setOutputFormat}
+            />
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in-95 duration-1000">
                 <div className="w-32 h-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] rotate-12 flex items-center justify-center text-coffee-200 shadow-2xl border border-white">
