@@ -26,6 +26,7 @@ interface PlayerProps {
     playbackRate: number
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
+    canDirectPlay: boolean
     onDecodeAndPlay: () => void
     onDownload: () => void
     onPlayPause: () => void
@@ -44,6 +45,7 @@ export function Player({
     playbackRate,
     wavesurfer,
     waveformRef,
+    canDirectPlay,
     onDecodeAndPlay,
     onDownload,
     onPlayPause,
@@ -98,7 +100,7 @@ export function Player({
                         onClick={onDecodeAndPlay}
                         className={cn(
                             "px-10 py-5 bg-coffee-Dark text-white rounded-2xl font-black flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-coffee-Dark/20 disabled:opacity-50 disabled:scale-100 uppercase text-xs tracking-widest",
-                            selectedFile.decodedPath && "bg-coffee-600 shadow-coffee-600/30"
+                            (selectedFile.decodedPath || canDirectPlay) && "bg-coffee-600 shadow-coffee-600/30"
                         )}
                     >
                         {isDecoding ? (
@@ -109,7 +111,7 @@ export function Player({
                         ) : (
                             <>
                                 <Play size={18} fill="currentColor" />
-                                {selectedFile.decodedPath ? 'Launch Stream' : 'Decode & Launch'}
+                                {selectedFile.decodedPath || canDirectPlay ? 'Play' : 'Decode & Play'}
                             </>
                         )}
                     </button>

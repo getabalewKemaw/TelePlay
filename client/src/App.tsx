@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Toaster, toast } from 'react-hot-toast'
-import { fetchFiles, createStreamingSession, decodeFile } from './api/api'
+import { fetchFiles, createStreamingSession, decodeFile, discoverFiles, uploadFile } from './api/api'
 import type { MediaFile } from './api/api'
 import { useWaveSurfer } from './hooks/useWaveSurfer'
 import { Sidebar } from './components/Sidebar/Sidebar'
@@ -16,13 +16,13 @@ export default function App() {
   const waveformRef = useRef<HTMLDivElement>(null)
 
   const waveformOptions = useMemo(() => ({
-    waveColor: '#D2B48C',
-    progressColor: '#3C2A21',
-    cursorColor: '#3C2A21',
-    barWidth: 3,
-    barGap: 3,
-    barRadius: 4,
-    barHeight: 0.8,
+    waveColor: '#2dd4bf',
+    progressColor: '#0f172a',
+    cursorColor: '#0f172a',
+    barWidth: 2,
+    barGap: 2,
+    barRadius: 2,
+    barHeight: 1,
     cursorWidth: 2,
     normalize: true,
     responsive: true,
@@ -32,7 +32,11 @@ export default function App() {
   const { wavesurfer, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions)
 
   useEffect(() => {
-    loadFiles()
+    loadFiles(true)
+    const interval = setInterval(() => {
+      loadFiles(true)
+    }, 5000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadFiles = async (quiet = false) => {
@@ -47,32 +51,34 @@ export default function App() {
     }
   }
 
+  const isDirectPlayable = (file: MediaFile) => {
+    const name = file.filename.toLowerCase()
+    const format = (file.format || '').toLowerCase()
+    return name.endsWith('.wav') || format === 'wav'
+  }
+
   const handleFileSelect = (file: MediaFile) => {
     setSelectedFile(file)
     toast(`Focusing on ${file.filename}`, { icon: '🎯' })
 
-    // Auto-launch stream if already decoded
-    if (file.decodedPath) {
-      // Small delay to ensure state update propagates
-      setTimeout(() => {
-        handleDecodeAndPlay(file)
-      }, 100)
-    }
   }
 
   const handleDecodeAndPlay = async (fileOverride?: MediaFile) => {
     const targetFile = fileOverride || selectedFile
     if (!targetFile) return
 
+    const directPlayable = isDirectPlayable(targetFile)
     setIsDecoding(true)
-    const toastId = toast.loading(targetFile.decodedPath ? 'Spinning up stream...' : 'Decoding high-fidelity signal...')
+    const toastId = toast.loading(
+      targetFile.decodedPath || directPlayable ? 'Starting playback...' : 'Decoding high-fidelity signal...'
+    )
 
     try {
-      let finalPath = targetFile.decodedPath
+      let finalPath = targetFile.decodedPath || (directPlayable ? targetFile.originalPath : undefined)
       if (!finalPath) {
         const outputDir = 'processed'
-        const timestamp = Date.now()
-        const outputFilename = `${targetFile.filename.split('.')[0]}_${timestamp}.wav`
+        const baseName = targetFile.filename.replace(/\.[^/.]+$/, '')
+        const outputFilename = `${baseName}_decoded.wav`
 
         const decodeResult = await decodeFile({
           fileId: targetFile.id,
@@ -104,7 +110,7 @@ export default function App() {
 
       const onReady = () => {
         wavesurfer.play()
-        toast.success('Live stream established', { id: toastId })
+        toast.success('Playback ready', { id: toastId })
         wavesurfer.un('ready', onReady)
       }
 
@@ -156,15 +162,46 @@ export default function App() {
   const pickDirectory = async () => {
     try {
       if (!('showDirectoryPicker' in window)) {
-        toast.error('Browser incompatible with File API.')
+        toast.error('Browser does not support Native File System API')
         return
       }
 
-      const directoryHandle = await (window as any).showDirectoryPicker()
-      toast.success(`Access granted: ${directoryHandle.name}`)
-      await loadFiles()
+      // 1. "Think like expo camera": Ask permission via native dialog
+      const dirHandle = await (window as any).showDirectoryPicker()
+      const toastId = toast.loading(`Accessing vault: ${dirHandle.name}...`)
+
+      // 2. Recursive scanner
+      let fileCount = 0
+      const processHandle = async (handle: any) => {
+        if (handle.kind === 'file') {
+          const file = await handle.getFile()
+          const ext = file.name.split('.').pop()?.toLowerCase()
+
+          // Only process relevant audio extensions
+          if (['g711', 'g726', 'g728', 'wav', 'pcm'].includes(ext || '')) {
+            // 3. Upload to "Sync" with server
+            await uploadFile(file)
+            fileCount++
+            toast.loading(`Syncing: ${file.name}`, { id: toastId })
+          }
+        } else if (handle.kind === 'directory') {
+          for await (const entry of handle.values()) {
+            await processHandle(entry)
+          }
+        }
+      }
+
+      await processHandle(dirHandle)
+
+      toast.success(`Import complete: ${fileCount} new signals secured.`, { id: toastId })
+      await loadFiles(true)
+
     } catch (error) {
-      console.error('Directory picker cancelled:', error)
+      console.error('Directory access failed:', error)
+      // Only show error if it wasn't a user cancellation
+      if ((error as any).name !== 'AbortError') {
+        toast.error('Access denied to local vault.')
+      }
     }
   }
 
@@ -223,6 +260,7 @@ export default function App() {
               playbackRate={playbackRate}
               wavesurfer={wavesurfer}
               waveformRef={waveformRef}
+              canDirectPlay={isDirectPlayable(selectedFile)}
               onDecodeAndPlay={() => handleDecodeAndPlay()}
               onDownload={handleDownload}
               onPlayPause={playPause}

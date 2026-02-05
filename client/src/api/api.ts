@@ -43,4 +43,19 @@ export const createStreamingSession = async (filePath: string) => {
     });
     return response.data.data;
 };
+
+export const discoverFiles = async (path?: string) => {
+    const response = await api.post('/discover', { path });
+    return response.data;
+};
+
+export const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // axios automatically sets Content-Type to multipart/form-data
+    const response = await api.post('/files/upload', formData);
+    return response.data;
+};
+
 export default api;
