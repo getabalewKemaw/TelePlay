@@ -5,10 +5,10 @@ import type { DecodeRequestDto, EncodeRequestDto, TranscodeRequestDto } from '..
 import type { IFfmpegService } from '../interfaces/ffmpeg/IFfmpegService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
 import prisma from '../lib/prisma.js';
-
+import { existsSync, mkdirSync } from 'fs';
+import path from 'path';
 export class FFmpegController {
     private ffmpegService: IFfmpegService;
-
     constructor(ffmpegService?: IFfmpegService) {
         this.ffmpegService = ffmpegService || new FFmpegService();
     }
@@ -16,6 +16,46 @@ export class FFmpegController {
     decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { fileId, ...decodeParams } = req.body;
+            if (fileId) {
+                const existing = await prisma.mediaFile.findUnique({ where: { id: fileId } });
+                if (existing?.decodedPath && existsSync(existing.decodedPath)) {
+                    return res.status(409).json({
+                        success: false,
+                        error: { message: 'File already decoded', code: 'ALREADY_DECODED' },
+                        data: { outputPath: existing.decodedPath },
+                        meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
+                    });
+                }
+            }
+
+            const outputPath = decodeParams.output?.path;
+            if (outputPath) {
+                const outputDir = path.dirname(outputPath);
+                if (!existsSync(outputDir)) {
+                    mkdirSync(outputDir, { recursive: true });
+                }
+                if (existsSync(outputPath)) {
+                    if (fileId) {
+                        await prisma.mediaFile.update({
+                            where: { id: fileId },
+                            data: {
+                                decodedPath: outputPath,
+                                status: 'ready'
+                            }
+                        });
+                    }
+                    const response: ApiResponse<any> = {
+                        success: true,
+                        data: { success: true, outputPath, alreadyDecoded: true },
+                        meta: {
+                            timestamp: new Date().toISOString(),
+                            version: '1.0.0'
+                        }
+                    };
+                    return res.status(200).json(response);
+                }
+            }
+
             const result = await this.ffmpegService.decode(decodeParams);
 
             // If we have a fileId, update the database with the decoded path

@@ -12,14 +12,27 @@ export class FileService implements IFileService {
     async discoverFiles(directoryPath: string): Promise<void> {
         if (!existsSync(directoryPath)) return;
 
-        const files = await fs.readdir(directoryPath);
-        for (const file of files) {
-            const ext = path.extname(file).toLowerCase();
-            if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav'].includes(ext)) {
-                const filePath = path.join(directoryPath, file);
-                await this.processFile(filePath);
+        // Recursive directory read (Node.js 20+ supports { recursive: true } for readdir, 
+        // but for compatibility we'll use a manual recursive approach or a helper if strict node version isn't guaranteed. 
+        // Actually, modern Node.js fs.readdir with recursive: true returns file names, but paths are tricky.
+        // Let's stick to a robust manual recursion for clarity and control.
+
+        const scan = async (dir: string) => {
+            const entries = await fs.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    await scan(fullPath);
+                } else if (entry.isFile()) {
+                    const ext = path.extname(entry.name).toLowerCase();
+                    if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav'].includes(ext)) {
+                        await this.processFile(fullPath);
+                    }
+                }
             }
-        }
+        };
+
+        await scan(directoryPath);
     }
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {

@@ -16,7 +16,8 @@ export class StreamingController {
     createSession = async (req: Request<{}, {}, CreateSessionRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { filePath, options } = req.body;
-            const session = await this.streamingService.createSession(filePath, options);
+            const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
+            const session = await this.streamingService.createSession(resolvedPath, options);
             const response: ApiResponse<any> = {
                 success: true,
                 data: session,

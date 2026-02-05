@@ -55,11 +55,15 @@ export class FileController {
 
     discoverFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const uploadsDir = './uploads';
-            await this.fileService.discoverFiles(uploadsDir);
+            // Allow user to specify path, default to ./uploads
+            const { path: customPath } = req.body;
+            const targetDir = customPath || './uploads';
+
+            await this.fileService.discoverFiles(targetDir);
+
             res.json({
                 success: true,
-                message: 'Discovery completed',
+                message: `Discovery completed for ${targetDir}`,
                 meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
             });
         } catch (error) {
@@ -83,6 +87,24 @@ export class FileController {
             }
 
             res.download(absolutePath, downloadName);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    uploadFile = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            if (!req.file) {
+                throw new Error('No file uploaded');
+            }
+            // Register it in the system
+            const result = await this.fileService.registerFile(req.file.filename, req.file.path);
+
+            res.json({
+                success: true,
+                data: result,
+                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
+            });
         } catch (error) {
             next(error);
         }
