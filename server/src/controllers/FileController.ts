@@ -80,10 +80,13 @@ export class FileController {
             const filePath = file.decodedPath || file.originalPath;
             const absolutePath = path.resolve(filePath);
 
-            // Format filename for download (ensure it has correct extension if decoded)
+            // Format filename for download (use decoded extension if available)
             let downloadName = file.filename;
-            if (file.decodedPath && !downloadName.toLowerCase().endsWith('.wav')) {
-                downloadName = downloadName.split('.')[0] + '.wav';
+            if (file.decodedPath) {
+                const ext = path.extname(file.decodedPath);
+                if (ext) {
+                    downloadName = downloadName.split('.')[0] + ext;
+                }
             }
 
             res.download(absolutePath, downloadName);

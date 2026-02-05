@@ -16,20 +16,27 @@ export class FFmpegController {
     decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { fileId, ...decodeParams } = req.body;
+            const requestedOutputPath = decodeParams.output?.path ? path.resolve(decodeParams.output.path) : undefined;
             if (fileId) {
                 const existing = await prisma.mediaFile.findUnique({ where: { id: fileId } });
-                if (existing?.decodedPath && existsSync(existing.decodedPath)) {
-                    return res.status(409).json({
-                        success: false,
-                        error: { message: 'File already decoded', code: 'ALREADY_DECODED' },
-                        data: { outputPath: existing.decodedPath },
-                        meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-                    });
+                const existingDecoded = existing?.decodedPath ? path.resolve(existing.decodedPath) : undefined;
+                if (existingDecoded && existsSync(existingDecoded)) {
+                    if (!requestedOutputPath || requestedOutputPath === existingDecoded) {
+                        return res.status(409).json({
+                            success: false,
+                            error: { message: 'File already decoded', code: 'ALREADY_DECODED' },
+                            data: { outputPath: existingDecoded },
+                            meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
+                        });
+                    }
                 }
             }
 
-            const outputPath = decodeParams.output?.path;
+            const outputPath = requestedOutputPath;
             if (outputPath) {
+                if (decodeParams.output) {
+                    decodeParams.output.path = outputPath;
+                }
                 const outputDir = path.dirname(outputPath);
                 if (!existsSync(outputDir)) {
                     mkdirSync(outputDir, { recursive: true });

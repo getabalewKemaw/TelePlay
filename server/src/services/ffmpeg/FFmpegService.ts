@@ -119,16 +119,23 @@ export class FFmpegService implements IFfmpegService {
       additionalArgs.push('-f', params.input.format);
     }
 
+    const outputFormat = params.output.format || 'wav';
+    const outputCodec = outputFormat === 'mp3' ? 'mp3' : undefined;
+
     const commandOptions = {
       input: params.input.path,
       output: params.output.path,
-      // For decoding, we don't set output codec, let FFmpeg auto-detect or use format
-      codec: undefined,
+      // For decoding, set output codec only when targeting MP3
+      codec: outputCodec,
       // For raw streams, we already added these to additionalArgs (before -i)
-      sampleRate: params.codec && ['g711', 'g726', 'g728'].includes(params.codec) ? undefined : params.sampleRate,
-      channels: params.codec && ['g711', 'g726', 'g728'].includes(params.codec) ? undefined : params.channels,
+      sampleRate: params.codec && ['g711', 'g726', 'g728'].includes(params.codec)
+        ? undefined
+        : params.sampleRate,
+      channels: params.codec && ['g711', 'g726', 'g728'].includes(params.codec)
+        ? undefined
+        : params.channels,
       bitrate: undefined,
-      format: params.output.format || 'wav', // Default to WAV for output
+      format: outputFormat, // Default to WAV for output
       startTime: params.startTime,
       duration: params.duration,
       additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined
