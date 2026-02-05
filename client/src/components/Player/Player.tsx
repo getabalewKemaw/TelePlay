@@ -9,7 +9,10 @@ import {
     FolderOpen,
     Download,
     Music,
-    Gauge
+    Gauge,
+    Rewind,
+    FastForward,
+    Volume2
 } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
 import { cn, formatTime } from '../../utils/utils'
@@ -24,6 +27,7 @@ interface PlayerProps {
     currentTime: number
     duration: number
     playbackRate: number
+    volume: number
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
     canDirectPlay: boolean
@@ -34,6 +38,9 @@ interface PlayerProps {
     onNext: () => void
     onPrev: () => void
     onRateChange: (rate: number) => void
+    onSeek: (time: number) => void
+    onSkip: (delta: number) => void
+    onVolumeChange: (volume: number) => void
 }
 
 export function Player({
@@ -44,6 +51,7 @@ export function Player({
     currentTime,
     duration,
     playbackRate,
+    volume,
     wavesurfer,
     waveformRef,
     canDirectPlay,
@@ -53,7 +61,10 @@ export function Player({
     onPlayPause,
     onNext,
     onPrev,
-    onRateChange
+    onRateChange,
+    onSeek,
+    onSkip,
+    onVolumeChange
 }: PlayerProps) {
     const [showSpeedMenu, setShowSpeedMenu] = useState(false)
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -144,6 +155,18 @@ export function Player({
                                 L-STREAM ACTIVE: {activeSession.sessionId.slice(0, 8)}
                             </div>
                         )}
+                        <div className={cn(
+                            'flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-wider',
+                            isWaveformReady
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50'
+                                : 'bg-amber-50 text-amber-700 border-amber-200/50'
+                        )}>
+                            <div className={cn(
+                                'w-1.5 h-1.5 rounded-full',
+                                isWaveformReady ? 'bg-emerald-500' : 'bg-amber-500'
+                            )} />
+                            Waveform {isWaveformReady ? 'Ready' : 'Loading'}
+                        </div>
                     </div>
 
                     <div className="relative">
@@ -174,12 +197,72 @@ export function Player({
                 </div>
 
                 <div className="relative group/ws cursor-pointer">
-                    <div ref={waveformRef} className="rounded-2xl overflow-hidden py-6" />
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-coffee-50 via-white to-coffee-50 border border-coffee-100/70 shadow-inner" />
+                    <div className="absolute inset-0 rounded-2xl opacity-20 bg-[linear-gradient(90deg,rgba(12,74,110,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(12,74,110,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
+                    <div ref={waveformRef} className="rounded-2xl overflow-hidden py-6 relative z-10" />
                     {/* Progress track line */}
                     <div
                         className="absolute top-0 bottom-0 pointer-events-none border-l-2 border-coffee-Dark/10 z-0"
                         style={{ left: `${(currentTime / duration) * 100}%` }}
                     />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4">
+                        <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Timeline Control</div>
+                        <input
+                            type="range"
+                            min={0}
+                            max={Math.max(duration, 0.01)}
+                            step={0.01}
+                            value={Math.min(currentTime, duration || 0)}
+                            onChange={(e) => onSeek(parseFloat(e.target.value))}
+                            className="w-full accent-coffee-Dark"
+                        />
+                        <div className="mt-2 flex items-center justify-between text-[10px] font-bold text-coffee-400 uppercase tracking-widest">
+                            <span>{formatTime(currentTime)}</span>
+                            <span>{formatTime(duration)}</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div>
+                            <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-1">Seek Assist</div>
+                            <div className="text-xs font-bold text-coffee-600">Jump control</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => onSkip(-10)}
+                                className="w-12 h-12 rounded-2xl bg-coffee-50 border border-coffee-100 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600"
+                                title="Rewind 10s"
+                            >
+                                <Rewind size={18} />
+                            </button>
+                            <button
+                                onClick={() => onSkip(10)}
+                                className="w-12 h-12 rounded-2xl bg-coffee-50 border border-coffee-100 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600"
+                                title="Forward 10s"
+                            >
+                                <FastForward size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4">
+                        <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Master Volume</div>
+                        <div className="flex items-center gap-3">
+                            <Volume2 size={18} className="text-coffee-600" />
+                            <input
+                                type="range"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={volume}
+                                onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+                                className="w-full accent-coffee-Dark"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-coffee-100/50">
@@ -211,7 +294,7 @@ export function Player({
                     <div className="w-32 flex flex-col items-center gap-1.5 opacity-50">
                         <div className="text-[9px] font-black text-coffee-400 uppercase tracking-widest">Master Vol</div>
                         <div className="w-full h-1.5 bg-coffee-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-coffee-400 w-3/4 rounded-full" />
+                            <div className="h-full bg-coffee-400 rounded-full" style={{ width: `${Math.round(volume * 100)}%` }} />
                         </div>
                     </div>
                 </div>

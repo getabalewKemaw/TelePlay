@@ -5,6 +5,8 @@ import type { MediaFile } from './api/api'
 import { useWaveSurfer } from './hooks/useWaveSurfer'
 import { Sidebar } from './components/Sidebar/Sidebar'
 import { Player } from './components/Player/Player'
+import { FileTable } from './components/FileTable/FileTable'
+import type { SortDir, SortKey } from './components/FileTable/FileTable'
 import { Music } from 'lucide-react'
 export default function App() {
   const [files, setFiles] = useState<MediaFile[]>([])
@@ -12,6 +14,12 @@ export default function App() {
   const [isDecoding, setIsDecoding] = useState(false)
   const [activeSession, setActiveSession] = useState<any>(null)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const [volume, setVolume] = useState(0.9)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterDecoded, setFilterDecoded] = useState(false)
+  const [sortKey, setSortKey] = useState<SortKey>('filename')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [isTableOpen, setIsTableOpen] = useState(true)
 
   const waveformRef = useRef<HTMLDivElement>(null)
 
@@ -32,6 +40,12 @@ export default function App() {
   const { wavesurfer, wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions)
 
   useEffect(() => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.setVolume(volume)
+    }
+  }, [volume, wavesurferRef])
+
+  useEffect(() => {
     loadFiles(true)
     const interval = setInterval(() => {
       loadFiles(true)
@@ -49,6 +63,38 @@ export default function App() {
       console.error('Failed to fetch files:', error)
       toast.error('Inventory synchronization failed.')
     }
+  }
+
+  const filteredFiles = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    const base = files.filter(file => {
+      const matchesSearch = term.length === 0 || file.filename.toLowerCase().includes(term)
+      const matchesType = filterDecoded ? !!file.decodedPath : true
+      return matchesSearch && matchesType
+    })
+
+    const sorted = [...base].sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1
+      if (sortKey === 'duration') {
+        return ((a.duration || 0) - (b.duration || 0)) * dir
+      }
+      const left = (a[sortKey] || '').toString().toLowerCase()
+      const right = (b[sortKey] || '').toString().toLowerCase()
+      if (left < right) return -1 * dir
+      if (left > right) return 1 * dir
+      return 0
+    })
+
+    return sorted
+  }, [files, searchTerm, filterDecoded, sortKey, sortDir])
+
+  const handleSortChange = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+      return
+    }
+    setSortKey(key)
+    setSortDir('asc')
   }
 
   const isDirectPlayable = (file: MediaFile) => {
@@ -163,17 +209,17 @@ export default function App() {
   }
 
   const handleNext = () => {
-    if (!selectedFile || files.length <= 1) return
-    const currentIndex = files.findIndex(f => f.id === selectedFile.id)
-    const nextIndex = (currentIndex + 1) % files.length
-    handleFileSelect(files[nextIndex])
+    if (!selectedFile || filteredFiles.length <= 1) return
+    const currentIndex = filteredFiles.findIndex(f => f.id === selectedFile.id)
+    const nextIndex = (currentIndex + 1) % filteredFiles.length
+    handleFileSelect(filteredFiles[nextIndex])
   }
 
   const handlePrev = () => {
-    if (!selectedFile || files.length <= 1) return
-    const currentIndex = files.findIndex(f => f.id === selectedFile.id)
-    const prevIndex = (currentIndex - 1 + files.length) % files.length
-    handleFileSelect(files[prevIndex])
+    if (!selectedFile || filteredFiles.length <= 1) return
+    const currentIndex = filteredFiles.findIndex(f => f.id === selectedFile.id)
+    const prevIndex = (currentIndex - 1 + filteredFiles.length) % filteredFiles.length
+    handleFileSelect(filteredFiles[prevIndex])
   }
 
   const handleRateChange = (rate: number) => {
@@ -182,6 +228,23 @@ export default function App() {
       wavesurfer.setPlaybackRate(rate)
       toast(`Time Warp: ${rate}x`, { icon: '⚡' })
     }
+  }
+
+  const handleSeek = (time: number) => {
+    if (!wavesurferRef.current) return
+    const bounded = Math.min(Math.max(time, 0), duration || 0)
+    wavesurferRef.current.setTime(bounded)
+  }
+
+  const handleSkip = (delta: number) => {
+    if (!wavesurferRef.current) return
+    const next = Math.min(Math.max(currentTime + delta, 0), duration || 0)
+    wavesurferRef.current.setTime(next)
+  }
+
+  const handleVolumeChange = (nextVolume: number) => {
+    setVolume(nextVolume)
+    wavesurferRef.current?.setVolume(nextVolume)
   }
 
   const pickDirectory = async () => {
@@ -245,10 +308,14 @@ export default function App() {
       }} />
 
       <Sidebar
-        files={files}
+        files={filteredFiles}
         selectedFile={selectedFile}
         onFileSelect={handleFileSelect}
         onPickDirectory={pickDirectory}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterDecoded={filterDecoded}
+        onFilterDecodedChange={setFilterDecoded}
       />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
@@ -274,37 +341,73 @@ export default function App() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-12 thin-scrollbar">
-          {selectedFile ? (
-            <Player
-              selectedFile={selectedFile}
-              isDecoding={isDecoding}
-              activeSession={activeSession}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              playbackRate={playbackRate}
-              wavesurfer={wavesurfer}
-              waveformRef={waveformRef}
-              canDirectPlay={isDirectPlayable(selectedFile)}
-              isWaveformReady={isWaveformReady}
-              onDecodeAndPlay={() => handleDecodeAndPlay()}
-              onDownload={handleDownload}
-              onPlayPause={playPause}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              onRateChange={handleRateChange}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in-95 duration-1000">
-              <div className="w-32 h-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] rotate-12 flex items-center justify-center text-coffee-200 shadow-2xl border border-white">
-                <Music size={64} className="-rotate-12 animate-pulse" />
+          <div className="max-w-6xl mx-auto space-y-10">
+            <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-coffee-200/40 border border-white overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-coffee-100/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-coffee-Dark text-white flex items-center justify-center shadow-lg">
+                    <Music size={18} />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.25em]">Signal Table</div>
+                    <div className="text-sm font-black text-coffee-Dark">{filteredFiles.length} assets indexed</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsTableOpen(!isTableOpen)}
+                  className="text-[10px] uppercase font-black tracking-widest px-3 py-2 rounded-xl border border-coffee-100 bg-white/60 hover:bg-white transition-colors text-coffee-500"
+                >
+                  {isTableOpen ? 'Collapse' : 'Expand'}
+                </button>
               </div>
-              <div className="space-y-3 max-w-sm">
-                <h3 className="text-3xl font-black text-coffee-Dark tracking-tighter">Signal Deadlock</h3>
-                <p className="text-sm text-coffee-400 font-bold uppercase tracking-wider leading-relaxed">Select a terminal source from the left inventory to initiate primary decode sequence.</p>
-              </div>
+              {isTableOpen && (
+                <FileTable
+                  files={filteredFiles}
+                  selectedId={selectedFile?.id}
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSortChange={handleSortChange}
+                  onSelect={handleFileSelect}
+                />
+              )}
             </div>
-          )}
+
+            {selectedFile ? (
+              <Player
+                selectedFile={selectedFile}
+                isDecoding={isDecoding}
+                activeSession={activeSession}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                duration={duration}
+                playbackRate={playbackRate}
+                volume={volume}
+                wavesurfer={wavesurfer}
+                waveformRef={waveformRef}
+                canDirectPlay={isDirectPlayable(selectedFile)}
+                isWaveformReady={isWaveformReady}
+                onDecodeAndPlay={() => handleDecodeAndPlay()}
+                onDownload={handleDownload}
+                onPlayPause={playPause}
+                onNext={handleNext}
+                onPrev={handlePrev}
+                onRateChange={handleRateChange}
+                onSeek={handleSeek}
+                onSkip={handleSkip}
+                onVolumeChange={handleVolumeChange}
+              />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in-95 duration-1000">
+                <div className="w-32 h-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] rotate-12 flex items-center justify-center text-coffee-200 shadow-2xl border border-white">
+                  <Music size={64} className="-rotate-12 animate-pulse" />
+                </div>
+                <div className="space-y-3 max-w-sm">
+                  <h3 className="text-3xl font-black text-coffee-Dark tracking-tighter">Signal Deadlock</h3>
+                  <p className="text-sm text-coffee-400 font-bold uppercase tracking-wider leading-relaxed">Select a terminal source from the left inventory to initiate primary decode sequence.</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

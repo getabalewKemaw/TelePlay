@@ -1,5 +1,4 @@
 import { Coffee, FolderOpen, AudioLines, Settings, Search } from 'lucide-react'
-import { useState } from 'react'
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
 
@@ -9,17 +8,23 @@ interface SidebarProps {
     selectedFile: MediaFile | null
     onFileSelect: (file: MediaFile) => void
     onPickDirectory: () => void
+    searchTerm: string
+    onSearchChange: (value: string) => void
+    filterDecoded: boolean
+    onFilterDecodedChange: (value: boolean) => void
 }
 
-export function Sidebar({ files, selectedFile, onFileSelect, onPickDirectory }: SidebarProps) {
-    const [searchTerm, setSearchTerm] = useState('')
-    const [filterDecoded, setFilterDecoded] = useState(false)
-
-    const filteredFiles = files?.filter(file => {
-        const matchesSearch = file.filename.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesType = filterDecoded ? !!file.decodedPath : true
-        return matchesSearch && matchesType
-    }) || []
+export function Sidebar({
+    files,
+    selectedFile,
+    onFileSelect,
+    onPickDirectory,
+    searchTerm,
+    onSearchChange,
+    filterDecoded,
+    onFilterDecodedChange
+}: SidebarProps) {
+    const filteredFiles = files || []
 
     return (
         <aside className="w-80 border-r border-coffee-200 bg-white/50 backdrop-blur-md flex flex-col z-20">
@@ -50,7 +55,7 @@ export function Sidebar({ files, selectedFile, onFileSelect, onPickDirectory }: 
                             placeholder="Search frequency..."
                             className="w-full pl-9 pr-3 py-2 bg-white/50 border border-coffee-100 rounded-lg text-xs font-medium text-coffee-Dark placeholder:text-coffee-300 focus:outline-none focus:ring-2 focus:ring-coffee-200"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => onSearchChange(e.target.value)}
                         />
                     </div>
 
@@ -60,7 +65,7 @@ export function Sidebar({ files, selectedFile, onFileSelect, onPickDirectory }: 
                                 type="checkbox"
                                 className="peer sr-only"
                                 checked={filterDecoded}
-                                onChange={(e) => setFilterDecoded(e.target.checked)}
+                                onChange={(e) => onFilterDecodedChange(e.target.checked)}
                             />
                             <div className="w-9 h-5 bg-coffee-100 rounded-full peer-checked:bg-green-500 transition-colors" />
                             <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
