@@ -29,7 +29,7 @@ export default function App() {
     height: 120,
   }), [])
 
-  const { wavesurfer, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions)
+  const { wavesurfer, wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions)
 
   useEffect(() => {
     loadFiles(true)
@@ -102,26 +102,51 @@ export default function App() {
 
       const audioUrl = `http://localhost:3000/api/streaming/sessions/${session.sessionId}/stream`
 
-      if (!wavesurfer) {
-        throw new Error("Waveform engine not initialized")
+      const waitForWaveform = () => new Promise<void>((resolve, reject) => {
+        const start = Date.now()
+        const tick = () => {
+          if (wavesurferRef.current && isWaveformReady) {
+            resolve()
+            return
+          }
+          if (Date.now() - start > 2000) {
+            reject(new Error('Waveform not ready'))
+            return
+          }
+          setTimeout(tick, 50)
+        }
+        tick()
+      })
+
+      try {
+        await waitForWaveform()
+      } catch {
+        toast.error('Waveform is still loading. Try again in a moment.', { id: toastId })
+        return
       }
 
-      wavesurfer.load(audioUrl)
+      const ws = wavesurferRef.current
+      if (!ws) {
+        toast.error('Waveform engine unavailable.', { id: toastId })
+        return
+      }
+
+      ws.load(audioUrl)
 
       const onReady = () => {
-        wavesurfer.play()
+        ws.play()
         toast.success('Playback ready', { id: toastId })
-        wavesurfer.un('ready', onReady)
+        ws.un('ready', onReady)
       }
 
       const onError = (err: any) => {
         console.error("WaveSurfer error:", err)
         toast.error('Stream signal lost', { id: toastId })
-        wavesurfer.un('error', onError)
+        ws.un('error', onError)
       }
 
-      wavesurfer.once('ready', onReady)
-      wavesurfer.once('error', onError)
+      ws.once('ready', onReady)
+      ws.once('error', onError)
 
     } catch (error) {
       console.error('Decode failed:', error)
@@ -261,6 +286,7 @@ export default function App() {
               wavesurfer={wavesurfer}
               waveformRef={waveformRef}
               canDirectPlay={isDirectPlayable(selectedFile)}
+              isWaveformReady={isWaveformReady}
               onDecodeAndPlay={() => handleDecodeAndPlay()}
               onDownload={handleDownload}
               onPlayPause={playPause}

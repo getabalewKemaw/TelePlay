@@ -27,6 +27,7 @@ interface PlayerProps {
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
     canDirectPlay: boolean
+    isWaveformReady: boolean
     onDecodeAndPlay: () => void
     onDownload: () => void
     onPlayPause: () => void
@@ -46,6 +47,7 @@ export function Player({
     wavesurfer,
     waveformRef,
     canDirectPlay,
+    isWaveformReady,
     onDecodeAndPlay,
     onDownload,
     onPlayPause,

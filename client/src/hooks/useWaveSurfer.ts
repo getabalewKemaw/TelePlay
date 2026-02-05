@@ -5,25 +5,48 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isReady, setIsReady] = useState(false);
     useEffect(() => {
-        if (!containerRef.current) return;
-        const ws = WaveSurfer.create({
-            container: containerRef.current,
-            ...options,
-        });
+        let rafId: number | null = null;
+        let ws: WaveSurfer | null = null;
 
-        wavesurfer.current = ws;
+        const init = () => {
+            if (!containerRef.current) {
+                rafId = requestAnimationFrame(init);
+                return;
+            }
+            if (wavesurfer.current) {
+                setIsReady(true);
+                return;
+            }
 
-        ws.on('play', () => setIsPlaying(true));
-        ws.on('pause', () => setIsPlaying(false));
-        ws.on('timeupdate', (time) => setCurrentTime(time));
-        ws.on('ready', () => setDuration(ws.getDuration()));
+            ws = WaveSurfer.create({
+                container: containerRef.current,
+                ...options,
+            });
+
+            wavesurfer.current = ws;
+            setIsReady(true);
+
+            ws.on('play', () => setIsPlaying(true));
+            ws.on('pause', () => setIsPlaying(false));
+            ws.on('timeupdate', (time) => setCurrentTime(time));
+            ws.on('ready', () => setDuration(ws.getDuration()));
+        };
+
+        init();
+
         return () => {
-            ws.destroy();
+            if (rafId !== null) cancelAnimationFrame(rafId);
+            setIsReady(false);
+            ws?.destroy();
+            wavesurfer.current = null;
         };
     }, [containerRef, options]);
     return {
         wavesurfer: wavesurfer.current,
+        wavesurferRef: wavesurfer,
+        isWaveformReady: isReady,
         isPlaying,
         currentTime,
         duration,

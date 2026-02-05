@@ -69,19 +69,29 @@ export class FileService implements IFileService {
     }
 
     async processFile(filePath: string): Promise<any> {
-        const filename = path.basename(filePath);
+        const normalizedPath = path.resolve(filePath);
+        const relativePath = path.relative(process.cwd(), normalizedPath);
+        const filename = path.basename(normalizedPath);
 
         // Check if already exists
-        const existing = await prisma.mediaFile.findFirst({ where: { originalPath: filePath } });
+        const existing = await prisma.mediaFile.findFirst({
+            where: {
+                OR: [
+                    { originalPath: normalizedPath },
+                    { originalPath: filePath },
+                    { originalPath: relativePath }
+                ]
+            }
+        });
         if (existing) return existing;
 
         try {
-            const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(filePath);
+            const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(normalizedPath);
 
             const file = await prisma.mediaFile.create({
                 data: {
                     filename,
-                    originalPath: filePath,
+                    originalPath: normalizedPath,
                     duration: metadataResult.duration,
                     fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
                     format: metadataResult.format,
@@ -93,12 +103,12 @@ export class FileService implements IFileService {
 
             return { ...file, fileSize: file.fileSize?.toString() };
         } catch (error) {
-            console.error(`Failed to process file ${filePath}:`, error);
+            console.error(`Failed to process file ${normalizedPath}:`, error);
             // Create with error status
             const file = await prisma.mediaFile.create({
                 data: {
                     filename,
-                    originalPath: filePath,
+                    originalPath: normalizedPath,
                     duration: 0,
                     status: 'error',
                     metadata: { error: (error as Error).message } as any
