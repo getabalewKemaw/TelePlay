@@ -22,6 +22,7 @@ export default function App() {
     sortDir,
     isTableOpen,
     isSidebarCollapsed,
+    isDarkMode,
     waveformRef,
     audioRef,
     nativeTime,
@@ -50,11 +51,15 @@ export default function App() {
     playPause,
     toggleSidebar,
     toggleTable,
+    toggleTheme,
     isDirectPlayable
   } = useAppController()
 
   return (
-    <div className="flex h-screen bg-coffee-50 text-coffee-Dark font-sans selection:bg-coffee-200 overflow-hidden">
+    <div
+      data-theme={isDarkMode ? 'dark' : 'light'}
+      className="flex h-screen bg-coffee-50 text-coffee-Dark font-sans selection:bg-coffee-200 overflow-hidden transition-colors duration-300"
+    >
       <Toaster position="top-right" toastOptions={{
         style: {
           background: '#3C2A21',
@@ -88,6 +93,8 @@ export default function App() {
           fileCount={filteredFiles.length}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
         />
 
         <div className="flex-1 overflow-y-auto p-12 thin-scrollbar">

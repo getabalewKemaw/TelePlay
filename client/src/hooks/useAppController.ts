@@ -19,6 +19,15 @@ export function useAppController() {
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [isTableOpen, setIsTableOpen] = useState(true)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('theme') : null
+    if (stored === 'dark') return true
+    if (stored === 'light') return false
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    return false
+  })
 
   const waveformRef = useRef<HTMLDivElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -418,6 +427,15 @@ export function useAppController() {
 
   const toggleSidebar = () => setIsSidebarCollapsed((prev) => !prev)
   const toggleTable = () => setIsTableOpen((prev) => !prev)
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('theme', next ? 'dark' : 'light')
+      }
+      return next
+    })
+  }
 
   return {
     files,
@@ -434,6 +452,7 @@ export function useAppController() {
     sortDir,
     isTableOpen,
     isSidebarCollapsed,
+    isDarkMode,
     waveformRef,
     audioRef,
     nativeTime,
@@ -463,6 +482,7 @@ export function useAppController() {
     playPause,
     toggleSidebar,
     toggleTable,
+    toggleTheme,
     isDirectPlayable
   }
 }

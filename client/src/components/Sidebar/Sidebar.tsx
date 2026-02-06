@@ -33,11 +33,11 @@ export function Sidebar({
 
     return (
         <aside className={cn(
-            "border-r border-coffee-200 bg-white/50 backdrop-blur-md flex flex-col z-20 transition-all duration-300",
+            "bg-white/50 backdrop-blur-md flex flex-col z-20 transition-all duration-300 shadow-xl shadow-coffee-200/30",
             collapsed ? "w-20" : "w-80"
         )}>
             <div className={cn(
-                "border-b border-coffee-100 flex items-center justify-between",
+                "flex items-center justify-between",
                 collapsed ? "p-4" : "p-6"
             )}>
                 <div className="w-10 h-10 bg-coffee-600 rounded-xl flex items-center justify-center shadow-lg shadow-coffee-600/20">
@@ -45,7 +45,7 @@ export function Sidebar({
                 </div>
                 <button
                     onClick={onToggleCollapsed}
-                    className="w-9 h-9 rounded-xl border border-coffee-100 bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-500"
+                    className="w-9 h-9 rounded-xl bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-500 shadow-sm"
                     aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                     {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
@@ -57,7 +57,7 @@ export function Sidebar({
                     <button
                         onClick={onPickDirectory}
                         className={cn(
-                            "w-full py-2.5 px-4 bg-coffee-100 hover:bg-coffee-200 text-coffee-600 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest border border-coffee-200 shadow-sm",
+                            "w-full py-2.5 px-4 bg-coffee-100 hover:bg-coffee-200 text-coffee-600 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
                             collapsed && "px-0"
                         )}
                         aria-label="Open directory"
@@ -73,7 +73,7 @@ export function Sidebar({
                                 <input
                                     type="text"
                                     placeholder="Search frequency..."
-                                    className="w-full pl-9 pr-3 py-2 bg-white/50 border border-coffee-100 rounded-lg text-xs font-medium text-coffee-Dark placeholder:text-coffee-300 focus:outline-none focus:ring-2 focus:ring-coffee-200"
+                                    className="w-full pl-9 pr-3 py-2 bg-white/60 rounded-lg text-xs font-medium text-coffee-Dark placeholder:text-coffee-300 focus:outline-none focus:ring-2 focus:ring-coffee-200 shadow-sm"
                                     value={searchTerm}
                                     onChange={(e) => onSearchChange(e.target.value)}
                                 />

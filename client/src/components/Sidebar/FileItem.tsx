@@ -26,7 +26,7 @@ export function FileItem({ file, isSelected, onClick }: FileItemProps) {
                 )}>
                     <FileAudio size={20} />
                     {file.decodedPath && !isSelected && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 border-2 border-white">
+                        <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 shadow-sm">
                             <CheckCircle2 size={8} />
                         </div>
                     )}

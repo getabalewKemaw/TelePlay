@@ -10,7 +10,7 @@ interface ActionCardProps {
 
 export function ActionCard({ title, desc, icon, color }: ActionCardProps) {
     return (
-        <div className="bg-white p-6 rounded-3xl shadow-lg shadow-coffee-100/50 border border-coffee-50 hover:border-coffee-200 transition-all group hover:-translate-y-1 cursor-pointer">
+        <div className="bg-white p-6 rounded-3xl shadow-lg shadow-coffee-100/50 hover:shadow-xl transition-all group hover:-translate-y-1 cursor-pointer">
             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 transition-transform group-hover:scale-110 shadow-sm", color)}>
                 {icon}
             </div>

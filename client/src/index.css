@@ -61,6 +61,38 @@
     font-family: var(--font-sans);
 }
 
+[data-theme="dark"] {
+    --color-coffee-50: #0b0f14;
+    --color-coffee-100: #121720;
+    --color-coffee-200: #1b2230;
+    --color-coffee-300: #263043;
+    --color-coffee-400: #97a3b6;
+    --color-coffee-500: #c2c9d6;
+    --color-coffee-600: #e0b97a;
+    --color-coffee-Dark: #f4f6f8;
+    --color-coffee-accent: #f2c38b;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: var(--color-coffee-100) !important;
+}
+
+[data-theme="dark"] .bg-white\/80 {
+    background-color: rgba(18, 23, 32, 0.8) !important;
+}
+
+[data-theme="dark"] .bg-white\/70 {
+    background-color: rgba(18, 23, 32, 0.7) !important;
+}
+
+[data-theme="dark"] .bg-white\/60 {
+    background-color: rgba(18, 23, 32, 0.6) !important;
+}
+
+[data-theme="dark"] .bg-white\/50 {
+    background-color: rgba(18, 23, 32, 0.5) !important;
+}
+
 @layer base {
     body {
         @apply antialiased overflow-hidden;

@@ -13,6 +13,7 @@ export interface MediaFile {
     format?: string;
     codec?: string;
     bitrate?: number;
+    fileSize?:number
 }
 
 export const fetchFiles = async () => {

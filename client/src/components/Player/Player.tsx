@@ -80,7 +80,7 @@ export function Player({
     return (
         <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* File Info Card */}
-            <div className="bg-white/70 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl shadow-coffee-200/40 border border-white flex flex-col md:flex-row gap-8 items-center relative overflow-hidden group">
+            <div className="bg-white/70 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl shadow-coffee-200/40 flex flex-col md:flex-row gap-8 items-center relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-5">
                     <Music size={120} />
                 </div>
@@ -116,7 +116,7 @@ export function Player({
                 </div>
 
                 <div className="pt-4 md:pt-0 flex flex-col md:flex-row items-center gap-4 z-10 w-full md:w-auto">
-                    <div className="flex md:hidden w-full items-center justify-between bg-white/60 border border-coffee-100 rounded-2xl px-4 py-3">
+                    <div className="flex md:hidden w-full items-center justify-between bg-white/60 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="text-[9px] font-black text-coffee-400 uppercase tracking-[0.2em]">Output</div>
                         <div className="flex items-center gap-2">
                             {(['wav', 'mp3'] as const).map(fmt => (
@@ -137,7 +137,7 @@ export function Player({
                     </div>
                     <div className="hidden md:flex flex-col items-end gap-2">
                         <div className="text-[9px] font-black text-coffee-400 uppercase tracking-[0.2em]">Output Format</div>
-                        <div className="flex items-center gap-2 bg-white/60 border border-coffee-100 rounded-2xl px-3 py-2">
+                        <div className="flex items-center gap-2 bg-white/60 rounded-2xl px-3 py-2 shadow-sm">
                             {(['wav', 'mp3'] as const).map(fmt => (
                                 <button
                                     key={fmt}
@@ -164,7 +164,7 @@ export function Player({
                     >
                         {isDecoding ? (
                             <>
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="w-5 h-5 rounded-full bg-white/40 animate-pulse" />
                                 Processing
                             </>
                         ) : (
@@ -183,7 +183,7 @@ export function Player({
                             "p-5 rounded-2xl font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg",
                             selectedFile.decodedPath
                                 ? "bg-coffee-accent text-white shadow-coffee-accent/40"
-                                : "bg-white text-coffee-400 border border-coffee-100 hover:bg-coffee-50"
+                                : "bg-white text-coffee-400 hover:bg-coffee-50 shadow-sm"
                         )}
                         title={selectedFile.decodedPath ? "Download HQ WAV" : "Download Original"}
                     >
@@ -193,21 +193,21 @@ export function Player({
             </div>
 
             {/* Main Player Area */}
-            <div className="bg-white/80 backdrop-blur-2xl p-10 rounded-[3rem] shadow-2xl shadow-coffee-200/50 border border-white space-y-8 relative">
+            <div className="bg-white/80 backdrop-blur-2xl p-10 rounded-[3rem] shadow-2xl shadow-coffee-200/50 space-y-8 relative">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="text-[10px] font-black text-coffee-500 uppercase tracking-[0.2em]">Signal Visualization</div>
                         {activeSession && (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[9px] font-black border border-green-200/50 uppercase tracking-wider">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm">
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                                 L-STREAM ACTIVE: {activeSession.sessionId.slice(0, 8)}
                             </div>
                         )}
                         <div className={cn(
-                            'flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-wider',
+                            'flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm',
                             isWaveformReady
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50'
-                                : 'bg-amber-50 text-amber-700 border-amber-200/50'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-amber-50 text-amber-700'
                         )}>
                             <div className={cn(
                                 'w-1.5 h-1.5 rounded-full',
@@ -220,13 +220,13 @@ export function Player({
                     <div className="relative">
                         <button
                             onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-coffee-50 hover:bg-coffee-100 text-coffee-600 rounded-lg text-[10px] font-black transition-colors uppercase tracking-widest border border-coffee-100"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-coffee-50 hover:bg-coffee-100 text-coffee-600 rounded-lg text-[10px] font-black transition-colors uppercase tracking-widest shadow-sm"
                         >
                             <Gauge size={14} />
                             Speed: {playbackRate}x
                         </button>
                         {showSpeedMenu && (
-                            <div className="absolute right-0 bottom-full mb-2 bg-white rounded-xl shadow-2xl border border-coffee-100 p-2 min-w-[80px] z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 bottom-full mb-2 bg-white rounded-xl shadow-2xl p-2 min-w-[80px] z-50 animate-in fade-in zoom-in-95 duration-200">
                                 {speeds.map(s => (
                                     <button
                                         key={s}
@@ -245,7 +245,7 @@ export function Player({
                 </div>
 
                 <div className="relative group/ws cursor-pointer">
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-coffee-50 via-white to-coffee-50 border border-coffee-100/70 shadow-inner" />
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-coffee-50 via-white to-coffee-50 shadow-inner" />
                     <div className="absolute inset-0 rounded-2xl opacity-20 bg-[linear-gradient(90deg,rgba(12,74,110,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(12,74,110,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
                     {useNativeAudio ? (
                         <div className="relative z-10 p-6">
@@ -256,14 +256,14 @@ export function Player({
                     )}
                     {!useNativeAudio && (
                         <div
-                            className="absolute top-0 bottom-0 pointer-events-none border-l-2 border-coffee-Dark/10 z-0"
+                            className="absolute top-0 bottom-0 pointer-events-none w-px bg-coffee-Dark/10 z-0"
                             style={{ left: `${(currentTime / duration) * 100}%` }}
                         />
                     )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4">
+                    <div className="bg-white/70 rounded-2xl p-4 shadow-sm">
                         <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Timeline Control</div>
                         <input
                             type="range"
@@ -280,7 +280,7 @@ export function Player({
                         </div>
                     </div>
 
-                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="bg-white/70 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                         <div>
                             <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-1">Seek Assist</div>
                             <div className="text-xs font-bold text-coffee-600">Jump control</div>
@@ -288,14 +288,14 @@ export function Player({
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => onSkip(-10)}
-                                className="w-12 h-12 rounded-2xl bg-coffee-50 border border-coffee-100 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600"
+                                className="w-12 h-12 rounded-2xl bg-coffee-50 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600 shadow-sm"
                                 title="Rewind 10s"
                             >
                                 <Rewind size={18} />
                             </button>
                             <button
                                 onClick={() => onSkip(10)}
-                                className="w-12 h-12 rounded-2xl bg-coffee-50 border border-coffee-100 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600"
+                                className="w-12 h-12 rounded-2xl bg-coffee-50 hover:bg-coffee-100 transition-colors flex items-center justify-center text-coffee-600 shadow-sm"
                                 title="Forward 10s"
                             >
                                 <FastForward size={18} />
@@ -303,7 +303,7 @@ export function Player({
                         </div>
                     </div>
 
-                    <div className="bg-white/70 border border-coffee-100 rounded-2xl p-4">
+                    <div className="bg-white/70 rounded-2xl p-4 shadow-sm">
                         <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Master Volume</div>
                         <div className="flex items-center gap-3">
                             <Volume2 size={18} className="text-coffee-600" />
@@ -320,8 +320,8 @@ export function Player({
                     </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 border-t border-coffee-100/50">
-                    <div className="text-sm font-black text-coffee-600 tabular-nums bg-coffee-50 px-4 py-2 rounded-full border border-coffee-100 tracking-tighter">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6">
+                    <div className="text-sm font-black text-coffee-600 tabular-nums bg-coffee-50 px-4 py-2 rounded-full tracking-tighter shadow-sm">
                         {formatTime(currentTime)} <span className="text-coffee-300 mx-1">/</span> {formatTime(duration)}
                     </div>
 
