@@ -6,7 +6,6 @@ import { AppHeader } from './components/App/AppHeader'
 import { FileTableCard } from './components/App/FileTableCard'
 import { EmptyState } from './components/App/EmptyState'
 import { useAppController } from './hooks/useAppController'
-
 export default function App() {
   const {
     filteredFiles,

@@ -34,7 +34,7 @@ export function Sidebar({
     return (
         <aside className={cn(
             "bg-white/50 backdrop-blur-md flex flex-col z-20 transition-all duration-300 shadow-xl shadow-coffee-200/30",
-            collapsed ? "w-20" : "w-80"
+            collapsed ? "w-30" : "w-90"
         )}>
             <div className={cn(
                 "flex items-center justify-between",
@@ -57,7 +57,7 @@ export function Sidebar({
                     <button
                         onClick={onPickDirectory}
                         className={cn(
-                            "w-full py-2.5 px-4 bg-coffee-100 hover:bg-coffee-200 text-coffee-600 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
+                            "w-full py-2.5 px-4 bg-coffee-600 hover:bg-coffee-200 text-coffee-50 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
                             collapsed && "px-0"
                         )}
                         aria-label="Open directory"
@@ -104,7 +104,7 @@ export function Sidebar({
                     </div>
                 )}
 
-                <div className="space-y-1">
+                <div className="space-y-3">
                     {!collapsed && filteredFiles.map((file) => (
                         <FileItem
                             key={file.id}

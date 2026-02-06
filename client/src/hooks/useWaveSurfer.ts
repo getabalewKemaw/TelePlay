@@ -55,13 +55,12 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
         };
     }, [containerRef, options, enabled]);
     return {
-        wavesurfer: wavesurfer.current,
         wavesurferRef: wavesurfer,
         isWaveformReady: isReady,
         isPlaying,
         currentTime,
         duration,
-        playPause: () => wavesurfer.current?.playPause(),
-        setTime: (time: number) => wavesurfer.current?.setTime(time),
+        playPause: () => wavesurfer.current && wavesurfer.current.playPause(),
+        setTime: (time: number) => wavesurfer.current && wavesurfer.current.setTime(time),
     };
 };
