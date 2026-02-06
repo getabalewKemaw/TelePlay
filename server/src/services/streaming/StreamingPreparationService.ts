@@ -93,6 +93,13 @@ export class StreamingPreparationService implements IStreamingPreparationService
       preparedSegments: [],
       transport: opts.transport,
       mode: opts.mode,
+      inputCodec: options?.inputCodec,
+      sampleRate: options?.sampleRate,
+      channels: options?.channels,
+      bitrate: options?.bitrate,
+      outputFormat: options?.outputFormat,
+      saveOutputPath: options?.saveOutputPath,
+      fileId: options?.fileId,
       startedAt: Date.now(),
       lastActivity: Date.now()
     };

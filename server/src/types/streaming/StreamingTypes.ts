@@ -148,6 +148,17 @@ export interface StreamingSession {
   mode: StreamingMode;
 
   /**
+   * Live transcode options (optional)
+   */
+  inputCodec?: string;
+  sampleRate?: number;
+  channels?: number;
+  bitrate?: number;
+  outputFormat?: 'wav' | 'mp3';
+  saveOutputPath?: string;
+  fileId?: string;
+
+  /**
    * Session start time
    */
   startedAt: number;
@@ -251,6 +262,17 @@ export interface StreamingPreparationOptions {
    * Buffer size in seconds
    */
   bufferSize?: number;
+
+  /**
+   * Live transcode options
+   */
+  inputCodec?: string;
+  sampleRate?: number;
+  channels?: number;
+  bitrate?: number;
+  outputFormat?: 'wav' | 'mp3';
+  saveOutputPath?: string;
+  fileId?: string;
 }
 
 /**

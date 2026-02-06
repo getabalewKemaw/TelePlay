@@ -22,6 +22,13 @@ export interface CreateSessionRequestDto {
         preTranscode?: boolean;
         preCompress?: boolean;
         bufferSize?: number;
+        inputCodec?: string;
+        sampleRate?: number;
+        channels?: number;
+        bitrate?: number;
+        outputFormat?: 'wav' | 'mp3';
+        saveOutputPath?: string;
+        fileId?: string;
     };
 }
 

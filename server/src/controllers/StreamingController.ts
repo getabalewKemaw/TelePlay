@@ -6,6 +6,8 @@ import type { IStreamingPreparationService } from '../interfaces/ffmpeg/IStreami
 import type { ApiResponse } from '../dto/base.dto.js';
 import path from 'path';
 import fs from 'fs';
+import { spawn } from 'child_process';
+import prisma from '../lib/prisma.js';
 
 export class StreamingController {
     private streamingService: IStreamingPreparationService;
@@ -95,6 +97,111 @@ export class StreamingController {
                 return res.status(404).json({ success: false, message: 'Session not found' });
             }
 
+            if (session.mode === 'live') {
+                const filePath = path.resolve(session.filePath);
+                const outputFormat = session.outputFormat || 'mp3';
+                const mimeType = outputFormat === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+
+                res.setHeader('Content-Type', mimeType);
+                res.setHeader('Transfer-Encoding', 'chunked');
+                res.removeHeader('Accept-Ranges');
+
+                const args: string[] = [];
+
+                // Raw input options before -i
+                if (session.inputCodec) {
+                    const codec = session.inputCodec;
+                    const inputFormatMap: Record<string, string> = {
+                        g711: 'mulaw',
+                        g711a: 'alaw',
+                        g726: 'g726',
+                        g728: 'g728',
+                        pcm_s16le: 's16le',
+                        pcm_s24le: 's24le'
+                    };
+                    if (codec in inputFormatMap) {
+                        args.push('-f', inputFormatMap[codec]);
+                    }
+
+                    if (codec === 'g726' && session.bitrate) {
+                        const codeSize = Math.floor(session.bitrate / 8);
+                        args.push('-code_size', codeSize.toString());
+                        args.push('-acodec', 'g726');
+                        if (session.sampleRate) {
+                            args.push('-sample_rate', session.sampleRate.toString());
+                        }
+                    } else if (codec === 'g711') {
+                        args.push('-acodec', 'pcm_mulaw');
+                    } else if (codec === 'g711a') {
+                        args.push('-acodec', 'pcm_alaw');
+                    } else if (codec === 'g728') {
+                        args.push('-acodec', 'g728');
+                    }
+
+                    if (session.sampleRate && codec !== 'g726') {
+                        args.push('-ar', session.sampleRate.toString());
+                    }
+                    if (session.channels) {
+                        args.push('-ac', session.channels.toString());
+                    }
+                }
+
+                args.push('-i', filePath);
+                args.push('-map', '0:a:0');
+                args.push('-vn');
+
+                if (outputFormat === 'mp3') {
+                    args.push('-acodec', 'libmp3lame');
+                }
+                // Stream + optionally save to file
+                if (session.saveOutputPath) {
+                    const savePath = path.resolve(session.saveOutputPath).replace(/\\/g, '/');
+                    const saveDir = path.dirname(savePath);
+                    if (!fs.existsSync(saveDir)) {
+                        fs.mkdirSync(saveDir, { recursive: true });
+                    }
+                    const teeTarget = `[f=${outputFormat}]pipe:1|[f=${outputFormat}]${savePath}`;
+                    args.push('-f', 'tee', teeTarget);
+                } else {
+                    args.push('-f', outputFormat);
+                    args.push('pipe:1');
+                }
+
+                const ff = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+                const cleanup = () => {
+                    if (!ff.killed) {
+                        ff.kill('SIGTERM');
+                    }
+                };
+                res.on('close', cleanup);
+                res.on('error', cleanup);
+
+                ff.stdout.pipe(res);
+
+                ff.stderr.on('data', (data: Buffer) => {
+                    console.warn('FFmpeg stream:', data.toString());
+                });
+
+                ff.on('close', async (code) => {
+                    if (code === 0 && session.saveOutputPath && session.fileId) {
+                        try {
+                            await prisma.mediaFile.update({
+                                where: { id: session.fileId },
+                                data: { decodedPath: path.resolve(session.saveOutputPath), status: 'ready' }
+                            });
+                        } catch (e) {
+                            console.warn('Failed to update decodedPath after live stream:', e);
+                        }
+                    }
+                });
+
+                ff.on('error', (err) => {
+                    console.error('FFmpeg stream error:', err);
+                });
+
+                return;
+            }
+
             const filePath = path.resolve(session.filePath);
             const stat = await fs.promises.stat(filePath);
             const range = req.headers.range;
@@ -122,7 +229,12 @@ export class StreamingController {
             const end = match[2] ? Math.min(parseInt(match[2], 10), stat.size - 1) : stat.size - 1;
 
             if (start >= stat.size || end < start) {
-                res.status(416).set('Content-Range', `bytes */${stat.size}`).end();
+                res.writeHead(200, {
+                    'Content-Length': stat.size,
+                    'Content-Type': mimeType,
+                    'Accept-Ranges': 'bytes'
+                });
+                fs.createReadStream(filePath).pipe(res);
                 return;
             }
 
@@ -139,3 +251,5 @@ export class StreamingController {
         }
     };
 }
+
+

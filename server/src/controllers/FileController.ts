@@ -105,11 +105,19 @@ export class FileController {
 
             res.json({
                 success: true,
-                data: result,
+                data: this.normalizeFile(result),
                 meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
             });
         } catch (error) {
             next(error);
         }
     };
+
+    private normalizeFile(file: any) {
+        if (!file) return file;
+        if (typeof file.fileSize === 'bigint') {
+            return { ...file, fileSize: file.fileSize.toString() };
+        }
+        return file;
+    }
 }
