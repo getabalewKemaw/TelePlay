@@ -6,12 +6,10 @@
 import type {
   StreamingSession,
   PreparedChunk,
-  PreparedSegment,
   PlaybackControlRequest,
   PlaybackControlResponse,
   StreamingPreparationOptions,
-  StreamMetadata,
-  StreamEndpoint
+  StreamMetadata
 } from '../../types/streaming/StreamingTypes.js';
 
 /**
@@ -36,36 +34,12 @@ export interface IStreamingPreparationService {
   prepareChunks(sessionId: string, chunkIndices?: number[]): Promise<PreparedChunk[]>;
 
   /**
-   * Prepare segments for streaming
-   * @param sessionId - Session ID
-   * @param segmentIndices - Indices of segments to prepare (optional, prepares all if not provided)
-   * @returns Promise resolving to prepared segments
-   */
-  prepareSegments(sessionId: string, segmentIndices?: number[]): Promise<PreparedSegment[]>;
-
-  /**
    * Handle playback control (play, pause, seek, etc.)
    * @param sessionId - Session ID
    * @param request - Playback control request
    * @returns Promise resolving to playback control response
    */
   handlePlaybackControl(sessionId: string, request: PlaybackControlRequest): Promise<PlaybackControlResponse>;
-
-  /**
-   * Get chunks needed for current playback position
-   * @param sessionId - Session ID
-   * @param time - Current time in seconds
-   * @returns Promise resolving to chunks to load
-   */
-  getChunksForTime(sessionId: string, time: number): Promise<PreparedChunk[]>;
-
-  /**
-   * Get stream endpoint information
-   * @param sessionId - Session ID
-   * @param chunkIndex - Chunk index (optional, for chunk-specific endpoint)
-   * @returns Promise resolving to stream endpoint
-   */
-  getStreamEndpoint(sessionId: string, chunkIndex?: number): Promise<StreamEndpoint>;
 
   /**
    * Get stream metadata

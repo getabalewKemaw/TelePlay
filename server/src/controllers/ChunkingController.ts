@@ -2,7 +2,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
 import type { ChunkAccessRequestDto } from '../dto/chunking.dto.js';
-import type { IChunkingService } from '../interfaces/ffmpeg/IChunkingService.js';
+import type { IChunkingService } from '../interfaces/chunking/IChunkingService.js';
 
 /**
  * Controller for Media Chunking operations

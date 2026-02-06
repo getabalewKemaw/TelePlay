@@ -6,7 +6,7 @@
 
 
 import type { ChunkMetadata } from '../chunking/ChunkingTypes.js';
-import type { SegmentMetadata } from '../segementation/SegmentationTypes.js';
+import type { SegmentMetadata } from '../segmentation/SegmentationTypes.js';
 /**
  * 
  * Transport protocol type
@@ -323,24 +323,3 @@ export interface StreamMetadata {
 /**
  * Stream endpoint information
  */
-export interface StreamEndpoint {
-  /**
-   * Endpoint URL
-   */
-  url: string;
-
-  /**
-   * Transport protocol
-   */
-  protocol: TransportProtocol;
-
-  /**
-   * MIME type
-   */
-  mimeType: string;
-
-  /**
-   * Additional headers (for HTTP)
-   */
-  headers?: Record<string, string>;
-}

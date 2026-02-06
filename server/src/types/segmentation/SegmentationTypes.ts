@@ -161,90 +161,6 @@ export interface SegmentationResult {
 }
 
 /**
- * Buffering strategy configuration
- */
-export interface BufferingStrategy {
-  /**
-   * Initial buffer size in seconds
-   * How much content to buffer before starting playback
-   */
-  initialBufferSize: number;
-
-  /**
-   * Minimum buffer size in seconds
-   * Playback pauses if buffer falls below this
-   */
-  minBufferSize: number;
-
-  /**
-   * Maximum buffer size in seconds
-   * Stop buffering if buffer exceeds this
-   */
-  maxBufferSize: number;
-
-  /**
-   * Target buffer size in seconds
-   * Try to maintain this buffer level
-   */
-  targetBufferSize: number;
-}
-
-/**
- * Playback state for adaptive buffering
- */
-export interface PlaybackState {
-  /**
-   * Current playback position in seconds
-   */
-  currentTime: number;
-
-  /**
-   * Current buffer level in seconds
-   */
-  bufferLevel: number;
-
-  /**
-   * Network bandwidth estimate in bytes per second
-   */
-  bandwidth?: number;
-
-  /**
-   * Whether playback is currently playing
-   */
-  isPlaying: boolean;
-}
-
-/**
- * Adaptive buffering recommendation
- */
-export interface BufferingRecommendation {
-  /**
-   * Segments to load immediately (high priority)
-   */
-  immediate: SegmentMetadata[];
-
-  /**
-   * Segments to preload (medium priority)
-   */
-  preload: SegmentMetadata[];
-
-  /**
-   * Segments that can be loaded later (low priority)
-   */
-  deferred: SegmentMetadata[];
-
-  /**
-   * Recommended buffer size in seconds
-   */
-  recommendedBufferSize: number;
-}
-
-/**
- * Streaming mode
- */
-export type StreamingMode = 'file-based' | 'live';
-
-/**
  * Segment loading priority
  */
 export enum SegmentPriority {
@@ -279,8 +195,4 @@ export interface SegmentationOptions {
    */
   optimizeForLowLatency?: boolean;
 
-  /**
-   * Streaming mode
-   */
-  mode?: StreamingMode;
 }

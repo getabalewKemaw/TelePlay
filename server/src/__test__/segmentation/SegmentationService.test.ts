@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SegmentationService } from '../../services/segmentation/SegmentationService.js';
-import type { IChunkingService } from '../../interfaces/segementation/IChunkingService.js';
+import type { IChunkingService } from '../../interfaces/segmentation/IChunkingService.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
 import { SegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
 

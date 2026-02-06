@@ -4,7 +4,7 @@
  */
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
-import type { SegmentationStrategy } from '../../../types/segementation/SegmentationTypes.js';
+import type { SegmentationStrategy } from '../../../types/segmentation/SegmentationTypes.js';
 import { FixedSegmentationStrategy } from './FixedSegmentationStrategy.js';
 import { AdaptiveSegmentationStrategy } from './AdaptiveSegmentationStrategy.js';
 import { ProgressiveSegmentationStrategy } from './ProgressiveSegmentationStrategy.js';

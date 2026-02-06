@@ -1,13 +1,12 @@
 /**
- * Streaming Preparation Service – Bridge Processing → Streaming
+ * Streaming Preparation Service â€“ Bridge Processing â†’ Streaming
  * Prepares processed chunks for network streaming with playback controls
  */
 
 import type { IStreamingPreparationService } from '../../interfaces/streaming/IStreamingPreparationService.js';
-import type { IChunkingService } from '../../interfaces/streaming/IChunkingService.js';
-import type { ISegmentationService } from '../../interfaces/streaming/ISegmentationService.js';
-import type { ITranscodingService } from '../../interfaces/streaming/ITranscodingService.js';
-import type { ICompressionService } from '../../interfaces/streaming/ICompressionService.js';
+import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
+import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
+import type { ICompressionService } from '../../interfaces/compression/ICompressionService.js';
 import type {
   StreamingSession,
   PreparedChunk,
@@ -16,9 +15,7 @@ import type {
   PlaybackControlResponse,
   StreamingPreparationOptions,
   StreamMetadata,
-  StreamEndpoint,
-  PlaybackState,
-  TransportProtocol
+  PlaybackState
 } from '../../types/streaming/StreamingTypes.js';
 import { StreamingSessionError, StreamingPlaybackError, StreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
@@ -43,14 +40,13 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
  * Streaming Preparation Service Implementation
  * 
  * Responsibilities:
- * - Prepare chunks/segments for streaming
+ * - Prepare chunks for streaming
  * - Handle playback controls (play, pause, seek, ff, rewind)
- * - Integrate chunking, segmentation, transcoding, compression
+ * - Integrate chunking, transcoding, compression
  * - Provide transport-agnostic streaming interface
  */
 export class StreamingPreparationService implements IStreamingPreparationService {
   private readonly chunkingService: IChunkingService;
-  private readonly segmentationService: ISegmentationService;
   private readonly transcodingService: ITranscodingService;
   private readonly compressionService: ICompressionService;
   private readonly sessions: Map<string, StreamingSession>;
@@ -60,12 +56,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
    */
   constructor(
     chunkingService: IChunkingService,
-    segmentationService: ISegmentationService,
     transcodingService: ITranscodingService,
     compressionService: ICompressionService
   ) {
     this.chunkingService = chunkingService;
-    this.segmentationService = segmentationService;
     this.transcodingService = transcodingService;
     this.compressionService = compressionService;
     this.sessions = new Map();
@@ -134,50 +128,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
     }
 
     return preparedChunks;
-  }
-
-  /**
-   * Prepare segments for streaming
-   */
-  async prepareSegments(
-    sessionId: string,
-    segmentIndices?: number[]
-  ): Promise<PreparedSegment[]> {
-    const session = this.findSessionOrThrow(sessionId);
-
-    // Get segments from segmentation service
-    const segments = await this.segmentationService.getAllSegments(session.filePath);
-
-    // Filter to requested segments if provided
-    const segmentsToPrepare = segmentIndices
-      ? segments.filter((_, idx) => segmentIndices.includes(idx))
-      : segments;
-
-    const preparedSegments: PreparedSegment[] = [];
-
-    for (const segment of segmentsToPrepare) {
-      const preparedChunks: PreparedChunk[] = [];
-
-      // Prepare each chunk in the segment
-      for (const chunk of segment.chunks) {
-        const prepared = await this.prepareSingleChunk(session, chunk);
-        preparedChunks.push(prepared);
-      }
-
-      const isReady = preparedChunks.every(c => c.status === 'ready');
-      const totalSize = preparedChunks.reduce((sum, c) => sum + c.size, 0);
-
-      preparedSegments.push({
-        segment,
-        chunks: preparedChunks,
-        status: isReady ? 'ready' : 'processing',
-        totalSize,
-        isReady
-      });
-    }
-
-    session.preparedSegments = preparedSegments;
-    return preparedSegments;
   }
 
   /**
@@ -281,7 +231,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
   /**
    * Get chunks needed for current playback position
    */
-  async getChunksForTime(sessionId: string, time: number): Promise<PreparedChunk[]> {
+  private async getChunksForTime(sessionId: string, time: number): Promise<PreparedChunk[]> {
     const session = this.findSessionOrThrow(sessionId);
 
     // Get chunk at time from chunking service
@@ -314,53 +264,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
     }
 
     return targetChunks;
-  }
-
-  /**
-   * Get stream endpoint information
-   */
-  async getStreamEndpoint(sessionId: string, chunkIndex?: number): Promise<StreamEndpoint> {
-    const session = this.findSessionOrThrow(sessionId);
-
-    // Build endpoint URL based on transport protocol
-    let url: string;
-    let mimeType: string;
-
-    switch (session.transport) {
-      case 'http':
-        url = `/stream/${sessionId}${chunkIndex !== undefined ? `/${chunkIndex}` : ''}`;
-        mimeType = this.getMimeTypeForCodec(session);
-        break;
-
-      case 'websocket':
-        url = `ws://localhost/stream/${sessionId}`;
-        mimeType = 'application/octet-stream';
-        break;
-
-      case 'rtp':
-        url = `rtp://localhost:5004/${sessionId}`;
-        mimeType = 'application/rtp';
-        break;
-
-      case 'webrtc':
-        url = `webrtc://localhost/${sessionId}`;
-        mimeType = 'application/webrtc';
-        break;
-
-      default:
-        url = `/stream/${sessionId}`;
-        mimeType = 'audio/aac';
-    }
-
-    return {
-      url,
-      protocol: session.transport,
-      mimeType,
-      headers: session.transport === 'http' ? {
-        'Content-Type': mimeType,
-        'Accept-Ranges': 'bytes'
-      } : undefined
-    };
   }
 
   /**

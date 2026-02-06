@@ -6,12 +6,11 @@ import path from 'path';
 
 export class FileController {
     private fileService: IFileService;
-
+//we use the concept of dependecy injection as well . for the porpose of the mocking test
     constructor(fileService?: IFileService) {
-        // In a real app, use dependency injection
         this.fileService = fileService || new FileService(new ChunkingService() as any);
     }
-
+// pagination and sorting.
     listFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { query, sort, order, page, limit } = req.query;
@@ -26,6 +25,7 @@ export class FileController {
             res.json({
                 success: true,
                 data: result.files,
+                
                 meta: {
                     total: result.total,
                     page: page ? parseInt(page as string) : 1,
@@ -52,7 +52,7 @@ export class FileController {
             next(error);
         }
     };
-
+    //folder scanning.
     discoverFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
             // Allow user to specify path, default to ./uploads
@@ -113,6 +113,8 @@ export class FileController {
         }
     };
 
+
+ //convert the massive number in to a string before sending to the user preventing a  server crashs.
     private normalizeFile(file: any) {
         if (!file) return file;
         if (typeof file.fileSize === 'bigint') {

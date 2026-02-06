@@ -1,7 +1,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { SegmentationService } from '../services/segmentation/SegmentationService.js';
-import type { ISegmentationService } from '../interfaces/ffmpeg/ISegmentationService.js';
+import type { ISegmentationService } from '../interfaces/segmentation/ISegmentationService.js';
 
 /**
  * Controller for Media Segmentation operations

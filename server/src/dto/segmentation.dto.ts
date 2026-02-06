@@ -1,5 +1,5 @@
 
-import type { SegmentMetadata } from '../types/segementation/SegmentationTypes.js';
+import type { SegmentMetadata } from '../types/segmentation/SegmentationTypes.js';
 
 export interface SegmentationRequestDto {
     filePath: string;

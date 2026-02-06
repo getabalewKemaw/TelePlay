@@ -1,4 +1,4 @@
-import type { AudioCodec, SampleRate, ChannelConfig, AudioEncodingParams } from '../../services/ffmpeg/index.js';
+import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 const FFMPEG_EXECUTABLE = 'ffmpeg';// Default ffmpeg executable name
 const DEFAULT_TIMEOUT = 30 * 60 * 1000;
 export {

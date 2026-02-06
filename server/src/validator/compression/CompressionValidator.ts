@@ -7,7 +7,7 @@
 // import type { CompressionOptions, CompressionLevel, CompressionStrategy } from '../types/CompressionTypes.js';
 import type { CompressionLevel ,CompressionOptions,CompressionStrategy} from '../../types/compression/CompressionTypes.js';
 
-import { CompressionValidationError } from '../../services/compression/index.js';
+import { CompressionValidationError } from '../../errors/compression/CompressionErrors.js';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';

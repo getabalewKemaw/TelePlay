@@ -7,7 +7,6 @@ import type { ITranscodingService } from '../../interfaces/transcoding/ITranscod
 import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
 import type {
   TranscodingResult,
-  TranscodingOptions,
   ChunkTranscodingParams,
   TranscodingConfig,
   SourceCodec,
@@ -16,23 +15,12 @@ import type {
 import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
-import path from 'path';
-import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
+import type { AudioCodec } from '../../types/ffmpeg/FFmpegTypes.js';
 
 /**
  * Default target codec (browser-playable)
  */
 const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
-
-/**
- * Default target sample rate
- */
-const DEFAULT_TARGET_SAMPLE_RATE: SampleRate = 44100;
-
-/**
- * Default target channels
- */
-const DEFAULT_TARGET_CHANNELS: ChannelConfig = 2;
 
 /**
  * Codec compatibility matrix
@@ -78,58 +66,6 @@ export class TranscodingService implements ITranscodingService {
    */
   constructor(ffmpegService: IFfmpegService) {
     this.ffmpegService = ffmpegService;
-  }
-
-  /**
-   * Transcode a media file from source to target codec
-   */
-  async transcode(inputPath: string, options?: TranscodingOptions): Promise<TranscodingResult> {
-    // Validate input file
-    if (!existsSync(inputPath)) {
-      throw new TranscodingFileError(`Input file does not exist: ${inputPath}`, inputPath);
-    }
-
-    // Build configuration
-    const config = this.buildConfig(options);
-
-    // Validate configuration
-    this.validateConfig(config);
-
-    // Generate output path
-    const outputPath = options?.outputPath || this.generateOutputPath(inputPath, config.target.codec);
-
-    // Get original file size
-    const originalStats = await fs.stat(inputPath);
-    const originalSize = originalStats.size;
-
-    // Perform transcoding
-    const startTime = Date.now();
-
-    try {
-      await this.performTranscoding(inputPath, outputPath, config);
-    } catch (error) {
-      throw new TranscodingCodecError(
-        `Transcoding failed: ${error instanceof Error ? error.message : String(error)}`,
-        config.source.codec,
-        config.target.codec
-      );
-    }
-
-    const executionTime = Date.now() - startTime;
-
-    // Get transcoded file size
-    const transcodedStats = await fs.stat(outputPath);
-    const transcodedSize = transcodedStats.size;
-
-    return {
-      outputPath,
-      originalSize,
-      transcodedSize,
-      executionTime,
-      sourceCodec: config.source.codec,
-      targetCodec: config.target.codec,
-      config
-    };
   }
 
   /**
@@ -188,41 +124,6 @@ export class TranscodingService implements ITranscodingService {
   }
 
   /**
-   * Transcode for streaming (time range)
-   */
-  async transcodeForStreaming(
-    inputPath: string,
-    startTime: number,
-    duration: number,
-    options?: TranscodingOptions
-  ): Promise<TranscodingResult> {
-    if (startTime < 0) {
-      throw new TranscodingValidationError('Start time must be non-negative', 'startTime');
-    }
-
-    if (duration <= 0) {
-      throw new TranscodingValidationError('Duration must be greater than 0', 'duration');
-    }
-
-    // Build configuration with streaming mode
-    const config = this.buildConfig({
-      ...options,
-      mode: 'stream',
-      startTime,
-      duration
-    });
-
-    // For streaming, we'll transcode the full file but mark it as streaming mode
-    // In a full implementation, this would use FFmpeg's -ss and -t options
-    return this.transcode(inputPath, {
-      ...options,
-      mode: 'stream',
-      startTime,
-      duration
-    });
-  }
-
-  /**
    * Get recommended target codec for source codec
    */
   getRecommendedTargetCodec(sourceCodec: string): string {
@@ -231,30 +132,6 @@ export class TranscodingService implements ITranscodingService {
       return DEFAULT_TARGET_CODEC;
     }
     return compatibility.recommended;
-  }
-
-  /**
-   * Check if transcoding is needed
-   */
-  async isTranscodingNeeded(inputPath: string, targetCodec: string): Promise<boolean> {
-    // Simple check: if file extension matches target codec, might not need transcoding
-    const ext = path.extname(inputPath).toLowerCase();
-    const codecExtensions: Record<string, string[]> = {
-      aac: ['.aac', '.m4a'],
-      mp3: ['.mp3'],
-      opus: ['.opus', '.ogg'],
-      pcm_s16le: ['.wav', '.pcm']
-    };
-
-    const targetExtensions = codecExtensions[targetCodec] || [];
-    if (targetExtensions.includes(ext)) {
-      // File extension matches, but we'd need to check actual codec
-      // For now, assume transcoding might be needed
-      return true;
-    }
-
-    // Different extension, likely needs transcoding
-    return true;
   }
 
   /**
@@ -310,50 +187,6 @@ export class TranscodingService implements ITranscodingService {
   }
 
   /**
-   * Build configuration from options
-   */
-  private buildConfig(options?: TranscodingOptions): TranscodingConfig {
-    const sourceCodec = (options?.sourceCodec || 'g711') as SourceCodec;
-    const targetCodec = (options?.targetCodec || this.getRecommendedTargetCodec(sourceCodec)) as TargetCodec;
-
-    return {
-      source: {
-        codec: sourceCodec,
-        sampleRate: options?.sourceSampleRate || 8000,
-        channels: options?.sourceChannels || 1,
-        bitrate: options?.sourceBitrate
-      },
-      target: {
-        codec: targetCodec,
-        sampleRate: options?.targetSampleRate || DEFAULT_TARGET_SAMPLE_RATE,
-        channels: options?.targetChannels || DEFAULT_TARGET_CHANNELS,
-        bitrate: options?.targetBitrate
-      },
-      mode: options?.mode || 'full',
-      startTime: options?.startTime,
-      duration: options?.duration
-    };
-  }
-
-  /**
-   * Validate configuration
-   */
-  private validateConfig(config: TranscodingConfig): void {
-    this.validateSourceEncoding(config.source);
-    this.validateTargetEncoding(config.target);
-
-    // Check codec compatibility
-    const compatibility = CODEC_COMPATIBILITY[config.source.codec];
-    if (compatibility && !compatibility.compatible.includes(config.target.codec)) {
-      throw new TranscodingCodecError(
-        `Target codec ${config.target.codec} is not compatible with source codec ${config.source.codec}`,
-        config.source.codec,
-        config.target.codec
-      );
-    }
-  }
-
-  /**
    * Validate source encoding
    */
   private validateSourceEncoding(encoding: { codec: SourceCodec; bitrate?: number }): void {
@@ -373,23 +206,5 @@ export class TranscodingService implements ITranscodingService {
     // Additional validation can be added here if needed
   }
 
-  /**
-   * Generate output path
-   */
-  private generateOutputPath(inputPath: string, targetCodec: TargetCodec): string {
-    const dir = path.dirname(inputPath);
-    const ext = path.extname(inputPath);
-    const baseName = path.basename(inputPath, ext);
-
-    const codecExtensions: Record<TargetCodec, string> = {
-      aac: '.aac',
-      mp3: '.mp3',
-      opus: '.opus',
-      pcm_s16le: '.wav'
-    };
-
-    const outputExt = codecExtensions[targetCodec] || '.aac';
-
-    return path.join(dir, `${baseName}_${targetCodec}${outputExt}`);
-  }
 }
+

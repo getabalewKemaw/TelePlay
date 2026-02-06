@@ -9,7 +9,7 @@ import { AdaptiveSegmentationStrategy } from '../../services/segmentation/strate
 import { ProgressiveSegmentationStrategy } from '../../services/segmentation/strategies/ProgressiveSegmentationStrategy.js';
 import { LowLatencySegmentationStrategy } from '../../services/segmentation/strategies/LowLatencySegmentationStrategy.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
-import { SegmentPriority } from '../../types/segementation/SegmentationTypes.js';
+import { SegmentPriority } from '../../types/segmentation/SegmentationTypes.js';
 
 // Helper to create mock chunks
 const createChunks = (count: number, chunkDuration: number = 10): ChunkMetadata[] => {

@@ -4,7 +4,7 @@
  */
 
 
-import type { AudioCodec,SampleRate,ChannelConfig } from '../ffmpeg/FFmpegTypes.js';
+import type { SampleRate, ChannelConfig } from '../ffmpeg/FFmpegTypes.js';
 /**
  * Source codec type (telecom or PCM)
  */
@@ -18,7 +18,7 @@ export type TargetCodec = 'aac' | 'mp3' | 'opus' | 'pcm_s16le';
 /**
  * Transcoding mode
  */
-export type TranscodingMode = 'full' | 'chunk' | 'stream';
+export type TranscodingMode = 'chunk';
 
 /**
  * Source encoding configuration
@@ -138,117 +138,3 @@ export interface ChunkTranscodingParams {
   targetEncoding: TargetEncoding;
 }
 
-/**
- * Transcoding options
- */
-export interface TranscodingOptions {
-  /**
-   * Source codec
-   */
-  sourceCodec?: SourceCodec;
-
-  /**
-   * Target codec (default: 'aac')
-   */
-  targetCodec?: TargetCodec;
-
-  /**
-   * Source sample rate
-   */
-  sourceSampleRate?: SampleRate;
-
-  /**
-   * Target sample rate
-   */
-  targetSampleRate?: SampleRate;
-
-  /**
-   * Source channels
-   */
-  sourceChannels?: ChannelConfig;
-
-  /**
-   * Target channels
-   */
-  targetChannels?: ChannelConfig;
-
-  /**
-   * Source bitrate (for G.726)
-   */
-  sourceBitrate?: number;
-
-  /**
-   * Target bitrate
-   */
-  targetBitrate?: number;
-
-  /**
-   * Transcoding mode
-   */
-  mode?: TranscodingMode;
-
-  /**
-   * Start time (for chunk/stream mode)
-   */
-  startTime?: number;
-
-  /**
-   * Duration (for chunk/stream mode)
-   */
-  duration?: number;
-
-  /**
-   * Output file path
-   */
-  outputPath?: string;
-}
-
-/**
- * Transcoding pipeline stage
- */
-export interface TranscodingPipelineStage {
-  /**
-   * Stage name
-   */
-  name: string;
-
-  /**
-   * Stage description
-   */
-  description: string;
-
-  /**
-   * Input format for this stage
-   */
-  inputFormat: string;
-
-  /**
-   * Output format for this stage
-   */
-  outputFormat: string;
-}
-
-/**
- * Codec compatibility matrix
- */
-export interface CodecCompatibility {
-  /**
-   * Source codec
-   */
-  source: SourceCodec;
-
-  /**
-   * Compatible target codecs
-   */
-  compatibleTargets: TargetCodec[];
-
-  /**
-   * Recommended target codec
-   */
-  recommendedTarget: TargetCodec;
-
-  /**
-   * Notes about compatibility
-   */
-  notes: string;
-}

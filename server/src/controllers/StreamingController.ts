@@ -2,7 +2,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StreamingPreparationService } from '../services/streaming/StreamingPreparationService.js';
 import type { CreateSessionRequestDto, PlaybackControlRequestDto, PrepareItemsRequestDto } from '../dto/streaming.dto.js';
-import type { IStreamingPreparationService } from '../interfaces/ffmpeg/IStreamingPreparationService.js';
+import type { IStreamingPreparationService } from '../interfaces/streaming/IStreamingPreparationService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
 import path from 'path';
 import fs from 'fs';
@@ -120,7 +120,7 @@ export class StreamingController {
                         pcm_s24le: 's24le'
                     };
                     if (codec in inputFormatMap) {
-                        args.push('-f', inputFormatMap[codec]);
+                        args.push('-f', inputFormatMap[codec]!);
                     }
 
                     if (codec === 'g726' && session.bitrate) {
@@ -233,7 +233,7 @@ export class StreamingController {
                 return;
             }
 
-            const start = parseInt(match[1], 10);
+            const start = parseInt(match[1]!, 10);
             const end = match[2] ? Math.min(parseInt(match[2], 10), stat.size - 1) : stat.size - 1;
 
             if (start >= stat.size || end < start) {

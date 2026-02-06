@@ -6,8 +6,8 @@
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
-import { SegmentPriority } from '../../../types/segementation/SegmentationTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
+import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
 
 /**
  * Progressive segmentation strategy

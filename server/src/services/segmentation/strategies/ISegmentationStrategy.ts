@@ -4,7 +4,7 @@
  */
 
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
-import type { SegmentMetadata, SegmentationConfig } from '../../../types/segementation/SegmentationTypes.js';
+import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 
 /**
  * Interface for segmentation strategies

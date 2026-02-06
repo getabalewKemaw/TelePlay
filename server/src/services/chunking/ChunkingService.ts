@@ -9,8 +9,6 @@ import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMet
 import type {
   ChunkingResult,
   ChunkMetadata,
-  SeekParams,
-  SeekResult,
   ChunkingOptions,
   ChunkingConfig
 } from '../../types/chunking/ChunkingTypes.js';
@@ -38,7 +36,7 @@ export class ChunkingService implements IChunkingService {
     this.ffmpegService = ffmpegService as any; // This will be injected via DI or passed in
     this.defaultChunkDuration = defaultChunkDuration;
   }
-  async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
+  private async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
     if (!existsSync(filePath)) {
       throw new ChunkingFileError(`Media file does not exist: ${filePath}`, filePath);
     }
@@ -88,98 +86,12 @@ export class ChunkingService implements IChunkingService {
     };
   }
 
-  /**
-   * Get chunk metadata for a specific chunk index
-   */
-  async getChunk(filePath: string, chunkIndex: number, options?: ChunkingOptions): Promise<ChunkMetadata> {
-    const result = await this.generateChunks(filePath, options);
-
-    if (chunkIndex < 0 || chunkIndex >= result.chunks.length) {
-      throw new ChunkingValidationError(
-        `Chunk index ${chunkIndex} is out of range. Valid range: 0-${result.chunks.length - 1}`,
-        'chunkIndex'
-      );
-    }
-
-    const chunk = result.chunks[chunkIndex] ?? null;
-    if (chunk === null) {
-      throw new ChunkingValidationError(
-        `Chunk at index ${chunkIndex} is null or undefined`,
-        'chunkIndex'
-      );
-    }
-    return chunk;
-  }
   async getAllChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkMetadata[]> {
     const result = await this.generateChunks(filePath, options);
     return result.chunks;
   }
 
-  async seek(filePath: string, params: SeekParams, options?: ChunkingOptions): Promise<SeekResult> {
-    const result = await this.generateChunks(filePath, options);
 
-    // Validate time
-    if (params.time < 0 || params.time > result.totalDuration) {
-      throw new ChunkingSeekError(
-        `Seek time ${params.time}s is out of range. Valid range: 0-${result.totalDuration}s`,
-        params.time
-      );
-    }
-
-    // Find the chunk containing this time
-    const chunk = this.findChunkAtTime(result.chunks, params.time, params.exact ?? false);
-    if (!chunk) {
-      throw new ChunkingSeekError(
-        `Could not find chunk for time ${params.time}s`,
-        params.time
-      );
-    }
-    const offsetInChunk = params.time - chunk.startTime;
-    const exact = params.time >= chunk.startTime && params.time < chunk.endTime;
-
-    return {
-      chunk,
-      offsetInChunk,
-      exact
-    };
-  }
-
-  /**
-   * Get chunk that contains a specific time
-   */
-  async getChunkAtTime(filePath: string, time: number, options?: ChunkingOptions): Promise<ChunkMetadata> {
-    const result = await this.seek(filePath, { time, exact: false }, options);
-    return result.chunk;
-  }
-
-  /**
-   * Get chunks for a time range
-   */
-  async getChunksInRange(
-    filePath: string,
-    startTime: number,
-    endTime: number,
-    options?: ChunkingOptions
-  ): Promise<ChunkMetadata[]> {
-    const result = await this.generateChunks(filePath, options);
-
-    // Validate range
-    if (startTime < 0 || endTime > result.totalDuration || startTime >= endTime) {
-      throw new ChunkingValidationError(
-        `Invalid time range: ${startTime}s - ${endTime}s`,
-        'timeRange'
-      );
-    }
-
-    // Find chunks that overlap with the range
-    return result.chunks.filter(chunk => {
-      return (
-        (chunk.startTime >= startTime && chunk.startTime < endTime) ||
-        (chunk.endTime > startTime && chunk.endTime <= endTime) ||
-        (chunk.startTime <= startTime && chunk.endTime >= endTime)
-      );
-    });
-  }
 
   /**
    * Calculate chunks based on configuration
