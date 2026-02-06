@@ -152,6 +152,14 @@ export class StreamingController {
 
                 if (outputFormat === 'mp3') {
                     args.push('-acodec', 'libmp3lame');
+                } else if (outputFormat === 'wav') {
+                    args.push('-acodec', 'pcm_s16le');
+                    if (session.sampleRate) {
+                        args.push('-ar', session.sampleRate.toString());
+                    }
+                    if (session.channels) {
+                        args.push('-ac', session.channels.toString());
+                    }
                 }
                 // Stream + optionally save to file
                 if (session.saveOutputPath) {

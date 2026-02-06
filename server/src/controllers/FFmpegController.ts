@@ -12,7 +12,6 @@ export class FFmpegController {
     constructor(ffmpegService?: IFfmpegService) {
         this.ffmpegService = ffmpegService || new FFmpegService();
     }
-
     decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { fileId, ...decodeParams } = req.body;
@@ -107,6 +106,8 @@ export class FFmpegController {
         }
     };
 
+
+    
     transcode = async (req: Request<{}, {}, TranscodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const result = await this.ffmpegService.transcode(req.body);
