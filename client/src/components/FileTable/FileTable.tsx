@@ -89,7 +89,7 @@ export function FileTable({
                 <td className="px-6 py-4 font-semibold">{(file.format || 'binary').toUpperCase()}</td>
                 <td className="px-6 py-4 text-right">
                   <div className="inline-flex items-center gap-2 font-bold">
-                    <Timer size={14} />
+                    <Timer size={14}  className='rounded-full'/>
                     {formatTime(file.duration || 0)}
                   </div>
                 </td>

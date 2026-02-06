@@ -1,4 +1,4 @@
-import { Coffee, FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { Coffee, FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
 import { cn } from '../../utils/utils'
@@ -40,8 +40,8 @@ export function Sidebar({
                 "flex items-center justify-between",
                 collapsed ? "p-4" : "p-6"
             )}>
-                <div className="w-10 h-10 bg-coffee-600 rounded-xl flex items-center justify-center shadow-lg shadow-coffee-600/20">
-                    <Coffee className="text-white w-6 h-6" />
+                <div className="w-10 h-10 bg-coffee-600  flex items-center justify-center shadow-lg shadow-coffee-600/20">
+                    <Music className="text-white w-6 h-6" />
                 </div>
                 <button
                     onClick={onToggleCollapsed}
@@ -57,7 +57,7 @@ export function Sidebar({
                     <button
                         onClick={onPickDirectory}
                         className={cn(
-                            "w-full py-2.5 px-4 bg-coffee-600 hover:bg-coffee-200 text-coffee-50 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
+                            "w-full py-2.5 px-6 bg-coffee-600 hover:bg-coffee-200 hover:border-2 text-coffee-50  flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
                             collapsed && "px-0"
                         )}
                         aria-label="Open directory"

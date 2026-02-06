@@ -23,7 +23,7 @@ export function FileTableCard({ fileCount, isOpen, onToggle, children }: FileTab
         </div>
         <button
           onClick={onToggle}
-          className="text-[10px] uppercase font-black tracking-widest px-3 py-2 rounded-xl bg-white/60 hover:bg-white transition-colors text-coffee-500 shadow-sm"
+          className="text-[10px] uppercase font-black tracking-widest px-3 py-2  border-1 bg-white/60 hover:bg-white transition-colors text-coffee-500 shadow-sm"
         >
           {isOpen ? 'Collapse' : 'Expand'}
         </button>

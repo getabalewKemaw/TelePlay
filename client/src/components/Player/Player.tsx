@@ -15,9 +15,9 @@ import {
     Volume2
 } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
-import { cn, formatTime } from '../../utils/utils'
+import { cn } from '../../utils/utils'
 import { Badge } from '../ui/Badge'
-import { ActionCard } from '../ui/ActionCard'
+import { formatTime } from '../../utils/utils'
 
 interface PlayerProps {
     selectedFile: MediaFile
@@ -76,6 +76,7 @@ export function Player({
 }: PlayerProps) {
     const [showSpeedMenu, setShowSpeedMenu] = useState(false)
     const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2]
+    const convertedDuartions=formatTime(selectedFile.duration);
 
     return (
         <div className="max-w-9xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -110,7 +111,7 @@ export function Player({
                     <h2 className="text-4xl font-black text-coffee-Dark mb-4 leading-none tracking-tight">{selectedFile.filename}</h2>
                     <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                         <Badge icon={<Activity size={12} />} label={selectedFile.codec?.toUpperCase() || 'RAW'} />
-                        <Badge icon={<Zap size={12} />} label={`${selectedFile.duration?.toFixed(1) || 0}s`} />
+                        <Badge icon={<Zap size={12} />} label={`${convertedDuartions|| 0}`} />
                         <Badge icon={<FolderOpen size={12} />} label={selectedFile.format || 'BINARY'} />
                     </div>
                 </div>

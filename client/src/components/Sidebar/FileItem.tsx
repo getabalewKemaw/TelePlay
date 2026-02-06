@@ -13,7 +13,7 @@ export function FileItem({ file, isSelected, onClick }: FileItemProps) {
         <button
             onClick={() => onClick(file)}
             className={cn(
-                "w-full text-left p-3 rounded-xl transition-all group relative overflow-hidden",
+                "w-full text-left p-3  transition-all group relative overflow-hidden",
                 isSelected
                     ? "bg-coffee-600 text-white shadow-md shadow-coffee-600/30"
                     : "hover:bg-coffee-100 active:scale-[0.98]"
