@@ -23,6 +23,11 @@ export default function App() {
   const [isTableOpen, setIsTableOpen] = useState(true)
 
   const waveformRef = useRef<HTMLDivElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [nativeTime, setNativeTime] = useState(0)
+  const [nativeDuration, setNativeDuration] = useState(0)
+  const [nativePlaying, setNativePlaying] = useState(false)
+  const [forceNativeAudio, setForceNativeAudio] = useState(false)
 
   const waveformOptions = useMemo(() => ({
     waveColor: '#2dd4bf',
@@ -36,15 +41,36 @@ export default function App() {
     normalize: true,
     responsive: true,
     height: 120,
+    backend: 'MediaElement',
+    mediaControls: false,
   }), [])
 
-  const { wavesurfer, wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions)
+  const { wavesurfer, wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions, !forceNativeAudio)
 
   useEffect(() => {
     if (wavesurferRef.current) {
       wavesurferRef.current.setVolume(volume)
     }
   }, [volume, wavesurferRef])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onTime = () => setNativeTime(audio.currentTime || 0)
+    const onDur = () => setNativeDuration(audio.duration || 0)
+    const onPlay = () => setNativePlaying(true)
+    const onPause = () => setNativePlaying(false)
+    audio.addEventListener('timeupdate', onTime)
+    audio.addEventListener('loadedmetadata', onDur)
+    audio.addEventListener('play', onPlay)
+    audio.addEventListener('pause', onPause)
+    return () => {
+      audio.removeEventListener('timeupdate', onTime)
+      audio.removeEventListener('loadedmetadata', onDur)
+      audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('pause', onPause)
+    }
+  }, [])
 
   useEffect(() => {
     loadFiles(true)
@@ -104,6 +130,11 @@ export default function App() {
     return name.endsWith('.wav') || format === 'wav'
   }
 
+  const isLargeFile = (file: MediaFile) => {
+    const size = typeof file.fileSize === 'string' ? parseInt(file.fileSize, 10) : (file.fileSize as any)
+    return Number.isFinite(size) && size > 200 * 1024 * 1024
+  }
+
   const getDecodedFormat = (file: MediaFile) => {
     const decodedPath = file.decodedPath?.toLowerCase() || ''
     if (decodedPath.endsWith('.mp3')) return 'mp3'
@@ -123,9 +154,10 @@ export default function App() {
 
     const decodedFormat = getDecodedFormat(targetFile)
     const directPlayable = outputFormat === 'wav' && isDirectPlayable(targetFile)
+    const hasPlayableOutput = decodedFormat === outputFormat || directPlayable
     setIsDecoding(true)
     const toastId = toast.loading(
-      (decodedFormat === outputFormat || directPlayable)
+      hasPlayableOutput
         ? 'Starting playback...'
         : `Converting to ${outputFormat.toUpperCase()}...`
     )
@@ -134,7 +166,27 @@ export default function App() {
       let finalPath = (decodedFormat === outputFormat)
         ? targetFile.decodedPath
         : (directPlayable ? targetFile.originalPath : undefined)
-      if (!finalPath) {
+
+      const wantsLiveTranscode = !finalPath && !directPlayable
+      const useNativeAudio = wantsLiveTranscode || isLargeFile(targetFile)
+      setForceNativeAudio(useNativeAudio)
+
+      if (!finalPath && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {
+        const outputDir = 'processed'
+        const baseName = targetFile.filename.replace(/\.[^/.]+$/, '')
+        const outputFilename = `${baseName}_decoded.${outputFormat}`
+        const decodeResult = await decodeFile({
+          fileId: targetFile.id,
+          input: { path: targetFile.decodedPath },
+          output: { path: `${outputDir}/${outputFilename}`, format: outputFormat }
+        })
+        finalPath = decodeResult.outputPath
+        const updatedFile = { ...targetFile, decodedPath: finalPath }
+        setSelectedFile(updatedFile)
+        await loadFiles(true)
+      }
+
+      if (!finalPath && !wantsLiveTranscode) {
         const outputDir = 'processed'
         const baseName = targetFile.filename.replace(/\.[^/.]+$/, '')
         const outputFilename = `${baseName}_decoded.${outputFormat}`
@@ -156,56 +208,105 @@ export default function App() {
         await loadFiles(true)
       }
 
-      const session = await createStreamingSession(finalPath!)
+      const inferredCodec = (() => {
+        const name = targetFile.filename.toLowerCase()
+        const codec = (targetFile.codec || '').toLowerCase()
+        if (codec.includes('alaw') || name.includes('alaw') || name.includes('g711a')) return 'g711a'
+        if (codec.includes('mulaw') || name.includes('mulaw') || name.includes('g711u')) return 'g711'
+        return targetFile.codec || 'g711'
+      })()
+
+      const sessionOptions = wantsLiveTranscode ? {
+        transport: 'http',
+        mode: 'live',
+        outputFormat: outputFormat,
+        inputCodec: inferredCodec,
+        sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
+        channels: 1,
+        bitrate: targetFile.codec === 'g726' ? 32 : undefined,
+        saveOutputPath: `processed/${targetFile.filename.replace(/\.[^/.]+$/, '')}_decoded.${outputFormat}`,
+        fileId: targetFile.id
+      } : {
+        transport: 'http',
+        mode: 'file-based'
+      }
+
+      const session = await createStreamingSession(wantsLiveTranscode ? targetFile.originalPath : finalPath!, sessionOptions)
       setActiveSession(session)
 
       const audioUrl = `http://localhost:3000/api/streaming/sessions/${session.sessionId}/stream`
 
-      const waitForWaveform = () => new Promise<void>((resolve, reject) => {
-        const start = Date.now()
-        const tick = () => {
-          if (wavesurferRef.current && isWaveformReady) {
-            resolve()
-            return
-          }
-          if (Date.now() - start > 2000) {
-            reject(new Error('Waveform not ready'))
-            return
-          }
-          setTimeout(tick, 50)
+      if (useNativeAudio) {
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl
+          audioRef.current.play().catch(() => undefined)
+          toast.success('Live playback started', { id: toastId })
+        } else {
+          toast.error('Audio engine unavailable.', { id: toastId })
         }
-        tick()
-      })
+      } else {
+        const waitForWaveform = () => new Promise<void>((resolve, reject) => {
+          const start = Date.now()
+          const tick = () => {
+            if (wavesurferRef.current && isWaveformReady) {
+              resolve()
+              return
+            }
+            if (Date.now() - start > 2000) {
+              reject(new Error('Waveform not ready'))
+              return
+            }
+            setTimeout(tick, 50)
+          }
+          tick()
+        })
 
-      try {
-        await waitForWaveform()
-      } catch {
-        toast.error('Waveform is still loading. Try again in a moment.', { id: toastId })
-        return
+        try {
+          await waitForWaveform()
+        } catch {
+          toast.error('Waveform is still loading. Try again in a moment.', { id: toastId })
+          return
+        }
+
+        const ws = wavesurferRef.current
+        if (!ws) {
+          toast.error('Waveform engine unavailable.', { id: toastId })
+          return
+        }
+
+        ws.stop()
+        ws.load(audioUrl)
       }
 
-      const ws = wavesurferRef.current
-      if (!ws) {
-        toast.error('Waveform engine unavailable.', { id: toastId })
-        return
+      if (!useNativeAudio) {
+        const ws = wavesurferRef.current
+        if (!ws) {
+          toast.error('Waveform engine unavailable.', { id: toastId })
+          return
+        }
+
+        const onReady = () => {
+          ws.play()
+          toast.success('Playback ready', { id: toastId })
+          ws.un('ready', onReady)
+        }
+
+        const onError = (err: any) => {
+          console.error("WaveSurfer error:", err)
+          toast.error('Stream signal lost', { id: toastId })
+          ws.un('error', onError)
+        }
+
+        if (wantsLiveTranscode) {
+          setTimeout(() => {
+            ws.play()
+          }, 250)
+          toast.success('Live playback started', { id: toastId })
+        } else {
+          ws.once('ready', onReady)
+        }
+        ws.once('error', onError)
       }
-
-      ws.load(audioUrl)
-
-      const onReady = () => {
-        ws.play()
-        toast.success('Playback ready', { id: toastId })
-        ws.un('ready', onReady)
-      }
-
-      const onError = (err: any) => {
-        console.error("WaveSurfer error:", err)
-        toast.error('Stream signal lost', { id: toastId })
-        ws.un('error', onError)
-      }
-
-      ws.once('ready', onReady)
-      ws.once('error', onError)
 
     } catch (error) {
       console.error('Decode failed:', error)
@@ -241,15 +342,30 @@ export default function App() {
       wavesurfer.setPlaybackRate(rate)
       toast(`Time Warp: ${rate}x`, { icon: '⚡' })
     }
+    if (audioRef.current) {
+      audioRef.current.playbackRate = rate
+    }
   }
 
   const handleSeek = (time: number) => {
+    if (forceNativeAudio) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = time
+      }
+      return
+    }
     if (!wavesurferRef.current) return
     const bounded = Math.min(Math.max(time, 0), duration || 0)
     wavesurferRef.current.setTime(bounded)
   }
 
   const handleSkip = (delta: number) => {
+    if (forceNativeAudio) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = Math.min(Math.max(audioRef.current.currentTime + delta, 0), audioRef.current.duration || 0)
+      }
+      return
+    }
     if (!wavesurferRef.current) return
     const next = Math.min(Math.max(currentTime + delta, 0), duration || 0)
     wavesurferRef.current.setTime(next)
@@ -258,6 +374,9 @@ export default function App() {
   const handleVolumeChange = (nextVolume: number) => {
     setVolume(nextVolume)
     wavesurferRef.current?.setVolume(nextVolume)
+    if (audioRef.current) {
+      audioRef.current.volume = nextVolume
+    }
   }
 
   const pickDirectory = async () => {
@@ -390,27 +509,40 @@ export default function App() {
                 selectedFile={selectedFile}
                 isDecoding={isDecoding}
                 activeSession={activeSession}
-                isPlaying={isPlaying}
-                currentTime={currentTime}
-                duration={duration}
-              playbackRate={playbackRate}
-              volume={volume}
-              outputFormat={outputFormat}
-              wavesurfer={wavesurfer}
-              waveformRef={waveformRef}
-              canDirectPlay={isDirectPlayable(selectedFile)}
-              isWaveformReady={isWaveformReady}
+                isPlaying={forceNativeAudio ? nativePlaying : isPlaying}
+                currentTime={forceNativeAudio ? nativeTime : currentTime}
+                duration={forceNativeAudio ? nativeDuration : duration}
+                playbackRate={playbackRate}
+                volume={volume}
+                outputFormat={outputFormat}
+                wavesurfer={wavesurfer}
+                waveformRef={waveformRef}
+                audioRef={audioRef}
+                useNativeAudio={forceNativeAudio}
+                canDirectPlay={isDirectPlayable(selectedFile)}
+                isWaveformReady={isWaveformReady}
                 onDecodeAndPlay={() => handleDecodeAndPlay()}
                 onDownload={handleDownload}
-                onPlayPause={playPause}
+                onPlayPause={() => {
+                  if (forceNativeAudio) {
+                    if (!audioRef.current) return
+                    if (nativePlaying) {
+                      audioRef.current.pause()
+                    } else {
+                      audioRef.current.play().catch(() => undefined)
+                    }
+                  } else {
+                    playPause()
+                  }
+                }}
                 onNext={handleNext}
-              onPrev={handlePrev}
-              onRateChange={handleRateChange}
-              onSeek={handleSeek}
-              onSkip={handleSkip}
-              onVolumeChange={handleVolumeChange}
-              onOutputFormatChange={setOutputFormat}
-            />
+                onPrev={handlePrev}
+                onRateChange={handleRateChange}
+                onSeek={handleSeek}
+                onSkip={handleSkip}
+                onVolumeChange={handleVolumeChange}
+                onOutputFormatChange={setOutputFormat}
+              />
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in-95 duration-1000">
                 <div className="w-32 h-32 bg-white/50 backdrop-blur-xl rounded-[2.5rem] rotate-12 flex items-center justify-center text-coffee-200 shadow-2xl border border-white">

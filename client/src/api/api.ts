@@ -24,9 +24,9 @@ export const decodeFile = async (data: {
     fileId?: string;
     input: { path: string; format?: string };
     output: { path: string; format: string };
-    codec: string;
-    sampleRate: number;
-    channels: number;
+    codec?: string;
+    sampleRate?: number;
+    channels?: number;
     bitrate?: number;
 }) => {
     try {
@@ -42,10 +42,10 @@ export const decodeFile = async (data: {
     }
 };
 
-export const createStreamingSession = async (filePath: string) => {
+export const createStreamingSession = async (filePath: string, options?: any) => {
     const response = await api.post('/streaming/sessions', {
         filePath,
-        options: {
+        options: options || {
             transport: 'http',
             mode: 'file-based'
         }

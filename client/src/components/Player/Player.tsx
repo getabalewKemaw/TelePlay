@@ -31,6 +31,8 @@ interface PlayerProps {
     outputFormat: 'wav' | 'mp3'
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
+    audioRef?: React.RefObject<HTMLAudioElement | null>
+    useNativeAudio?: boolean
     canDirectPlay: boolean
     isWaveformReady: boolean
     onDecodeAndPlay: () => void
@@ -57,6 +59,8 @@ export function Player({
     outputFormat,
     wavesurfer,
     waveformRef,
+    audioRef,
+    useNativeAudio,
     canDirectPlay,
     isWaveformReady,
     onDecodeAndPlay,
@@ -166,7 +170,9 @@ export function Player({
                         ) : (
                             <>
                                 <Play size={18} fill="currentColor" />
-                                {selectedFile.decodedPath || canDirectPlay ? 'Play' : `Decode & Play (${outputFormat.toUpperCase()})`}
+                                {((selectedFile.decodedPath || '').toLowerCase().endsWith(`.${outputFormat}`) || canDirectPlay)
+                                    ? 'Play'
+                                    : `Decode & Play (${outputFormat.toUpperCase()})`}
                             </>
                         )}
                     </button>
@@ -241,12 +247,19 @@ export function Player({
                 <div className="relative group/ws cursor-pointer">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-coffee-50 via-white to-coffee-50 border border-coffee-100/70 shadow-inner" />
                     <div className="absolute inset-0 rounded-2xl opacity-20 bg-[linear-gradient(90deg,rgba(12,74,110,0.08)_1px,transparent_1px),linear-gradient(0deg,rgba(12,74,110,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
-                    <div ref={waveformRef} className="rounded-2xl overflow-hidden py-6 relative z-10" />
-                    {/* Progress track line */}
-                    <div
-                        className="absolute top-0 bottom-0 pointer-events-none border-l-2 border-coffee-Dark/10 z-0"
-                        style={{ left: `${(currentTime / duration) * 100}%` }}
-                    />
+                    {useNativeAudio ? (
+                        <div className="relative z-10 p-6">
+                            <audio ref={audioRef} className="w-full" controls />
+                        </div>
+                    ) : (
+                        <div ref={waveformRef} className="rounded-2xl overflow-hidden py-6 relative z-10" />
+                    )}
+                    {!useNativeAudio && (
+                        <div
+                            className="absolute top-0 bottom-0 pointer-events-none border-l-2 border-coffee-Dark/10 z-0"
+                            style={{ left: `${(currentTime / duration) * 100}%` }}
+                        />
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
