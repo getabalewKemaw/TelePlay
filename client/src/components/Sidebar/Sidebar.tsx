@@ -116,7 +116,7 @@ export function Sidebar({
 
                     {!collapsed && filteredFiles.length === 0 && (
                         <div className="text-center py-16 px-4">
-                            <AudioLines className="w-12 h-12 text-coffee-100 mx-auto mb-4 animate-pulse" />
+                            <AudioLines className="w-12 h-12 text-coffee-400 mx-auto mb-4 animate-pulse" />
                             <p className="text-xs text-coffee-400 font-bold uppercase tracking-widest leading-relaxed">
                                 {files?.length === 0 ? "Vault is empty" : "No signals match"}
                                 <br />

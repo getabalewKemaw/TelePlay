@@ -62,15 +62,15 @@
 }
 
 [data-theme="dark"] {
-    --color-coffee-50: #0b0f14;
-    --color-coffee-100: #121720;
-    --color-coffee-200: #1b2230;
-    --color-coffee-300: #263043;
-    --color-coffee-400: #97a3b6;
-    --color-coffee-500: #c2c9d6;
-    --color-coffee-600: #e0b97a;
-    --color-coffee-Dark: #f4f6f8;
-    --color-coffee-accent: #f2c38b;
+    --color-coffee-50: #0b1118;
+    --color-coffee-100: #121a24;
+    --color-coffee-200: #1a2432;
+    --color-coffee-300: #273246;
+    --color-coffee-400: #c9d2df;
+    --color-coffee-500: #e6ebf2;
+    --color-coffee-600: #f0c98a;
+    --color-coffee-Dark: #f8fafc;
+    --color-coffee-accent: #f3d3a1;
 }
 
 [data-theme="dark"] .bg-white {

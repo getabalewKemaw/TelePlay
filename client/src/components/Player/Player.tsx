@@ -100,7 +100,7 @@ export function Player({
                             ))}
                         </div>
                     ) : (
-                        <Music size={80} className="relative z-10 text-coffee-200" />
+                        <Music size={80} className="relative z-10 text-coffee-400" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent" />
                 </div>
@@ -193,7 +193,7 @@ export function Player({
             </div>
 
             {/* Main Player Area */}
-            <div className="bg-white/80 backdrop-blur-2xl p-10 rounded-[3rem] shadow-2xl shadow-coffee-200/50 space-y-8 relative">
+            <div className="bg-white/80 backdrop-blur-2xl p-12 rounded-[3rem] shadow-2xl shadow-coffee-200/50 space-y-10 relative">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="text-[10px] font-black text-coffee-500 uppercase tracking-[0.2em]">Signal Visualization</div>
@@ -262,8 +262,8 @@ export function Player({
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="bg-white/70 rounded-2xl p-4 shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="bg-white/70 rounded-2xl p-6 shadow-sm">
                         <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Timeline Control</div>
                         <input
                             type="range"
@@ -280,7 +280,7 @@ export function Player({
                         </div>
                     </div>
 
-                    <div className="bg-white/70 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div className="bg-white/70 rounded-2xl p-6 flex items-center justify-between shadow-sm">
                         <div>
                             <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-1">Seek Assist</div>
                             <div className="text-xs font-bold text-coffee-600">Jump control</div>
@@ -303,7 +303,7 @@ export function Player({
                         </div>
                     </div>
 
-                    <div className="bg-white/70 rounded-2xl p-4 shadow-sm">
+                    <div className="bg-white/70 rounded-2xl p-6 shadow-sm">
                         <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.2em] mb-3">Master Volume</div>
                         <div className="flex items-center gap-3">
                             <Volume2 size={18} className="text-coffee-600" />

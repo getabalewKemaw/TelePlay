@@ -32,7 +32,7 @@ export function AppHeader({
       </div>
       <button
         onClick={onToggleTheme}
-        className="w-10 h-10 rounded-xl bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-500 shadow-sm"
+        className="w-10 h-10 rounded-xl bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-600 shadow-sm"
         aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
       >
         {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
