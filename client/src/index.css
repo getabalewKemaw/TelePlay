@@ -1,6 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap');
 @import "tailwindcss";
 
 @theme {
+    --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
     --color-coffee-50: #FDF8F5;
     --color-coffee-100: #F3E5D8;
     --color-coffee-200: #E7D4C1;
@@ -55,6 +58,7 @@
     color: var(--color-coffee-Dark);
     scrollbar-color: var(--color-coffee-200) transparent;
     scrollbar-width: thin;
+    font-family: var(--font-sans);
 }
 
 @layer base {
