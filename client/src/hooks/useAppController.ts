@@ -42,12 +42,13 @@ export function useAppController() {
   const [forceNativeAudio, setForceNativeAudio] = useState(false)
 
   const waveformOptions = useMemo(() => ({
-    waveColor: '#2dd4bf',
+    waveColor: '#989f9eff',
     progressColor: '#0f172a',
     cursorColor: '#0f172a',
     barWidth: 3,
     barGap: 4,
     barRadius: 3,
+    splitChannels: false,
     normalize: true,
     responsive: true,
     height: 80,

@@ -87,7 +87,10 @@ export function Player({
     return (
         <div className="max-w-9xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* File Info Card */}
-            <div className="bg-transparent md:bg-white/70 backdrop-blur-xl p-0 md:p-8 rounded-[2.5rem] md:shadow-2xl md:shadow-coffee-200/40 flex flex-col md:flex-row gap-6 md:gap-8 items-center relative overflow-visible md:overflow-hidden group transition-all z-[60]">
+            <div className={cn(
+                "bg-transparent md:bg-white/70 backdrop-blur-xl p-0 md:p-8 rounded-[2.5rem] md:shadow-2xl md:shadow-coffee-200/40 flex flex-col md:flex-row gap-6 md:gap-8 items-center relative overflow-visible md:overflow-hidden group transition-all",
+                showMobileMenu ? "z-40" : "z-30"
+            )}>
                 <div className="absolute top-0 right-0 p-8 opacity-5 hidden md:block">
 
                     <Music size={120} className='border-4' />
@@ -270,7 +273,10 @@ export function Player({
             </div>
 
             {/* Main Player Area */}
-            <div className="bg-white/80 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-2xl shadow-coffee-200/50 space-y-8 md:space-y-10 relative">
+            <div className={cn(
+                "bg-white/80 backdrop-blur-2xl p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-2xl shadow-coffee-200/50 space-y-8 md:space-y-10 relative",
+                (showSpeedMenu || showInfo || showVolume) ? "z-40" : "z-20"
+            )}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-3 md:gap-4 flex-1">
                         <div className="text-[10px] font-black text-coffee-500 uppercase tracking-[0.2em] w-full md:w-auto">Signal Visualization</div>
@@ -286,7 +292,7 @@ export function Player({
                                     <span className="hidden md:inline">Speed: </span>{playbackRate}x
                                 </button>
                                 {showSpeedMenu && (
-                                    <div className="absolute right-0 bottom-full mb-2 bg-white rounded-xl shadow-2xl p-2 min-w-[80px] z-[80] animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute right-0 bottom-15 mb-2 bg-white rounded-xl shadow-2xl p-2 min-w-[80px] z-[10] animate-in fade-in zoom-in-95 duration-200">
                                         {speeds.map(s => (
                                             <button
                                                 key={s}
@@ -304,7 +310,7 @@ export function Player({
                             </div>
 
                             {/* Mobile Info Toggle */}
-                            <div className="md:hidden relative">
+                            <div className="md:hidden relative " >
                                 <button
                                     onClick={() => setShowInfo(!showInfo)}
                                     className="w-8 h-8 rounded-full bg-coffee-50 text-coffee-400 flex items-center justify-center border border-coffee-100 active:scale-95 transition-transform"
@@ -312,7 +318,7 @@ export function Player({
                                     <HelpCircle size={14} />
                                 </button>
                                 {showInfo && (
-                                    <div className="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-white/50 min-w-[240px] z-[80] space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute  mt-2 bg-white/95 backdrop-blur-xl  shadow-2xl border border-white/50 min-w-[240px] z-[80] space-y-3 animate-in fade-in zoom-in-95 duration-200">
                                         <div className="text-[10px] font-black text-coffee-400 uppercase tracking-widest border-b border-coffee-100 pb-2">Debug Info</div>
                                         {activeSession && (
                                             <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg border-2 text-[9px] font-black uppercase tracking-wider shadow-sm">
@@ -449,7 +455,7 @@ export function Player({
                         step={0.01}
                         value={Math.min(currentTime, duration || 0)}
                         onChange={(e) => onSeek(parseFloat(e.target.value))}
-                        className="flex-1 accent-coffee-Dark h-1 bg-coffee-100 rounded-lg appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-coffee-600 [&::-webkit-slider-thumb]:rounded-full"
+                        className="flex-1 accent-coffee-Dark h-1 bg-coffee-300 rounded-lg appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-coffee-600 [&::-webkit-slider-thumb]:rounded-full"
                     />
                     <span className="text-[10px] font-black text-coffee-400 tabular-nums w-10">{formatTime(duration)}</span>
                 </div>
@@ -497,7 +503,7 @@ export function Player({
                             onClick={() => onSkip(-10)}
                             className="md:hidden text-coffee-400 hover:text-coffee-600 active:scale-90 transition-transform relative flex items-center justify-center w-10 h-10"
                         >
-                            <RotateCcw size={28} strokeWidth={1.5} />
+                            <RotateCcw size={35} strokeWidth={1.5} />
                             <span className="absolute text-[8px] font-black top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pt-1">10</span>
                         </button>
 
@@ -527,7 +533,7 @@ export function Player({
                             onClick={() => onSkip(10)}
                             className="md:hidden text-coffee-400 hover:text-coffee-600 active:scale-90 transition-transform relative flex items-center justify-center w-10 h-10"
                         >
-                            <RotateCw size={28} strokeWidth={1.5} />
+                            <RotateCw size={35} strokeWidth={1.5} />
                             <span className="absolute text-[8px] font-black top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pt-1">10</span>
                         </button>
 
