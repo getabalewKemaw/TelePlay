@@ -1,4 +1,4 @@
-// FFmpeg Service - Core Execution Layer
+
 import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type {
@@ -10,7 +10,6 @@ import type {
 import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
 import { FFmpegFileError, FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
-
 export class FFmpegService implements IFfmpegService {
   private readonly executor: IFfmpegExecutor;
   constructor(executor?: IFfmpegExecutor) {
@@ -22,7 +21,7 @@ export class FFmpegService implements IFfmpegService {
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
     if (params.codec) {
-      // Normalize codec aliases
+      // normalize codec aliases
       if (params.codec === 'pcm_mulaw' || params.codec === 'pcm_alaw') {
         params.codec = 'g711';
       } else if (params.codec === 'adpcm_g726') {
@@ -30,8 +29,7 @@ export class FFmpegService implements IFfmpegService {
       }
 
       FFmpegValidator.validateCodec(params.codec);
-
-      // For telecom codecs, validate sampleRate and channels are provided
+      // validate sample rates and channel if provided.
       if (params.codec === 'g711' || params.codec === 'g726' || params.codec === 'g728') {
         if (!params.sampleRate) {
           throw new FFmpegValidationError(
@@ -70,14 +68,9 @@ export class FFmpegService implements IFfmpegService {
     if (params.bitrate) {
       FFmpegValidator.validateBitrate(params.bitrate);
     }
-
-    // Build command options
-    // For decoding, we need to specify input format/codec before -i
     const additionalArgs: string[] = [];
-
-    // For telecom codecs, we need to specify input format and parameters BEFORE -i
     if (params.codec && (params.codec === 'g711' || params.codec === 'g726' || params.codec === 'g728')) {
-      // Map codec to input format/demuxer
+      // map codec to input format/demuxer
       const inputFormatMap: Record<string, string> = {
         g711: 'mulaw',
         g726: 'g726',
@@ -108,7 +101,7 @@ export class FFmpegService implements IFfmpegService {
         additionalArgs.push('-acodec', 'g728');
       }
 
-      // POSSIBLY CRITICAL: For raw streams, sample rate and channels MUST be before -i
+      //  For raw streams, sample rate and channels MUST be before -i
       if (params.sampleRate && params.codec !== 'g726') { // G.726 uses -sample_rate for demuxer
         additionalArgs.push('-ar', params.sampleRate.toString());
       }
@@ -125,9 +118,7 @@ export class FFmpegService implements IFfmpegService {
     const commandOptions = {
       input: params.input.path,
       output: params.output.path,
-      // For decoding, set output codec only when targeting MP3
       codec: outputCodec,
-      // For raw streams, we already added these to additionalArgs (before -i)
       sampleRate: params.codec && ['g711', 'g726', 'g728'].includes(params.codec)
         ? undefined
         : params.sampleRate,
@@ -149,7 +140,7 @@ export class FFmpegService implements IFfmpegService {
     }
   }
   async encode(params: EncodeParams): Promise<FFmpegExecutionResult> {
-    // Validate input
+    
     FFmpegValidator.validateFilePath(params.input.path, 'input');
     FFmpegValidator.validateFilePath(params.output.path, 'output');
 
@@ -178,10 +169,6 @@ export class FFmpegService implements IFfmpegService {
       throw error;
     }
   }
-
-  /**
-   * Transcode audio file
-   */
   async transcode(params: TranscodeParams): Promise<FFmpegExecutionResult> {
     // Validate input
     FFmpegValidator.validateFilePath(params.input.path, 'input');
@@ -191,8 +178,6 @@ export class FFmpegService implements IFfmpegService {
     await FFmpegValidator.validateOutputPath(params.output.path);
     FFmpegValidator.validateEncodingParams(params.sourceEncoding);
     FFmpegValidator.validateEncodingParams(params.targetEncoding);
-
-    // Build command options
     const commandOptions = {
       input: params.input.path,
       output: params.output.path,
@@ -218,18 +203,11 @@ export class FFmpegService implements IFfmpegService {
       throw error;
     }
   }
-
-
-  /**
-   * Handle execution errors and transform them appropriately
-   */
   private handleExecutionError(
     error: unknown,
     inputPath: string,
     outputPath: string
   ): void {
-    // Error transformation is handled by the executor
-    // This method can be extended for additional error handling logic
     if (error instanceof Error && error.message.includes('ENOENT')) {
       throw new FFmpegFileError(
         `File not found: ${inputPath}`,

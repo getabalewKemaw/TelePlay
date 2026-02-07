@@ -213,10 +213,8 @@ export class StreamingController {
             const filePath = path.resolve(session.filePath);
             const stat = await fs.promises.stat(filePath);
             const range = req.headers.range;
-
             const ext = path.extname(filePath).toLowerCase();
             const mimeType = ext === '.mp3' ? 'audio/mpeg' : ext === '.wav' ? 'audio/wav' : 'application/octet-stream';
-
             if (!range) {
                 res.writeHead(200, {
                     'Content-Length': stat.size,

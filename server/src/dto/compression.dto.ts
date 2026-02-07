@@ -10,10 +10,4 @@ export interface CompressRequestDto {
     };
 }
 
-export interface CompressionResponse {
-    originalSize: number;
-    compressedSize: number;
-    compressionRatio: number;
-    outputPath: string;
-    details: CompressionResult;
-}
+

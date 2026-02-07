@@ -1,9 +1,6 @@
 
 import type { AudioCodec, SampleRate, ChannelConfig, FFmpegExecutionResult } from '../types/ffmpeg/FFmpegTypes.js';
 
-/**
- * REQUESTS
- */
 
 export interface FileConfigDto {
     path: string;
@@ -40,12 +37,5 @@ export interface TranscodeRequestDto {
     targetEncoding: AudioEncodingParamsDto;
 }
 
-/**
- * RESPONSES (mapped from service types)
- */
 
-export interface FFmpegOperationResponse {
-    jobId: string;
-    status: 'completed' | 'failed' | 'processing';
-    result: FFmpegExecutionResult;
-}
+

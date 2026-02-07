@@ -1,12 +1,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
-import type { ChunkAccessRequestDto } from '../dto/chunking.dto.js';
 import type { IChunkingService } from '../interfaces/chunking/IChunkingService.js';
-
-/**
- * Controller for Media Chunking operations
- */
 export class ChunkingController {
     private chunkingService: IChunkingService;
 
@@ -33,11 +28,7 @@ export class ChunkingController {
             next(error);
         }
     };
-    /**
-     * GET /api/chunks/at-time
-     * Query params: filePath, time
-     */
-    getChunkAtTime = async (req: Request, res: Response, next: NextFunction) => {
+  /*   getChunkAtTime = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const filePath = req.query.filePath as string;
             const time = parseFloat(req.query.time as string);
@@ -52,6 +43,6 @@ export class ChunkingController {
         } catch (error) {
             next(error);
         }
-    };
+    }; */
     
 }

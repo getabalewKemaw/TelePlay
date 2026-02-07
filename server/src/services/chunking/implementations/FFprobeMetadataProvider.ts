@@ -1,14 +1,22 @@
 /**
  * FFprobe Metadata Provider Implementation
- * Uses FFprobe to extract media metadata
+ * use  FFprobe to extract media metadata
  */
-
 import { spawn } from 'child_process';
 import path from 'path';
 import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { ChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 const FFPROBE_EXECUTABLE = 'ffprobe';
+
+type  rawFileTypes={
+  format: string,
+   codec: string; 
+   sampleRate: number; 
+   channels: number; 
+   bitrate: number 
+};
+
 export class FFprobeMetadataProvider implements IMediaMetadataProvider {
   private readonly executable: string;
  constructor(executable: string = FFPROBE_EXECUTABLE) {
@@ -40,20 +48,18 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
         reject(new ChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
       });
     });
-
     const baseArgs = [
       '-v', 'error',
       '-show_entries', 'format=duration,size,bit_rate,format_name',
       '-show_entries', 'stream=codec_name',
       '-of', 'json'
     ];
-
     try {
       const stdout = await runProbe([...baseArgs, filePath]);
       return this.parseFFprobeOutput(stdout, filePath);
     } catch (error) {
       const ext = path.extname(filePath).toLowerCase();
-      const rawProfiles: Record<string, { format: string; codec: string; sampleRate: number; channels: number; bitrate: number }> = {
+      const rawProfiles: Record<string, rawFileTypes> = {
         '.g711': { format: 'mulaw', codec: 'pcm_mulaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
         '.g711u': { format: 'mulaw', codec: 'pcm_mulaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
         '.g711a': { format: 'alaw', codec: 'pcm_alaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
@@ -61,7 +67,6 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
         '.g728': { format: 'g728', codec: 'g728', sampleRate: 8000, channels: 1, bitrate: 16000 },
         '.pcm': { format: 's16le', codec: 'pcm_s16le', sampleRate: 8000, channels: 1, bitrate: 128000 }
       };
-
       if (rawProfiles[ext]) {
         const profile = rawProfiles[ext];
         try {
@@ -80,15 +85,11 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
       throw error;
     }
   }
-  /**
-   * Parse FFprobe JSON output
-   */
+//parse the ffbrobe json output.
   private parseFFprobeOutput(output: string, filePath: string, fallback?: { codec: string; bitrate: number }): MediaMetadata {
     const data = JSON.parse(output);
-
     const format = data.format || {};
     const stream = data.streams?.[0] || {};
-
     let duration = parseFloat(format.duration || '0');
     const bitrate = format.bit_rate ? parseInt(format.bit_rate, 10) : undefined;
     const size = format.size ? parseInt(format.size, 10) : undefined;

@@ -1,7 +1,3 @@
-/**
- * Transcoding Service – Codec Interoperability Layer
- * Converts PCM and telecom codecs into browser-playable formats
- */
 
 import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
 import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
@@ -16,15 +12,9 @@ import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import type { AudioCodec } from '../../types/ffmpeg/FFmpegTypes.js';
-
-/**
- * Default target codec (browser-playable)
- */
 const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 
-/**
- * Codec compatibility matrix
- */
+
 const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compatible: TargetCodec[] }> = {
   g711: {
     recommended: 'aac',
@@ -48,48 +38,25 @@ const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compa
   }
 };
 
-/**
- * Transcoding Service Implementation
- * 
- * Responsibilities:
- * - Convert telecom codecs to browser-playable formats
- * - Support chunk-based transcoding
- * - Integrate with FFmpeg service
- * - Handle codec compatibility
- */
 export class TranscodingService implements ITranscodingService {
   private readonly ffmpegService: IFfmpegService;
-
-  /**
-   * Constructor with dependency injection
-   * @param ffmpegService - FFmpeg service instance
-   */
   constructor(ffmpegService: IFfmpegService) {
     this.ffmpegService = ffmpegService;
   }
 
-  /**
-   * Transcode a chunk (partial file)
-   */
   async transcodeChunk(params: ChunkTranscodingParams): Promise<TranscodingResult> {
-    // Validate input
+  
     if (!existsSync(params.inputPath)) {
       throw new TranscodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
     }
 
-    // Validate source encoding
     this.validateSourceEncoding(params.sourceEncoding);
-
-    // Validate target encoding
     this.validateTargetEncoding(params.targetEncoding);
 
-    // Get original size
+  
     const originalStats = await fs.stat(params.inputPath);
     const originalSize = originalStats.size;
-
-    // Perform chunk transcoding
     const startTime = Date.now();
-
     const config: TranscodingConfig = {
       source: params.sourceEncoding,
       target: params.targetEncoding,
@@ -107,8 +74,6 @@ export class TranscodingService implements ITranscodingService {
     }
 
     const executionTime = Date.now() - startTime;
-
-    // Get transcoded size
     const transcodedStats = await fs.stat(params.outputPath);
     const transcodedSize = transcodedStats.size;
 
@@ -123,9 +88,6 @@ export class TranscodingService implements ITranscodingService {
     };
   }
 
-  /**
-   * Get recommended target codec for source codec
-   */
   getRecommendedTargetCodec(sourceCodec: string): string {
     const compatibility = CODEC_COMPATIBILITY[sourceCodec as SourceCodec];
     if (!compatibility) {
@@ -133,21 +95,15 @@ export class TranscodingService implements ITranscodingService {
     }
     return compatibility.recommended;
   }
-
-  /**
-   * Perform actual transcoding using FFmpeg
-   */
   private async performTranscoding(
     inputPath: string,
     outputPath: string,
     config: TranscodingConfig
   ): Promise<void> {
-    // Map codecs to FFmpeg codec names
+  
     const sourceCodec = this.mapCodecToFFmpeg(config.source.codec);
     const targetCodec = this.mapCodecToFFmpeg(config.target.codec);
 
-    // Build transcode parameters for FFmpeg service
-    // Note: FFmpeg service transcode expects TranscodeParams format
     const transcodeParams: any = {
       input: { path: inputPath },
       output: { path: outputPath },
@@ -167,10 +123,6 @@ export class TranscodingService implements ITranscodingService {
 
     await this.ffmpegService.transcode(transcodeParams);
   }
-
-  /**
-   * Map internal codec names to FFmpeg codec names
-   */
   private mapCodecToFFmpeg(codec: string): string {
     const codecMap: Record<string, string> = {
       g711: 'pcm_mulaw',
@@ -186,9 +138,6 @@ export class TranscodingService implements ITranscodingService {
     return codecMap[codec] || codec;
   }
 
-  /**
-   * Validate source encoding
-   */
   private validateSourceEncoding(encoding: { codec: SourceCodec; bitrate?: number }): void {
     if (encoding.codec === 'g726' && !encoding.bitrate) {
       throw new TranscodingValidationError(
@@ -197,13 +146,8 @@ export class TranscodingService implements ITranscodingService {
       );
     }
   }
-
-  /**
-   * Validate target encoding
-   */
   private validateTargetEncoding(encoding: { codec: TargetCodec }): void {
-    // Target codec validation is handled by FFmpeg service
-    // Additional validation can be added here if needed
+    // 
   }
 
 }

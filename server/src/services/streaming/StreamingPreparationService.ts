@@ -1,8 +1,6 @@
 /**
- * Streaming Preparation Service â€“ Bridge Processing â†’ Streaming
  * Prepares processed chunks for network streaming with playback controls
  */
-
 import type { IStreamingPreparationService } from '../../interfaces/streaming/IStreamingPreparationService.js';
 import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
@@ -22,10 +20,6 @@ import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
-
-/**
- * Default streaming preparation options
- */
 const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   transport: 'http',
   mode: 'file-based',
@@ -35,25 +29,11 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   preCompress: false,
   bufferSize: 10
 };
-
-/**
- * Streaming Preparation Service Implementation
- * 
- * Responsibilities:
- * - Prepare chunks for streaming
- * - Handle playback controls (play, pause, seek, ff, rewind)
- * - Integrate chunking, transcoding, compression
- * - Provide transport-agnostic streaming interface
- */
 export class StreamingPreparationService implements IStreamingPreparationService {
   private readonly chunkingService: IChunkingService;
   private readonly transcodingService: ITranscodingService;
   private readonly compressionService: ICompressionService;
   private readonly sessions: Map<string, StreamingSession>;
-
-  /**
-   * Constructor with dependency injection
-   */
   constructor(
     chunkingService: IChunkingService,
     transcodingService: ITranscodingService,
@@ -64,10 +44,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
     this.compressionService = compressionService;
     this.sessions = new Map();
   }
-
-  /**
-   * Create a streaming session
-   */
   async createSession(
     filePath: string,
     options?: StreamingPreparationOptions
@@ -75,10 +51,8 @@ export class StreamingPreparationService implements IStreamingPreparationService
     if (!existsSync(filePath)) {
       throw new StreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
     }
-
     const sessionId = randomUUID();
     const opts = { ...DEFAULT_OPTIONS, ...options };
-
     const session: StreamingSession = {
       sessionId,
       filePath,
@@ -97,25 +71,19 @@ export class StreamingPreparationService implements IStreamingPreparationService
       startedAt: Date.now(),
       lastActivity: Date.now()
     };
-
     this.sessions.set(sessionId, session);
-
     return session;
   }
-
-  /**
-   * Prepare chunks for streaming
-   */
+// prepare chunks for streaming.
   async prepareChunks(
     sessionId: string,
     chunkIndices?: number[]
   ): Promise<PreparedChunk[]> {
     const session = this.findSessionOrThrow(sessionId);
 
-    // Get chunks from chunking service
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
 
-    // Filter to requested chunks if provided
+    // filter to requested chunks if provided
     const chunksToPrepare = chunkIndices
       ? chunks.filter((_, idx) => chunkIndices.includes(idx))
       : chunks;
@@ -129,10 +97,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
 
     return preparedChunks;
   }
-
-  /**
-   * Handle playback control (play, pause, seek, etc.)
-   */
   async handlePlaybackControl(
     sessionId: string,
     request: PlaybackControlRequest
@@ -161,16 +125,12 @@ export class StreamingPreparationService implements IStreamingPreparationService
         if (request.targetTime !== undefined) {
           newTime = request.targetTime;
           newState = 'seeking';
-
-          // Get chunks/segments for new position
           const result = await this.getChunksForTime(sessionId, newTime);
           chunksToLoad = result;
-
-          // Get segments containing these chunks
+          // get segments containing these chunks
           segmentsToLoad = session.preparedSegments.filter(seg =>
             seg.chunks.some(c => chunksToLoad.includes(c))
           );
-
           newState = 'ready';
         }
         break;
@@ -194,7 +154,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
         if (request.amount) {
           newTime = Math.max(0, session.currentTime - request.amount);
           newState = 'seeking';
-
           const result = await this.getChunksForTime(sessionId, newTime);
           chunksToLoad = result;
 
@@ -214,11 +173,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
         );
     }
 
-    // Update session
+    // update the  session
     session.state = newState;
     session.currentTime = newTime;
     session.lastActivity = Date.now();
-
     return {
       state: newState,
       currentTime: newTime,
@@ -228,22 +186,14 @@ export class StreamingPreparationService implements IStreamingPreparationService
     };
   }
 
-  /**
-   * Get chunks needed for current playback position
-   */
+  // get chunks needed for the current playback soln
   private async getChunksForTime(sessionId: string, time: number): Promise<PreparedChunk[]> {
     const session = this.findSessionOrThrow(sessionId);
-
-    // Get chunk at time from chunking service
     const chunk = await this.chunkingService.getChunkAtTime(session.filePath, time);
-
-    // Find prepared chunks for this chunk and nearby chunks
     const allPreparedChunks: PreparedChunk[] = [];
     session.preparedSegments.forEach(seg => {
       allPreparedChunks.push(...seg.chunks);
     });
-
-    // Find chunks around the target time (current chunk + buffer)
     const bufferSize = 10; // seconds
     const targetChunks = allPreparedChunks.filter(prepared => {
       const chunkTime = prepared.chunk.startTime;
@@ -266,42 +216,30 @@ export class StreamingPreparationService implements IStreamingPreparationService
     return targetChunks;
   }
 
-  /**
-   * Get stream metadata
-   */
   async getStreamMetadata(sessionId: string): Promise<StreamMetadata> {
     const session = this.findSessionOrThrow(sessionId);
-
-    // Get chunks to determine duration
+ //get chunks to determine duration
     const chunks = await this.chunkingService.getAllChunks(session.filePath);
     const duration = chunks.length > 0 ? chunks[chunks.length - 1]!.endTime : 0;
-
     return {
       streamId: sessionId,
       filePath: session.filePath,
       duration,
-      codec: 'aac', // Default target codec
+      codec: 'aac', 
       sampleRate: 44100,
       channels: 2,
       mimeType: this.getMimeTypeForCodec(session)
     };
   }
 
-  /**
-   * Cleanup session
-   */
   async cleanupSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
     if (session) {
-      // Cleanup prepared files if needed
-      // In production, you might want to delete temporary transcoded/compressed files
       this.sessions.delete(sessionId);
+      // we need to delte the processed files after some times/in production
     }
   }
 
-  /**
-   * Prepare a single chunk for streaming
-   */
   private async prepareSingleChunk(
     session: StreamingSession,
     chunk: any
@@ -332,7 +270,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
         transcodedPath = transcoded.outputPath;
         streamPath = transcodedPath;
       } catch (error) {
-        // If transcoding fails, use original
+    
         console.warn('Transcoding failed, using original:', error);
       }
     }
@@ -346,18 +284,15 @@ export class StreamingPreparationService implements IStreamingPreparationService
         compressedPath = compressed.outputPath;
         streamPath = compressedPath;
       } catch (error) {
-        // If compression fails, use transcoded/original
         console.warn('Compression failed, using previous:', error);
       }
     }
-
-    // Get final file size
+// get final file size
     let size = 0;
     if (existsSync(streamPath)) {
       const stats = await fs.stat(streamPath);
       size = stats.size;
     }
-
     return {
       chunk,
       transcodedPath,
@@ -369,17 +304,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
       preparedAt: Date.now()
     };
   }
-
-  /**
-   * Get session by ID (Public interface)
-   */
+// get the session by the ids .
   async getSession(sessionId: string): Promise<StreamingSession | undefined> {
     return this.sessions.get(sessionId);
   }
-
-  /**
-   * Get session (with error handling)
-   */
   private findSessionOrThrow(sessionId: string): StreamingSession {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -388,17 +316,10 @@ export class StreamingPreparationService implements IStreamingPreparationService
     return session;
   }
 
-  /**
-   * Get session options
-   */
   private getSessionOptions(session: StreamingSession): Required<StreamingPreparationOptions> {
-    // In a full implementation, store options with session
     return DEFAULT_OPTIONS;
   }
 
-  /**
-   * Get MIME type for codec
-   */
   private getMimeTypeForCodec(session: StreamingSession): string {
     const codecMimeTypes: Record<string, string> = {
       aac: 'audio/aac',
@@ -409,10 +330,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
 
     return codecMimeTypes['aac'] || 'audio/aac';
   }
-
-  /**
-   * Generate temporary file path
-   */
   private generateTempPath(originalPath: string, suffix: string): string {
     const dir = path.dirname(originalPath);
     const ext = path.extname(originalPath);
@@ -420,9 +337,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
     return path.join(dir, `${baseName}_${suffix}${ext}`);
   }
 
-  /**
-   * Get total duration
-   */
   private async getTotalDuration(sessionId: string): Promise<number> {
     const session = this.findSessionOrThrow(sessionId);
     const chunks = await this.chunkingService.getAllChunks(session.filePath);

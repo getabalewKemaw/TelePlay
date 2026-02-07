@@ -1,11 +1,4 @@
-/**
- * Chunking Service Custom Errors
- * Production-ready error handling with proper error types
- */
 
-/**
- * Base error class for all chunking-related errors
- */
 export class ChunkingError extends Error {
   constructor(
     message: string,

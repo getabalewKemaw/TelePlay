@@ -1,5 +1,4 @@
 /**
- * Segmentation Strategy Factory
  * Creates appropriate strategy instances based on strategy type
  */
 
@@ -15,9 +14,6 @@ import { SegmentationStrategyError } from '../../../errors/segmentation/Segmenta
  * Factory for creating segmentation strategies
  */
 export class SegmentationStrategyFactory {
-  /**
-   * Create a strategy instance based on strategy type
-   */
   static create(strategy: SegmentationStrategy): ISegmentationStrategy {
     switch (strategy) {
       case 'fixed':
@@ -35,10 +31,6 @@ export class SegmentationStrategyFactory {
         );
     }
   }
-
-  /**
-   * Get default strategy
-   */
   static getDefault(): ISegmentationStrategy {
     return new AdaptiveSegmentationStrategy();
   }

@@ -1,16 +1,8 @@
-// FFmpeg Executor Implementation
-// we use spawn from child_process to execute ffmpeg commands asynchronously, capturing stdout and stderr
 import { spawn } from 'child_process';
 import type { IFfmpegExecutor } from '../../../interfaces/ffmpeg/IFfmpegExecutor.js';
-
-
 import type { FFmpegCommandOptions, FFmpegExecutionResult } from '../../../types/ffmpeg/FFmpegTypes.js';
 import { FFmpegExecutionError, FFmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
 import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
-/**
- * FFmpeg Executor implementation
- * Handles actual FFmpeg process execution with proper error handling and metrics
- */
 export class FFmpegExecutor implements IFfmpegExecutor {
   private readonly executable: string;
   private readonly defaultTimeout: number;
@@ -18,7 +10,6 @@ export class FFmpegExecutor implements IFfmpegExecutor {
     this.executable = executable;
     this.defaultTimeout = defaultTimeout;
   }
-  //  Execute FFmpeg command
   async execute(
     options: FFmpegCommandOptions,
     timeout: number = this.defaultTimeout
@@ -52,13 +43,13 @@ export class FFmpegExecutor implements IFfmpegExecutor {
           stdout += data.toString();
         });
       }
-      // Capture stderr
+      // capture stderr
       if (process.stderr) {
         process.stderr.on('data', (data: Buffer) => {
           stderr += data.toString();
         });
       }
-      // Handle process completion
+      // handle process completion
       process.on('close', (exitCode) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -88,7 +79,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
           );
         }
       });
-      // Handle process errors
+      // handle  process errors
       process.on('error', (error: Error) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -108,12 +99,9 @@ export class FFmpegExecutor implements IFfmpegExecutor {
   private buildCommandArgs(options: FFmpegCommandOptions): string[] {
     const args: string[] = [];
 
-    // Start time must be specified BEFORE input for fast seeking or AFTER for accurate seeking.
-    // Generally, before -i is faster.
     if (options.startTime !== undefined) {
       args.push('-ss', options.startTime.toString());
     }
-
     if (options.additionalArgs) {
       args.push(...options.additionalArgs);
     }
@@ -144,7 +132,6 @@ export class FFmpegExecutor implements IFfmpegExecutor {
     args.push(options.output);
     return args;
   }
-  // Map internal codec names to FFmpeg codec names
   private mapCodecToFFmpeg(codec: string): string {
     const codecMap: Record<string, string> = {
       g711: 'pcm_mulaw', // G.711 μ-law

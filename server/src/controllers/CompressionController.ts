@@ -3,20 +3,12 @@ import type { Request, Response, NextFunction } from 'express';
 import { CompressionService } from '../services/compression/CompressionService.js';
 import type { CompressRequestDto } from '../dto/compression.dto.js';
 import type { ICompressionService } from '../interfaces/compression/ICompressionService.js';
-
-/**
- * Controller for Media Compression operations
- */
 export class CompressionController {
     private compressionService: ICompressionService;
 
     constructor(compressionService?: ICompressionService) {
         this.compressionService = compressionService || new (CompressionService as any)();
     }
-
-    /**
-     * POST /api/compress
-     */
     compress = async (req: Request<{}, {}, CompressRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { inputPath, options } = req.body;

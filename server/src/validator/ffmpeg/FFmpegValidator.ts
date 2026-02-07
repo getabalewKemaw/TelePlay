@@ -1,9 +1,4 @@
 
-/**
- * FFmpeg Parameter Validators
- * Validates input parameters before FFmpeg execution
- */
-
 import type { AudioCodec,SampleRate,ChannelConfig,AudioEncodingParams } from '../../types/ffmpeg/FFmpegTypes.js';
 // import { FFmpegValidationError } from '../errors/FFmpegErrors.js';
 import { FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
@@ -13,9 +8,6 @@ import { existsSync } from 'fs';
 import { SUPPORTED_CHANNELS,SUPPORTED_CODECS,SUPPORTED_SAMPLE_RATES } from '../../constants/ffmpeg/index.js';
 import path from 'path';
 
-/**
- * Validator class for FFmpeg parameters
- */
 export class FFmpegValidator {
   static validateCodec(codec: string): asserts codec is AudioCodec {
     if (!SUPPORTED_CODECS.has(codec as AudioCodec)) {
@@ -58,10 +50,6 @@ export class FFmpegValidator {
     this.validateChannels(params.channels);
     this.validateBitrate(params.bitrate);
   }
-
-  /**
-   * Validates file path exists and is accessible
-   */
   static async validateInputFile(filePath: string): Promise<void> {
     if (!filePath || typeof filePath !== 'string') {
       throw new FFmpegValidationError('Input file path is required and must be a string', 'input');
@@ -105,10 +93,6 @@ export class FFmpegValidator {
       );
     }
   }
-
-  /**
-   * Validates file path format
-   */
   static validateFilePath(filePath: string, fieldName: string): void {
     if (!filePath || typeof filePath !== 'string') {
       throw new FFmpegValidationError(

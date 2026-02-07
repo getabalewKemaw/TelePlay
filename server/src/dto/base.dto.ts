@@ -21,10 +21,6 @@ export interface ResponseMetadata {
     version: string;
     processingTimeMs?: number;
 }
-
-/**
- * Common Error Codes
- */
 export enum ApiErrorCode {
     VALIDATION_ERROR = 'VALIDATION_ERROR',
     NOT_FOUND = 'NOT_FOUND',

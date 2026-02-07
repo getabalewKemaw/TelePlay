@@ -1,11 +1,4 @@
-/**
- * Transcoding Service Custom Errors
- * Production-ready error handling with proper error types
- */
 
-/**
- * Base error class for all transcoding-related errors
- */
 export class TranscodingError extends Error {
   constructor(
     message: string,

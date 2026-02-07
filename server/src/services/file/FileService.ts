@@ -11,12 +11,6 @@ export class FileService implements IFileService {
 
     async discoverFiles(directoryPath: string): Promise<void> {
         if (!existsSync(directoryPath)) return;
-
-        // Recursive directory read (Node.js 20+ supports { recursive: true } for readdir, 
-        // but for compatibility we'll use a manual recursive approach or a helper if strict node version isn't guaranteed. 
-        // Actually, modern Node.js fs.readdir with recursive: true returns file names, but paths are tricky.
-        // Let's stick to a robust manual recursion for clarity and control.
-
         const scan = async (dir: string) => {
             const entries = await fs.readdir(dir, { withFileTypes: true });
             for (const entry of entries) {
@@ -37,7 +31,6 @@ export class FileService implements IFileService {
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
         const { query, sort = 'createdAt', order = 'desc', page = 1, limit = 10 } = criteria;
-
         const where = query ? {
             OR: [
                 { filename: { contains: query, mode: 'insensitive' as any } },
@@ -72,8 +65,6 @@ export class FileService implements IFileService {
         const normalizedPath = path.resolve(filePath);
         const relativePath = path.relative(process.cwd(), normalizedPath);
         const filename = path.basename(normalizedPath);
-
-        // Check if already exists
         const existing = await prisma.mediaFile.findFirst({
             where: {
                 OR: [
@@ -100,11 +91,9 @@ export class FileService implements IFileService {
                     status: 'ready'
                 }
             });
-
             return { ...file, fileSize: file.fileSize?.toString() };
         } catch (error) {
             console.error(`Failed to process file ${normalizedPath}:`, error);
-            // Create with error status
             const file = await prisma.mediaFile.create({
                 data: {
                     filename,

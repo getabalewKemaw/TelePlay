@@ -13,10 +13,6 @@ import type {
 } from '../../types/segmentation/SegmentationTypes.js';
 import { SegmentationStrategyFactory } from './strategies/SegmentationStrategyFactory.js';
 import { SegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
-
-/**
- * Default segmentation configuration
- */
 const DEFAULT_CONFIG: SegmentationConfig = {
   strategy: 'adaptive',
   chunksPerSegment: 5,
@@ -41,14 +37,6 @@ const DEFAULT_CONFIG: SegmentationConfig = {
 export class SegmentationService implements ISegmentationService {
   private readonly chunkingService: IChunkingService;
   private readonly defaultConfig: SegmentationConfig;
-
-
-
-
-
-  /**
-   * Build configuration from options
-   */
   private buildConfig(options?: SegmentationOptions): SegmentationConfig {
     return {
       strategy: options?.strategy ?? this.defaultConfig.strategy,
@@ -62,9 +50,6 @@ export class SegmentationService implements ISegmentationService {
     };
   }
 
-  /**
-   * Validate configuration
-   */
   private validateConfig(config: SegmentationConfig): void {
     if (config.chunksPerSegment && config.chunksPerSegment <= 0) {
       throw new SegmentationValidationError(

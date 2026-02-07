@@ -3,39 +3,28 @@
  * Creates segments with increasing sizes (small initial, larger later)
  * Optimized for progressive playback and low initial latency
  */
-
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
-
-/**
- * Progressive segmentation strategy
- * Creates segments with increasing sizes for progressive playback
- */
 export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
   getName(): string {
     return 'progressive';
   }
-
   createSegments(chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] {
     if (chunks.length === 0) {
       return [];
     }
-
     const baseChunksPerSegment = config.chunksPerSegment ?? 5;
     const initialMultiplier = config.initialSegmentMultiplier ?? 0.5;
     const optimizeForLowLatency = config.optimizeForLowLatency ?? true;
-
     const segments: SegmentMetadata[] = [];
     let chunkIndex = 0;
     let segmentIndex = 0;
-
     while (chunkIndex < chunks.length) {
-      // Calculate chunks for this segment (increases with each segment)
       const multiplier = segmentIndex === 0
         ? initialMultiplier
-        : 1 + (segmentIndex * 0.1); // Gradually increase
+        : 1 + (segmentIndex * 0.1); // gradually  increase
 
       const chunksForSegment = Math.max(
         1,
@@ -66,7 +55,6 @@ export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
       } else {
         priority = SegmentPriority.LOW;
       }
-
       const segment: SegmentMetadata = {
         index: segmentIndex,
         startTime,

@@ -8,9 +8,6 @@ import type {
     StreamMetadata
 } from '../types/streaming/StreamingTypes.js';
 
-/**
- * REQUESTS
- */
 
 export interface CreateSessionRequestDto {
     filePath: string;

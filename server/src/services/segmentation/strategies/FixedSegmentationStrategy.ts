@@ -1,17 +1,10 @@
 /**
- * Fixed Segmentation Strategy
  * Groups chunks into segments with a fixed number of chunks per segment
  */
-
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
-
-/**
- * Fixed segmentation strategy
- * Divides chunks into segments with a fixed number of chunks per segment
- */
 export class FixedSegmentationStrategy implements ISegmentationStrategy {
   getName(): string {
     return 'fixed';

@@ -7,16 +7,10 @@ import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
-
-/**
- * Adaptive segmentation strategy
- * Groups chunks to achieve target segment duration
- */
 export class AdaptiveSegmentationStrategy implements ISegmentationStrategy {
   getName(): string {
     return 'adaptive';
   }
-
   createSegments(chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] {
     if (chunks.length === 0) {
       return [];
@@ -55,19 +49,16 @@ export class AdaptiveSegmentationStrategy implements ISegmentationStrategy {
         // Add chunk and create segment if we've reached target or minimum
         currentChunks.push(chunk);
         currentDuration = newDuration;
-
         segments.push(this.createSegment(
           segmentIndex++,
           currentChunks,
           currentStartTime,
           optimizeForLowLatency
         ));
-
-        // Reset for next segment
         currentChunks = [];
         currentDuration = 0;
       } else {
-        // Add chunk to current segment
+        // add  chunk to current segment
         currentChunks.push(chunk);
         currentDuration = newDuration;
       }

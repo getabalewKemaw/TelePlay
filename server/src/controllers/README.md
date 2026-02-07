@@ -46,8 +46,5 @@ The controller layer follows the **Clean Architecture** principles, ensuring tha
 *   `GET /api/streaming/sessions/:sessionId/metadata`: Retrieve stream metadata.
 *   `DELETE /api/streaming/sessions/:sessionId`: Cleanup session resources.
 
-## Implementation Details
 
-*   **TypeScript**: Full type safety with strict type-only imports for `verbatimModuleSyntax` compatibility.
-*   **Modular**: Each service has a dedicated controller and route file, making the system easy to extend.
-*   **Performance**: Utilizes existing high-performance services without adding overhead.
+

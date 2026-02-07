@@ -1,9 +1,4 @@
 
-/**
- * Chunking Service - Time-Based Media Control
- * Splits media files into time-based chunks for fast-forward, rewind, and streaming
- */
-
 import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 import type {
@@ -18,9 +13,6 @@ import { FFprobeMetadataProvider } from './implementations/FFprobeMetadataProvid
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
-/**
- * Default chunk duration in seconds (2 minutes)
- */
 const DEFAULT_CHUNK_DURATION = 120;
 export class ChunkingService implements IChunkingService {
   private readonly metadataProvider: IMediaMetadataProvider;
@@ -41,10 +33,8 @@ export class ChunkingService implements IChunkingService {
       throw new ChunkingFileError(`Media file does not exist: ${filePath}`, filePath);
     }
 
-    // Get media metadata
+    
     const metadata = await this.metadataProvider.getMetadata(filePath);
-
-    // Build chunking config
     const config: ChunkingConfig = {
       chunkDuration: options?.chunkDuration ?? this.defaultChunkDuration,
       totalDuration: metadata.duration,
@@ -52,14 +42,10 @@ export class ChunkingService implements IChunkingService {
       outputDirectory: options?.outputDirectory,
       baseFilename: options?.baseFilename ?? path.basename(filePath, path.extname(filePath))
     };
-
-    // Validate config
     this.validateConfig(config);
-
-    // Generate meta-chunks
     const chunks = this.calculateChunks(config);
 
-    // Physically split data if requested
+    // Physically split data 
     if (config.generateFiles && config.outputDirectory) {
       if (!existsSync(config.outputDirectory)) {
         mkdirSync(config.outputDirectory, { recursive: true });
@@ -76,7 +62,6 @@ export class ChunkingService implements IChunkingService {
         }
       }
     }
-
     return {
       chunks,
       totalChunks: chunks.length,
@@ -85,18 +70,10 @@ export class ChunkingService implements IChunkingService {
       lastChunkDuration: chunks.length > 0 ? chunks[chunks.length - 1]!.duration : 0
     };
   }
-
   async getAllChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkMetadata[]> {
     const result = await this.generateChunks(filePath, options);
     return result.chunks;
   }
-
-
-
-  /**
-   * Calculate chunks based on configuration
-   * This is the core chunking algorithm
-   */
   private calculateChunks(config: ChunkingConfig): ChunkMetadata[] {
     const chunks: ChunkMetadata[] = [];
     const totalDuration = config.totalDuration;
@@ -116,8 +93,7 @@ export class ChunkingService implements IChunkingService {
         endTime,
         duration
       };
-
-      // Add file path if generating files
+      //add file paths 
       if (config.generateFiles && config.outputDirectory) {
         const extension = path.extname(config.baseFilename || 'chunk');
         const baseName = path.basename(config.baseFilename || 'chunk', extension);
@@ -126,57 +102,11 @@ export class ChunkingService implements IChunkingService {
           `${baseName}_chunk_${i.toString().padStart(4, '0')}${extension}`
         );
       }
-
       chunks.push(chunk);
     }
-
     return chunks;
   }
-
-  /**
-   * Find chunk at a specific time
-   */
-  private findChunkAtTime(
-    chunks: ChunkMetadata[],
-    time: number,
-    exact: boolean
-  ): ChunkMetadata | null {
-    // Binary search for efficiency with large chunk counts
-    let left = 0;
-    let right = chunks.length - 1;
-
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      const chunk = chunks[mid];
-      if (chunk && time >= chunk.startTime && time < chunk.endTime) {
-        return chunk;
-      }
-      if (chunk && time < chunk.startTime) {
-        right = mid - 1;
-      } else {
-        left = mid + 1;
-      }
-    }
-
-    // If exact match required, return null
-    if (exact) {
-      return null;
-    }
-
-    // Otherwise, return nearest chunk or null
-    if (left > 0 && left <= chunks.length) {
-      return typeof chunks[left - 1] !== 'undefined' ? chunks[left - 1]! : null;
-    }
-    if (right >= 0 && right < chunks.length) {
-      return typeof chunks[right] !== 'undefined' ? chunks[right]! : null;
-    }
-
-    return typeof chunks[0] !== 'undefined' ? chunks[0]! : null;
-  }
-
-  /**
-   * Validate chunking configuration
-   */
+ 
   private validateConfig(config: ChunkingConfig): void {
     if (config.chunkDuration <= 0) {
       throw new ChunkingValidationError(

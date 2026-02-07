@@ -1,13 +1,7 @@
-/**
- * Compression Presets
- * Pre-configured compression settings for common use cases
- */
 
+//pre configured compression settings.
 import type { CompressionPreset } from '../../../types/compression/CompressionTypes.js';
 
-/**
- * Default compression presets
- */
 export const COMPRESSION_PRESETS: CompressionPreset[] = [
   {
     name: 'fast',
@@ -67,20 +61,4 @@ export const COMPRESSION_PRESETS: CompressionPreset[] = [
   }
 ];
 
-/**
- * Get preset by name
- */
-export function getPreset(name: string): CompressionPreset | undefined {
-  return COMPRESSION_PRESETS.find(preset => preset.name === name);
-}
 
-/**
- * Get default preset
- */
-export function getDefaultPreset(): CompressionPreset {
-  const preset = COMPRESSION_PRESETS.find(p => p.name === 'balanced') || COMPRESSION_PRESETS[0];
-  if (!preset) {
-    throw new Error('No compression presets available');
-  }
-  return preset;
-}

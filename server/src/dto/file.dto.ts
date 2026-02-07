@@ -22,14 +22,6 @@ export interface ListFilesRequestDto {
     limit?: number;
 }
 
-export interface ListFilesResponseDto extends ApiResponse<FileMetadataDto[]> {
-    meta: {
-        total: number;
-        page: number;
-        limit: number;
-        timestamp: string;
-        version: string;
-    };
-}
+
 
 export interface UploadFileResponseDto extends ApiResponse<FileMetadataDto> { }

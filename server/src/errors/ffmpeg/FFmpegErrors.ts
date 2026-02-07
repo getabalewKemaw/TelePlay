@@ -1,11 +1,4 @@
-/**
- * FFmpeg Service Custom Errors
- * Production-ready error handling with proper error types
- */
 
-/**
- * Base error class for all FFmpeg-related errors
- */
 export class FFmpegError extends Error {
   constructor(
     message: string,
@@ -17,10 +10,6 @@ export class FFmpegError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
-
-/**
- * Validation error - thrown when input parameters are invalid
- */
 export class FFmpegValidationError extends FFmpegError {
   constructor(message: string, public readonly field?: string) {
     super(message, 'VALIDATION_ERROR');

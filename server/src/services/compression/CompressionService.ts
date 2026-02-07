@@ -1,26 +1,15 @@
-/**
- * Compression Service – Network Efficiency Layer
- * Reduces media size before network transmission or storage
- */
 
+//reduce the media size for storege and before  transmitted through over a  network.
 import type { ICompressionService } from '../../interfaces/compression/ICompressionService.js';
-
 import type { IFfmpegService } from '../../interfaces/compression/IFfmpegService.js';
 import type {
-  CompressionResult,
+
   CompressionOptions,
   CompressionConfig,
 } from '../../types/compression/CompressionTypes.js';
-import { CompressionValidator } from '../../validator/compression/CompressionValidator.js';
-import { CompressionValidationError, CompressionFileError } from '../../errors/compression/CompressionErrors.js';
-import { promises as fs } from 'fs';
-
 import path from 'path';
 import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 
-/**
- * Default compression configuration
- */
 const DEFAULT_CONFIG: CompressionConfig = {
   level: 'medium',
   strategy: 'balanced',
@@ -28,28 +17,10 @@ const DEFAULT_CONFIG: CompressionConfig = {
   codec: 'aac',
   preserveOriginal: true
 };
-
-/**
- * Compression Service Implementation
- * 
- * Responsibilities:
- * - Compress media files using FFmpeg
- * - Support multiple compression levels and strategies
- * - Track compression metrics
- * - Provide compression recommendations
- * - Balance compression ratio vs decoding latency
- */
 export class CompressionService implements ICompressionService {
   private readonly ffmpegService: IFfmpegService;
   private readonly defaultConfig: CompressionConfig;
 
-
-
-
-
-  /**
-   * Perform actual compression using FFmpeg
-   */
   private async performCompression(
     inputPath: string,
     outputPath: string,
@@ -78,9 +49,6 @@ export class CompressionService implements ICompressionService {
     });
   }
 
-  /**
-   * Get bitrate for compression level and strategy
-   */
   private getBitrateForLevel(level: CompressionLevel, strategy: CompressionStrategy): number {
     const bitrateMap: Record<string, Record<string, number>> = {
       low: { fast: 160, quality: 192, balanced: 128, size: 112 },
@@ -92,9 +60,6 @@ export class CompressionService implements ICompressionService {
     return bitrateMap[level]?.[strategy] ?? 96;
   }
 
-  /**
-   * Generate output path for compressed file
-   */
   private generateOutputPath(inputPath: string, config: CompressionConfig): string {
     const dir = path.dirname(inputPath);
     const ext = path.extname(inputPath);
@@ -103,10 +68,6 @@ export class CompressionService implements ICompressionService {
     
     return path.join(dir, `${baseName}_compressed_${config.level}_${codec}${ext}`);
   }
-
-  /**
-   * Build configuration from options
-   */
   private buildConfig(options?: CompressionOptions): CompressionConfig {
     return {
       level: options?.level ?? this.defaultConfig.level,

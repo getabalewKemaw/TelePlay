@@ -1,11 +1,4 @@
-/**
- * Segmentation Service Custom Errors
- * Production-ready error handling with proper error types
- */
 
-/**
- * Base error class for all segmentation-related errors
- */
 export class SegmentationError extends Error {
   constructor(
     message: string,
@@ -17,10 +10,6 @@ export class SegmentationError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
-
-/**
- * Validation error - thrown when input parameters are invalid
- */
 export class SegmentationValidationError extends SegmentationError {
   constructor(message: string, public readonly field?: string) {
     super(message, 'VALIDATION_ERROR');

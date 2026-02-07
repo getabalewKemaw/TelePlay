@@ -2,15 +2,12 @@ import 'dotenv/config';
 import express from 'express';
 import type { Request, Response } from 'express';
 import apiRoutes from './routes/index.js';
-
 import { errorHandler } from './middleware/errorHandler.js';
-
 import { FileService } from './services/file/FileService.js';
 import { ChunkingService } from './services/chunking/ChunkingService.js';
 import path from 'path';
 import cors from 'cors';
 import fs from 'fs';
-
 const app = express();
 app.use(cors({
     origin: true,
@@ -19,22 +16,16 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 3000;
-
-// Initialize services for background discovery
 const fileService = new FileService(new ChunkingService() as any);
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR || './uploads');
-
-// Ensure uploads directory exists
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
-// Discovery Helper
 const runDiscovery = async () => {
     try {
         await fileService.discoverFiles(uploadsDir);
 
-        // Also scan MEDIA_ROOT if defined
+        // scan MEDIA_ROOT if defined
         if (process.env.MEDIA_ROOT) {
             const mediaRoot = path.resolve(process.env.MEDIA_ROOT);
             if (fs.existsSync(mediaRoot)) {
@@ -46,7 +37,7 @@ const runDiscovery = async () => {
     }
 };
 
-// 1. Startup Discovery
+// 1.start up Discovery
 runDiscovery().then(() => console.log('Initial file discovery completed'));
 
 // 2. Real-time Watcher (Debounced)
@@ -62,8 +53,6 @@ const triggerDiscovery = (source: string) => {
 fs.watch(uploadsDir, { recursive: true }, (eventType, filename) => {
     if (filename) triggerDiscovery('uploads');
 });
-
-// Watch MEDIA_ROOT if defined
 if (process.env.MEDIA_ROOT) {
     const mediaRoot = path.resolve(process.env.MEDIA_ROOT);
     if (fs.existsSync(mediaRoot)) {
@@ -73,24 +62,17 @@ if (process.env.MEDIA_ROOT) {
         console.log(`Watching custom media root: ${mediaRoot}`);
     }
 }
-
-// 3. Fallback Periodic Discovery (every 30 seconds)
 setInterval(() => {
     runDiscovery();
 }, 30 * 1000);
 
-// Body parsing middleware
 app.use(express.json());
 
-// Main Landing
 app.get("/", (req: Request, res: Response) => {
     res.send("I-Player Backend API is active");
 });
-
-// API Routes
 app.use('/api', apiRoutes);
 
-// Error Handling
 app.use(errorHandler);
 
 app.listen(PORT, () => {

@@ -4,10 +4,8 @@ import { ApiErrorCode } from '../dto/base.dto.js';
 import type { ApiResponse } from '../dto/base.dto.js';
 import { FFmpegValidationError, FFmpegExecutionError, FFmpegTimeoutError, FFmpegFileError } from '../errors/ffmpeg/FFmpegErrors.js';
 
-/**
- * Global Error Handler Middleware
- * Maps domain-specific errors to standard HTTP responses
- */
+//Global Error Handler Middleware
+
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
     const startTime = (req as any).startTime || Date.now();
     const processingTimeMs = Date.now() - startTime;
@@ -16,8 +14,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     let code = ApiErrorCode.INTERNAL_ERROR;
     let message = 'An internal server error occurred';
     let details = undefined;
-
-    // 1. Map Domain Errors to HTTP Statuses & API Codes
+//map domain errors with there respective Api errors.
     if (err instanceof FFmpegValidationError) {
         status = 400;
         code = ApiErrorCode.VALIDATION_ERROR;
@@ -42,17 +39,16 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
         message = err.message;
         details = { path: err.filePath };
     } else if (err.status) {
-        // Handle standard HTTP errors if they have a status property
         status = err.status;
     }
-
-    // 2. Logging Strategy (Simple console for now, as requested)
+    else{
+        status=400;
+        message="some thing  bad things happen on the server please try again"
+    }
     console.error(`[${new Date().toISOString()}] ${req.method} ${req.url} - Error: ${err.message}`);
     if (err.stack && process.env.NODE_ENV === 'development') {
         console.debug(err.stack);
     }
-
-    // 3. Consistent Response Format
     const response: ApiResponse<null> = {
         success: false,
         error: {

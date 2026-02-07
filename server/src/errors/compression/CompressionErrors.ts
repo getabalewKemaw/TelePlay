@@ -1,11 +1,4 @@
-/**
- * Compression Service Custom Errors
- * Production-ready error handling with proper error types
- */
 
-/**
- * Base error class for all compression-related errors
- */
 export class CompressionError extends Error {
   constructor(
     message: string,
@@ -18,9 +11,6 @@ export class CompressionError extends Error {
   }
 }
 
-/**
- * Validation error - thrown when input parameters are invalid
- */
 export class CompressionValidationError extends CompressionError {
   constructor(message: string, public readonly field?: string) {
     super(message, 'VALIDATION_ERROR');
@@ -28,9 +18,6 @@ export class CompressionValidationError extends CompressionError {
   }
 }
 
-/**
- * File error - thrown when file operations fail
- */
 export class CompressionFileError extends CompressionError {
   constructor(message: string, public readonly filePath: string) {
     super(message, 'FILE_ERROR');
@@ -38,9 +25,6 @@ export class CompressionFileError extends CompressionError {
   }
 }
 
-/**
- * Compression error - thrown when compression operation fails
- */
 export class CompressionOperationError extends CompressionError {
   constructor(
     message: string,

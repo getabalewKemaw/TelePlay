@@ -32,6 +32,5 @@ model StreamSession {
   startTime    DateTime  @default(now())
   lastActivity DateTime  @updatedAt
   mediaFile    MediaFile @relation(fields: [mediaFileId], references: [id])
-
   @@map("stream_sessions")
 }

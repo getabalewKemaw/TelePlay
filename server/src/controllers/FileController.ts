@@ -6,7 +6,6 @@ import path from 'path';
 
 export class FileController {
     private fileService: IFileService;
-//we use the concept of dependecy injection as well . for the porpose of the mocking test
     constructor(fileService?: IFileService) {
         this.fileService = fileService || new FileService(new ChunkingService() as any);
     }
@@ -21,7 +20,6 @@ export class FileController {
                 page: page ? parseInt(page as string) : 1,
                 limit: limit ? parseInt(limit as string) : 10,
             });
-
             res.json({
                 success: true,
                 data: result.files,
@@ -102,7 +100,6 @@ export class FileController {
             }
             // Register it in the system
             const result = await this.fileService.registerFile(req.file.filename, req.file.path);
-
             res.json({
                 success: true,
                 data: this.normalizeFile(result),

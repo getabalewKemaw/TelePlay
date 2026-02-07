@@ -2,21 +2,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import { SegmentationService } from '../services/segmentation/SegmentationService.js';
 import type { ISegmentationService } from '../interfaces/segmentation/ISegmentationService.js';
-
-/**
- * Controller for Media Segmentation operations
- */
 export class SegmentationController {
     private segmentationService: ISegmentationService;
 
     constructor(segmentationService?: ISegmentationService) {
         this.segmentationService = segmentationService || new (SegmentationService as any)();
     }
-
-    /**
-     * GET /api/segments
-     * Query params: filePath
-     */
     getAllSegments = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const filePath = req.query.filePath as string;
@@ -33,10 +24,8 @@ export class SegmentationController {
         }
     };
 
-    /**
-     * GET /api/segments/range
-     * Query params: filePath, startTime, endTime
-     */
+    
+
     getSegmentsInRange = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const filePath = req.query.filePath as string;
