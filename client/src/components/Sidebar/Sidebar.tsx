@@ -1,4 +1,4 @@
-import { Coffee, FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } from 'lucide-react'
+import { FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
 import { cn } from '../../utils/utils'
@@ -31,10 +31,18 @@ export function Sidebar({
 }: SidebarProps) {
     const filteredFiles = files || []
 
+    const handleFileClick = (file: MediaFile) => {
+        onFileSelect(file)
+        if (window.innerWidth < 768) {
+            onToggleCollapsed()
+        }
+    }
+
     return (
         <aside className={cn(
-            "bg-white/50 backdrop-blur-md flex flex-col z-20 transition-all duration-300 shadow-xl shadow-coffee-200/30",
-            collapsed ? "w-30" : "w-90"
+            "bg-white/50 backdrop-blur-md flex flex-col z-50 transition-all duration-300 shadow-xl shadow-coffee-200/30",
+            "fixed inset-y-0 left-0 h-full md:relative",
+            collapsed ? "-translate-x-full md:translate-x-0 md:w-30" : "translate-x-0 w-full md:w-90"
         )}>
             <div className={cn(
                 "flex items-center justify-between",
@@ -110,7 +118,7 @@ export function Sidebar({
                             key={file.id}
                             file={file}
                             isSelected={selectedFile?.id === file.id}
-                            onClick={onFileSelect}
+                            onClick={handleFileClick}
                         />
                     ))}
 

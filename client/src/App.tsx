@@ -96,7 +96,7 @@ export default function App() {
           onToggleTheme={toggleTheme}
         />
 
-        <div className="flex-1 overflow-y-auto p-12 thin-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-12 thin-scrollbar">
           <div className="max-w-6xl mx-auto space-y-10">
             <FileTableCard
               fileCount={filteredFiles.length}

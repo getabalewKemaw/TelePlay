@@ -18,7 +18,12 @@ export function useAppController() {
   const [sortKey, setSortKey] = useState<SortKey>('filename')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [isTableOpen, setIsTableOpen] = useState(true)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768
+    }
+    return false
+  })
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('theme') : null
     if (stored === 'dark') return true
@@ -40,19 +45,17 @@ export function useAppController() {
     waveColor: '#2dd4bf',
     progressColor: '#0f172a',
     cursorColor: '#0f172a',
-    barWidth: 2,
-    barGap: 2,
-    barRadius: 2,
-    barHeight: 1,
-    cursorWidth: 2,
+    barWidth: 3,
+    barGap: 4,
+    barRadius: 3,
     normalize: true,
     responsive: true,
-    height: 120,
+    height: 80,
     backend: 'MediaElement',
     mediaControls: false,
   }), [])
 
-  const { wavesurfer, wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions, !forceNativeAudio)
+  const { wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(waveformRef, waveformOptions, !forceNativeAudio)
 
   useEffect(() => {
     if (wavesurferRef.current) {
@@ -343,8 +346,8 @@ export function useAppController() {
 
   const handleRateChange = (rate: number) => {
     setPlaybackRate(rate)
-    if (wavesurfer) {
-      wavesurfer.setPlaybackRate(rate)
+    if (wavesurferRef.current) {
+      wavesurferRef.current.setPlaybackRate(rate)
       toast(`Time Warp: ${rate}x`, { icon: '⚡' })
     }
     if (audioRef.current) {
@@ -459,7 +462,7 @@ export function useAppController() {
     nativeDuration,
     nativePlaying,
     forceNativeAudio,
-    wavesurfer,
+    wavesurfer: wavesurferRef.current,
     wavesurferRef,
     isWaveformReady,
     isPlaying,
