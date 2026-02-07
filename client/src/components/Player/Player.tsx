@@ -557,20 +557,3 @@ export function Player({
         </div>
     )
 }
-
-function AudioLines({ size, className }: { size: number, className?: string }) {
-    return (
-        <div className={cn("flex items-end gap-1", className)}>
-            {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                    key={i}
-                    className="bg-current rounded-full"
-                    style={{
-                        width: size / 8,
-                        height: `${20 + Math.random() * 60}%`
-                    }}
-                />
-            ))}
-        </div>
-    )
-}

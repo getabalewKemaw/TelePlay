@@ -42,7 +42,6 @@ export const decodeFile = async (data: {
         throw error;
     }
 };
-
 export const createStreamingSession = async (filePath: string, options?: any) => {
     const response = await api.post('/streaming/sessions', {
         filePath,
