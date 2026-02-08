@@ -1,6 +1,6 @@
 import { ArrowUpDown, CheckCircle2, FileAudio, Timer } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
-import { cn, formatTime } from '../../utils/utils'
+import { cn, formatTime, getDisplayFilename } from '../../utils/utils'
 
 export type SortKey = 'filename' | 'codec' | 'format' | 'duration' | 'status'
 export type SortDir = 'asc' | 'desc'
@@ -75,7 +75,9 @@ export function FileTable({
                       <FileAudio size={16} />
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold truncate">{file.filename}</div>
+                      <div className="font-bold truncate">
+                        {getDisplayFilename(file.filename, file.decodedPath)}
+                      </div>
                       <div className={cn(
                         'text-[10px] uppercase tracking-widest',
                         isSelected ? 'text-white/70' : 'text-coffee-400'

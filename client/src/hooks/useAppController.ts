@@ -393,6 +393,7 @@ export function useAppController() {
         return { codec: 'aac', format: 'adts' }
       })()
 
+      
       const targetEncoding = {
         codec: targetConfig.codec,
         sampleRate: baseSampleRate,

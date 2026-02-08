@@ -21,7 +21,7 @@ import {
 import type { MediaFile } from '../../api/api'
 import { cn } from '../../utils/utils'
 import { Badge } from '../ui/Badge'
-import { formatTime } from '../../utils/utils'
+import { formatTime, getDisplayFilename } from '../../utils/utils'
 
 interface PlayerProps {
     selectedFile: MediaFile
@@ -128,7 +128,9 @@ export function Player({
 
                 <div className="flex-1 text-center md:text-left z-10">
                     <div className="text-[10px] font-black text-coffee-400 uppercase tracking-[0.3em] mb-2 md:mb-3">Master Reference</div>
-                    <h2 className="text-2xl md:text-4xl font-black text-coffee-Dark mb-3 md:mb-4 leading-none tracking-tight break-all">{selectedFile.filename}</h2>
+                    <h2 className="text-2xl md:text-4xl font-black text-coffee-Dark mb-3 md:mb-4 leading-none tracking-tight break-all">
+                        {getDisplayFilename(selectedFile.filename, selectedFile.decodedPath)}
+                    </h2>
                     <div className="hidden md:flex flex-wrap gap-2 justify-center md:justify-start">
                         <Badge icon={<Activity size={12} />} label={selectedFile.codec?.toUpperCase() || 'RAW'} />
                         <Badge icon={<Zap size={12} />} label={`${convertedDuartions || 0}`} />

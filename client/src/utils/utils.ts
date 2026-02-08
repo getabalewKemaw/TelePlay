@@ -24,3 +24,13 @@ export function formatTime(seconds: number) {
   //  Seconds only: S
   return `${sec}`;
 }
+
+export function getDisplayFilename(filename: string, decodedPath?: string) {
+  if (!decodedPath) return filename;
+  const decodedExt = decodedPath.split('.').pop()?.toLowerCase();
+  if (!decodedExt) return filename;
+  const base = filename.replace(/\.[^/.]+$/, '');
+  return `${base}.${decodedExt}`;
+}
+
+

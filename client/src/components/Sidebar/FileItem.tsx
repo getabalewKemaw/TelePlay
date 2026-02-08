@@ -1,6 +1,6 @@
 import { FileAudio, CheckCircle2 } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
-import { cn } from '../../utils/utils'
+import { cn, getDisplayFilename } from '../../utils/utils'
 
 interface FileItemProps {
     file: MediaFile
@@ -32,7 +32,9 @@ export function FileItem({ file, isSelected, onClick }: FileItemProps) {
                     )}
                 </div>
                 <div className="flex-1 truncate">
-                    <div className="font-semibold text-sm truncate tracking-tight">{file.filename}</div>
+                    <div className="font-semibold text-sm truncate tracking-tight">
+                        {getDisplayFilename(file.filename, file.decodedPath)}
+                    </div>
                     <div className={cn(
                         "text-[10px] truncate uppercase font-bold tracking-widest opacity-70",
                         isSelected ? "text-coffee-50" : "text-coffee-400"
