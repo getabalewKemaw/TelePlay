@@ -15,7 +15,8 @@ import {
     HelpCircle,
     VolumeX,
     RotateCcw,
-    RotateCw
+    RotateCw,
+    ChevronDown
 } from 'lucide-react'
 import type { MediaFile } from '../../api/api'
 import { cn } from '../../utils/utils'
@@ -262,40 +263,38 @@ export function Player({
                     )}
 
                     {/* Desktop Actions (Hidden on Mobile) */}
-                    <div className="hidden md:flex flex-col items-end gap-2">
-                        <div className="text-[9px] font-black text-coffee-400 uppercase pt-10">Output Format</div>
-                        <div className="flex items-center gap-2 bg-white/60  px-3 py-2 shadow-sm border">
-                            {(['wav', 'mp3'] as const).map(fmt => (
-                                <button
-                                    key={fmt}
-                                    onClick={() => onOutputFormatChange(fmt)}
-                                    className={cn(
-                                        'px-3 py-1  text-[10px] font-black uppercase tracking-widest transition-colors',
-                                        outputFormat === fmt
-                                            ? 'bg-coffee-Dark text-white'
-                                            : 'bg-white text-coffee-400 hover:text-coffee-600'
-                                    )}
-                                >
-                                    {fmt}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="text-[9px] font-black text-coffee-400 uppercase pt-6">Convert Format</div>
-                        <div className="flex items-center gap-2 bg-white/60 px-3 py-2 shadow-sm border">
-                            {(['aac', 'ogg', 'mp3', 'wav'] as const).map(fmt => (
-                                <button
-                                    key={fmt}
-                                    onClick={() => onConvertFormatChange(fmt)}
-                                    className={cn(
-                                        'px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors',
-                                        convertFormat === fmt
-                                            ? 'bg-coffee-Dark text-white'
-                                            : 'bg-white text-coffee-400 hover:text-coffee-600'
-                                    )}
-                                >
-                                    {fmt}
-                                </button>
-                            ))}
+                    <div className="hidden md:flex flex-col items-end gap-4">
+                        <div className="flex items-end gap-4">
+                            <div className="flex flex-col items-start gap-2">
+                                <div className="text-[9px] font-black text-coffee-400 uppercase">Output Format</div>
+                                <div className="relative">
+                                    <select
+                                        value={outputFormat}
+                                        onChange={(e) => onOutputFormatChange(e.target.value as 'wav' | 'mp3')}
+                                        className="bg-white/60 border border-coffee-200 shadow-sm pl-3 pr-8 py-2 text-[10px] font-black uppercase tracking-widest text-coffee-700 focus:outline-none focus:ring-0 focus:border-coffee-400 focus-visible:outline-none focus-visible:ring-0 hover:border-coffee-300 appearance-none"
+                                    >
+                                        <option value="wav">WAV</option>
+                                        <option value="mp3">MP3</option>
+                                    </select>
+                                    <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-coffee-400" />
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-start gap-2">
+                                <div className="text-[9px] font-black text-coffee-400 uppercase">Convert Format</div>
+                                <div className="relative">
+                                    <select
+                                        value={convertFormat}
+                                        onChange={(e) => onConvertFormatChange(e.target.value as 'aac' | 'ogg' | 'mp3' | 'wav')}
+                                        className="bg-white/60 border border-coffee-200 shadow-sm pl-3 pr-8 py-2 text-[10px] font-black uppercase tracking-widest text-coffee-700 focus:outline-none focus:ring-0 focus:border-coffee-400 focus-visible:outline-none focus-visible:ring-0 hover:border-coffee-300 appearance-none"
+                                    >
+                                        <option value="aac">AAC</option>
+                                        <option value="ogg">OGG</option>
+                                        <option value="mp3">MP3</option>
+                                        <option value="wav">WAV</option>
+                                    </select>
+                                    <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-coffee-400" />
+                                </div>
+                            </div>
                         </div>
                         <div className="flex items-center gap-2 mt-4">
                             <button
@@ -323,13 +322,14 @@ export function Player({
 
                             <button
                                 onClick={onDownload}
+                                aria-disabled={!selectedFile.decodedPath}
                                 className={cn(
                                     "p-5 font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg border",
                                     selectedFile.decodedPath
                                         ? "bg-coffee-accent text-white shadow-coffee-accent/40"
-                                        : "bg-white text-coffee-400 hover:bg-coffee-50 shadow-sm"
+                                        : "bg-white text-coffee-400 hover:bg-coffee-50 shadow-sm opacity-60 cursor-not-allowed"
                                 )}
-                                title={selectedFile.decodedPath ? "Download HQ WAV" : "Download Original"}
+                                title={selectedFile.decodedPath ? "Download HQ WAV" : "Decode first to download"}
                             >
                                 <Download size={24} />
                             </button>
@@ -387,6 +387,7 @@ export function Player({
                                     </div>
                                 )}
                             </div>
+
 
                             {/* Mobile Info Toggle */}
                             <div className="md:hidden relative " >

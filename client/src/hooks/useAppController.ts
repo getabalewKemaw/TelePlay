@@ -344,6 +344,10 @@ export function useAppController() {
 
   const handleDownload = () => {
     if (!selectedFile) return
+    if (!selectedFile.decodedPath) {
+      toast.error('Decode to WAV or MP3 first.')
+      return
+    }
     toast.success('Initiating secure download...')
     window.open(`http://localhost:3000/api/files/${selectedFile.id}/download`, '_blank')
   }
