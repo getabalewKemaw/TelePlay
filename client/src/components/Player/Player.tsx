@@ -32,14 +32,17 @@ interface PlayerProps {
     playbackRate: number
     volume: number
     outputFormat: 'wav' | 'mp3'
+    convertFormat: 'aac' | 'ogg' | 'mp3' | 'wav'
     wavesurfer: any
     waveformRef: React.RefObject<HTMLDivElement | null>
     audioRef?: React.RefObject<HTMLAudioElement | null>
     useNativeAudio?: boolean
     canDirectPlay: boolean
     isWaveformReady: boolean
+    isConverting: boolean
     onDecodeAndPlay: () => void
     onDownload: () => void
+    onConvertAndDownload: () => void
     onPlayPause: () => void
     onNext: () => void
     onPrev: () => void
@@ -48,6 +51,7 @@ interface PlayerProps {
     onSkip: (delta: number) => void
     onVolumeChange: (volume: number) => void
     onOutputFormatChange: (format: 'wav' | 'mp3') => void
+    onConvertFormatChange: (format: 'aac' | 'ogg' | 'mp3' | 'wav') => void
 }
 
 export function Player({
@@ -60,14 +64,17 @@ export function Player({
     playbackRate,
     volume,
     outputFormat,
+    convertFormat,
     wavesurfer,
     waveformRef,
     audioRef,
     useNativeAudio,
     canDirectPlay,
     isWaveformReady,
+    isConverting,
     onDecodeAndPlay,
     onDownload,
+    onConvertAndDownload,
     onPlayPause,
     onNext,
     onPrev,
@@ -75,7 +82,8 @@ export function Player({
     onSeek,
     onSkip,
     onVolumeChange,
-    onOutputFormatChange
+    onOutputFormatChange,
+    onConvertFormatChange
 }: PlayerProps) {
     const [showSpeedMenu, setShowSpeedMenu] = useState(false)
     const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -209,6 +217,47 @@ export function Player({
                                     </button>
                                 ))}
                             </div>
+                            <div className="my-1 border-t border-coffee-100/50" />
+                            <div className="px-3 py-2 text-[10px] font-black text-coffee-400 uppercase tracking-widest">
+                                Convert Format
+                            </div>
+                            <div className="flex p-1 bg-coffee-50 rounded-xl">
+                                {(['aac', 'ogg', 'mp3', 'wav'] as const).map(fmt => (
+                                    <button
+                                        key={fmt}
+                                        onClick={() => onConvertFormatChange(fmt)}
+                                        className={cn(
+                                            "flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all",
+                                            convertFormat === fmt ? "bg-white text-coffee-800 shadow-sm" : "text-coffee-400"
+                                        )}
+                                    >
+                                        {fmt}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    onConvertAndDownload()
+                                    setShowMobileMenu(false)
+                                }}
+                                disabled={isConverting}
+                                className={cn(
+                                    "w-full text-left px-3 py-2.5 rounded-xl hover:bg-coffee-50 text-coffee-700 flex items-center gap-3 transition-colors",
+                                    isConverting && "opacity-60"
+                                )}
+                            >
+                                {isConverting ? (
+                                    <>
+                                        <div className="w-4 h-4 bg-coffee-400 animate-pulse rounded-full" />
+                                        <span className="text-xs font-bold">Converting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={16} />
+                                        <span className="text-xs font-bold">Convert & Download</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
 
@@ -223,6 +272,23 @@ export function Player({
                                     className={cn(
                                         'px-3 py-1  text-[10px] font-black uppercase tracking-widest transition-colors',
                                         outputFormat === fmt
+                                            ? 'bg-coffee-Dark text-white'
+                                            : 'bg-white text-coffee-400 hover:text-coffee-600'
+                                    )}
+                                >
+                                    {fmt}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="text-[9px] font-black text-coffee-400 uppercase pt-6">Convert Format</div>
+                        <div className="flex items-center gap-2 bg-white/60 px-3 py-2 shadow-sm border">
+                            {(['aac', 'ogg', 'mp3', 'wav'] as const).map(fmt => (
+                                <button
+                                    key={fmt}
+                                    onClick={() => onConvertFormatChange(fmt)}
+                                    className={cn(
+                                        'px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-colors',
+                                        convertFormat === fmt
                                             ? 'bg-coffee-Dark text-white'
                                             : 'bg-white text-coffee-400 hover:text-coffee-600'
                                     )}
@@ -266,6 +332,19 @@ export function Player({
                                 title={selectedFile.decodedPath ? "Download HQ WAV" : "Download Original"}
                             >
                                 <Download size={24} />
+                            </button>
+                            <button
+                                onClick={onConvertAndDownload}
+                                disabled={isConverting}
+                                className={cn(
+                                    "px-6 py-5 font-black text-[10px] uppercase tracking-widest flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-lg border",
+                                    isConverting
+                                        ? "bg-coffee-100 text-coffee-400"
+                                        : "bg-white text-coffee-600 hover:bg-coffee-50"
+                                )}
+                                title="Convert and download"
+                            >
+                                {isConverting ? 'Converting...' : 'Convert'}
                             </button>
                         </div>
                     </div>

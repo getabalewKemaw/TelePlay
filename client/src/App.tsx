@@ -15,6 +15,7 @@ export default function App() {
     playbackRate,
     volume,
     outputFormat,
+    convertFormat,
     searchTerm,
     filterDecoded,
     sortKey,
@@ -22,6 +23,7 @@ export default function App() {
     isTableOpen,
     isSidebarCollapsed,
     isDarkMode,
+    isConverting,
     waveformRef,
     audioRef,
     nativeTime,
@@ -36,10 +38,12 @@ export default function App() {
     setSearchTerm,
     setFilterDecoded,
     setOutputFormat,
+    setConvertFormat,
     handleSortChange,
     handleFileSelect,
     handleDecodeAndPlay,
     handleDownload,
+    handleConvertAndDownload,
     handleNext,
     handlePrev,
     handleRateChange,
@@ -124,14 +128,17 @@ export default function App() {
                 playbackRate={playbackRate}
                 volume={volume}
                 outputFormat={outputFormat}
+                convertFormat={convertFormat}
                 wavesurfer={wavesurfer}
                 waveformRef={waveformRef}
                 audioRef={audioRef}
                 useNativeAudio={forceNativeAudio}
                 canDirectPlay={isDirectPlayable(selectedFile)}
                 isWaveformReady={isWaveformReady}
+                isConverting={isConverting}
                 onDecodeAndPlay={() => handleDecodeAndPlay()}
                 onDownload={handleDownload}
+                onConvertAndDownload={handleConvertAndDownload}
                 onPlayPause={() => {
                   if (forceNativeAudio) {
                     if (!audioRef.current) return
@@ -151,6 +158,7 @@ export default function App() {
                 onSkip={handleSkip}
                 onVolumeChange={handleVolumeChange}
                 onOutputFormatChange={setOutputFormat}
+                onConvertFormatChange={setConvertFormat}
               />
             ) : (
               <EmptyState />

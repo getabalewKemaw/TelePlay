@@ -42,6 +42,27 @@ export const decodeFile = async (data: {
         throw error;
     }
 };
+
+export const transcodeFile = async (data: {
+    fileId?: string;
+    input: { path: string; format?: string };
+    output: { path: string; format?: string };
+    sourceEncoding: { codec: string; sampleRate: number; channels: number; bitrate?: number };
+    targetEncoding: { codec: string; sampleRate: number; channels: number; bitrate?: number };
+}) => {
+    const response = await api.post('/transcoding/convert', data);
+    return response.data.data;
+};
+
+export const transcodeFileDownload = async (data: {
+    input: { path: string; format?: string };
+    output: { path: string; format?: string };
+    sourceEncoding: { codec: string; sampleRate: number; channels: number; bitrate?: number };
+    targetEncoding: { codec: string; sampleRate: number; channels: number; bitrate?: number };
+}) => {
+    const response = await api.post('/transcoding/convert-download', data, { responseType: 'blob' });
+    return response;
+};
 export const createStreamingSession = async (filePath: string, options?: any) => {
     const response = await api.post('/streaming/sessions', {
         filePath,

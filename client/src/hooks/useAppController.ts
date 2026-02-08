@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { toast } from 'react-hot-toast'
-import { fetchFiles, createStreamingSession, decodeFile, uploadFile } from '../api/api'
+import { fetchFiles, createStreamingSession, decodeFile, transcodeFileDownload, uploadFile } from '../api/api'
 import type { MediaFile } from '../api/api'
 import { useWaveSurfer } from './useWaveSurfer'
 import type { SortDir, SortKey } from '../components/FileTable/FileTable'
@@ -13,6 +13,8 @@ export function useAppController() {
   const [playbackRate, setPlaybackRate] = useState(1)
   const [volume, setVolume] = useState(0.9)
   const [outputFormat, setOutputFormat] = useState<'wav' | 'mp3'>('wav')
+  const [convertFormat, setConvertFormat] = useState<'aac' | 'ogg' | 'mp3' | 'wav'>('aac')
+  const [isConverting, setIsConverting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDecoded, setFilterDecoded] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('filename')
@@ -150,7 +152,22 @@ export function useAppController() {
     const decodedPath = file.decodedPath?.toLowerCase() || ''
     if (decodedPath.endsWith('.mp3')) return 'mp3'
     if (decodedPath.endsWith('.wav')) return 'wav'
+    if (decodedPath.endsWith('.aac')) return 'aac'
+    if (decodedPath.endsWith('.ogg')) return 'ogg'
     return undefined
+  }
+
+  const inferBaseSampleRate = (file: MediaFile) => {
+    const codec = (file.codec || '').toLowerCase()
+    if (codec === 'g728') return 16000
+    if (codec === 'g711' || codec === 'g726') return 8000
+    return 44100
+  }
+
+  const inferBaseChannels = (file: MediaFile) => {
+    const codec = (file.codec || '').toLowerCase()
+    if (codec === 'g711' || codec === 'g726' || codec === 'g728') return 1
+    return 2
   }
 
   const handleFileSelect = (file: MediaFile) => {
@@ -331,6 +348,77 @@ export function useAppController() {
     window.open(`http://localhost:3000/api/files/${selectedFile.id}/download`, '_blank')
   }
 
+  const handleConvertAndDownload = async () => {
+    if (!selectedFile) return
+    if (!selectedFile.decodedPath) {
+      toast.error('Decode to WAV or MP3 first.')
+      return
+    }
+
+    const toastId = toast.loading(`Converting to ${convertFormat.toUpperCase()}...`)
+    setIsConverting(true)
+
+    try {
+      const inputPath = selectedFile.decodedPath
+      const baseName = selectedFile.filename.replace(/\.[^/.]+$/, '')
+      const targetExt = convertFormat
+      const outputDir = 'processed'
+      const outputFilename = `${baseName}_converted.${targetExt}`
+      const outputPath = `${outputDir}/${outputFilename}`
+
+      const decodedFormat = getDecodedFormat(selectedFile)
+      const baseSampleRate = inferBaseSampleRate(selectedFile)
+      const baseChannels = inferBaseChannels(selectedFile)
+
+      const sourceEncoding = {
+        codec: decodedFormat === 'mp3' ? 'mp3' : decodedFormat === 'aac' ? 'aac' : decodedFormat === 'ogg' ? 'opus' : 'pcm_s16le',
+        sampleRate: baseSampleRate,
+        channels: baseChannels
+      }
+
+      const targetConfig = (() => {
+        if (convertFormat === 'wav') {
+          return { codec: 'pcm_s16le', format: 'wav' }
+        }
+        if (convertFormat === 'mp3') {
+          return { codec: 'mp3', format: 'mp3' }
+        }
+        if (convertFormat === 'ogg') {
+          return { codec: 'opus', format: 'ogg' }
+        }
+        return { codec: 'aac', format: 'adts' }
+      })()
+
+      const targetEncoding = {
+        codec: targetConfig.codec,
+        sampleRate: baseSampleRate,
+        channels: baseChannels
+      }
+
+      const response = await transcodeFileDownload({
+        input: { path: inputPath },
+        output: { path: outputPath, format: targetConfig.format },
+        sourceEncoding,
+        targetEncoding
+      })
+      const blob = new Blob([response.data])
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = outputFilename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Conversion ready. Downloading...', { id: toastId })
+    } catch (error) {
+      console.error('Convert failed:', error)
+      toast.error('Conversion failed.', { id: toastId })
+    } finally {
+      setIsConverting(false)
+    }
+  }
+
   const handleNext = () => {
     if (!selectedFile || filteredFiles.length <= 1) return
     const currentIndex = filteredFiles.findIndex(f => f.id === selectedFile.id)
@@ -450,10 +538,12 @@ export function useAppController() {
     playbackRate,
     volume,
     outputFormat,
+    convertFormat,
     searchTerm,
     filterDecoded,
     sortKey,
     sortDir,
+    isConverting,
     isTableOpen,
     isSidebarCollapsed,
     isDarkMode,
@@ -472,10 +562,12 @@ export function useAppController() {
     setSearchTerm,
     setFilterDecoded,
     setOutputFormat,
+    setConvertFormat,
     handleSortChange,
     handleFileSelect,
     handleDecodeAndPlay,
     handleDownload,
+    handleConvertAndDownload,
     handleNext,
     handlePrev,
     handleRateChange,
