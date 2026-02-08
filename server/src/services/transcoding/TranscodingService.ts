@@ -35,6 +35,18 @@ const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compa
   pcm_s24le: {
     recommended: 'aac',
     compatible: ['aac', 'mp3', 'opus', 'pcm_s16le']
+  },
+  mp3: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  aac: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  opus: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
   }
 };
 

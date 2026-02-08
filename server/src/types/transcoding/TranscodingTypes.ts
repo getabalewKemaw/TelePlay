@@ -1,6 +1,14 @@
 
 import type { SampleRate, ChannelConfig } from '../ffmpeg/FFmpegTypes.js';
-export type SourceCodec = 'g711' | 'g726' | 'g728' | 'pcm_s16le' | 'pcm_s24le';
+export type SourceCodec =
+  | 'g711'
+  | 'g726'
+  | 'g728'
+  | 'pcm_s16le'
+  | 'pcm_s24le'
+  | 'aac'
+  | 'mp3'
+  | 'opus';
 export type TargetCodec = 'aac' | 'mp3' | 'opus' | 'pcm_s16le';
 export type TranscodingMode = 'chunk';
 export interface SourceEncoding {

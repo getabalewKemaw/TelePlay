@@ -10,6 +10,7 @@ import type {
 import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
 import { FFmpegFileError, FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
+import path from 'path';
 export class FFmpegService implements IFfmpegService {
   private readonly executor: IFfmpegExecutor;
   constructor(executor?: IFfmpegExecutor) {
@@ -178,6 +179,10 @@ export class FFmpegService implements IFfmpegService {
     await FFmpegValidator.validateOutputPath(params.output.path);
     FFmpegValidator.validateEncodingParams(params.sourceEncoding);
     FFmpegValidator.validateEncodingParams(params.targetEncoding);
+    const containerExts = new Set(['.wav', '.mp3', '.aac', '.ogg', '.opus', '.m4a']);
+    const inputExt = params.input.path ? path.extname(params.input.path).toLowerCase() : '';
+    const isContainerInput = containerExts.has(inputExt);
+    const needsInputCodec = !isContainerInput && ['g711', 'g726', 'g728', 'pcm_s16le', 'pcm_s24le'].includes(params.sourceEncoding.codec);
     const commandOptions = {
       input: params.input.path,
       output: params.output.path,
@@ -189,10 +194,12 @@ export class FFmpegService implements IFfmpegService {
       startTime: params.startTime,
       duration: params.duration,
       additionalArgs: [
-        ...(params.input.format ? ['-f', params.input.format] : []),
-        '-acodec', this.mapCodecToFFmpeg(params.sourceEncoding.codec),
-        '-ar', params.sourceEncoding.sampleRate.toString(),
-        '-ac', params.sourceEncoding.channels.toString()
+        ...(params.input.format && !isContainerInput ? ['-f', params.input.format] : []),
+        ...(needsInputCodec ? [
+          '-acodec', this.mapCodecToFFmpeg(params.sourceEncoding.codec),
+          '-ar', params.sourceEncoding.sampleRate.toString(),
+          '-ac', params.sourceEncoding.channels.toString()
+        ] : [])
       ]
     };
 
