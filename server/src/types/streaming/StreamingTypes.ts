@@ -30,6 +30,7 @@ export interface StreamingSession {
   preparedSegments: PreparedSegment[];
   transport: TransportProtocol;
   mode: StreamingMode
+  chunkDuration?: number;
   inputCodec?: string;
   sampleRate?: number;
   channels?: number;
@@ -61,6 +62,7 @@ export interface StreamingPreparationOptions {
   preTranscode?: boolean;
   preCompress?: boolean;
   bufferSize?: number;
+  chunkDuration?: number;
   inputCodec?: string;
   sampleRate?: number;
   channels?: number;
@@ -80,4 +82,5 @@ export interface StreamMetadata {
   bitrate?: number;
   mimeType: string;
 }
+
 

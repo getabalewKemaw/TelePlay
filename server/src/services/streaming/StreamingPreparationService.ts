@@ -27,7 +27,8 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   compressionLevel: 'medium',
   preTranscode: true,
   preCompress: false,
-  bufferSize: 10
+  bufferSize: 10,
+  chunkDuration: 10
 };
 export class StreamingPreparationService implements IStreamingPreparationService {
   private readonly chunkingService: IChunkingService;
@@ -61,6 +62,7 @@ export class StreamingPreparationService implements IStreamingPreparationService
       preparedSegments: [],
       transport: opts.transport,
       mode: opts.mode,
+      chunkDuration: opts.chunkDuration,
       inputCodec: options?.inputCodec,
       sampleRate: options?.sampleRate,
       channels: options?.channels,

@@ -19,6 +19,7 @@ export interface CreateSessionRequestDto {
         preTranscode?: boolean;
         preCompress?: boolean;
         bufferSize?: number;
+        chunkDuration?: number;
         inputCodec?: string;
         sampleRate?: number;
         channels?: number;
