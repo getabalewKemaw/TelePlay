@@ -74,6 +74,18 @@ export const createStreamingSession = async (filePath: string, options?: any) =>
     return response.data.data;
 };
 
+export const fetchStreamingChunks = async (sessionId: string) => {
+    const response = await api.get(`/streaming/sessions/${sessionId}/chunks`);
+    return response.data.data;
+};
+
+export const fetchStreamingChunkPeaks = async (sessionId: string, index: number, bins: number) => {
+    const response = await api.get(`/streaming/sessions/${sessionId}/chunks/${index}/peaks`, {
+        params: { bins }
+    });
+    return response.data.data;
+};
+
 export const discoverFiles = async (path?: string) => {
     const response = await api.post('/discover', { path });
     return response.data;

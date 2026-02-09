@@ -24,8 +24,12 @@ export function usePlaybackState({
   const [isConverting, setIsConverting] = useState(false)
   const [forceNativeAudio, setForceNativeAudio] = useState(false)
   const [volume, setVolume] = useState(0.9)
+  const [useExternalAudio, setUseExternalAudio] = useState(false)
+  const [streamingPeaks, setStreamingPeaks] = useState<number[] | null>(null)
+  const [streamingDuration, setStreamingDuration] = useState<number | null>(null)
+  const [isChunkedStreaming, setIsChunkedStreaming] = useState(false)
 
-  const { audioRef, nativeTime, nativeDuration, nativePlaying } = useNativeAudioState()
+  const { audioRef, nativeTime, nativeDuration, nativePlaying } = useNativeAudioState({ forceRaf: isChunkedStreaming })
 
   const {
     waveformRef,
@@ -35,7 +39,7 @@ export function usePlaybackState({
     playPause,
     currentTime,
     duration
-  } = useWaveformState({ volume, disabled: forceNativeAudio })
+  } = useWaveformState({ volume, disabled: forceNativeAudio || isChunkedStreaming, useExternalAudio, mediaRef: audioRef })
 
   const {
     playbackRate,
@@ -48,7 +52,7 @@ export function usePlaybackState({
     audioRef,
     currentTime,
     duration,
-    forceNativeAudio,
+    forceNativeAudio: forceNativeAudio || isChunkedStreaming,
     volume,
     setVolume
   })
@@ -61,6 +65,10 @@ export function usePlaybackState({
     setIsDecoding,
     setActiveSession,
     setForceNativeAudio,
+    setUseExternalAudio,
+    setStreamingPeaks,
+    setStreamingDuration,
+    setIsChunkedStreaming,
     wavesurferRef,
     isWaveformReady,
     audioRef
@@ -91,7 +99,6 @@ export function usePlaybackState({
     isPlaying,
     currentTime,
     duration,
-    volume,
     setOutputFormat,
     setConvertFormat,
     handleDecodeAndPlay,
@@ -101,6 +108,9 @@ export function usePlaybackState({
     handleSeek,
     handleSkip,
     handleVolumeChange,
-    playPause
+    playPause,
+    streamingPeaks,
+    streamingDuration,
+    isChunkedStreaming
   }
 }

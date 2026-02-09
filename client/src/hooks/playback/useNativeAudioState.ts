@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
-export function useNativeAudioState() {
+interface NativeAudioOptions {
+  forceRaf?: boolean
+}
+
+export function useNativeAudioState(options: NativeAudioOptions = {}) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [nativeTime, setNativeTime] = useState(0)
   const [nativeDuration, setNativeDuration] = useState(0)
@@ -24,6 +28,24 @@ export function useNativeAudioState() {
       audio.removeEventListener('pause', onPause)
     }
   }, [])
+
+  useEffect(() => {
+    if (!options.forceRaf) return
+    let rafId: number | null = null
+    const tick = () => {
+      const audio = audioRef.current
+      if (audio) {
+        setNativeTime(audio.currentTime || 0)
+        setNativeDuration(audio.duration || 0)
+        setNativePlaying(!audio.paused)
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [options.forceRaf])
 
   return {
     audioRef,

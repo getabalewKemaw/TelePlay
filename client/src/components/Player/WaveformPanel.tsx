@@ -1,4 +1,5 @@
 import React from 'react'
+import { StreamingWaveform } from './StreamingWaveform'
 
 interface WaveformPanelProps {
   useNativeAudio?: boolean
@@ -6,6 +7,10 @@ interface WaveformPanelProps {
   waveformRef: React.RefObject<HTMLDivElement | null>
   currentTime: number
   duration: number
+  attachHiddenAudio?: boolean
+  streamingPeaks?: number[]
+  streamingDuration?: number
+  showStreamingWaveform?: boolean
 }
 
 export function WaveformPanel({
@@ -13,7 +18,11 @@ export function WaveformPanel({
   audioRef,
   waveformRef,
   currentTime,
-  duration
+  duration,
+  attachHiddenAudio,
+  streamingPeaks,
+  streamingDuration,
+  showStreamingWaveform
 }: WaveformPanelProps) {
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0
 
@@ -26,7 +35,23 @@ export function WaveformPanel({
           <audio ref={audioRef} className="w-full" controls />
         </div>
       ) : (
-        <div ref={waveformRef} className=" overflow-hidden py-6 relative z-10" />
+        <>
+          {showStreamingWaveform && streamingPeaks && streamingDuration !== undefined ? (
+            <div className="py-6 relative z-10">
+              <StreamingWaveform
+                peaks={streamingPeaks}
+                duration={streamingDuration}
+                currentTime={currentTime}
+                baseColor="#989f9eff"
+                progressColor="#0f172a"
+                backgroundColor="#f8fafc"
+              />
+            </div>
+          ) : (
+            <div ref={waveformRef} className=" overflow-hidden py-6 relative z-10" />
+          )}
+          {attachHiddenAudio && <audio ref={audioRef} className="hidden" />}
+        </>
       )}
       {!useNativeAudio && (
         <div

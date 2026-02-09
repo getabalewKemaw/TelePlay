@@ -34,6 +34,9 @@ export default function App() {
     isPlaying,
     currentTime,
     duration,
+    streamingPeaks,
+    streamingDuration,
+    isChunkedStreaming,
     setSearchTerm,
     setFilterDecoded,
     setOutputFormat,
@@ -121,9 +124,9 @@ export default function App() {
                 selectedFile={selectedFile}
                 isDecoding={isDecoding}
                 activeSession={activeSession}
-                isPlaying={forceNativeAudio ? nativePlaying : isPlaying}
-                currentTime={forceNativeAudio ? nativeTime : currentTime}
-                duration={forceNativeAudio ? nativeDuration : duration}
+                isPlaying={isChunkedStreaming || forceNativeAudio ? nativePlaying : isPlaying}
+                currentTime={isChunkedStreaming || forceNativeAudio ? nativeTime : currentTime}
+                duration={isChunkedStreaming ? (streamingDuration || nativeDuration) : (forceNativeAudio ? nativeDuration : duration)}
                 playbackRate={playbackRate}
                 volume={volume}
                 outputFormat={outputFormat}
@@ -134,11 +137,14 @@ export default function App() {
                 canDirectPlay={isDirectPlayable(selectedFile)}
                 isWaveformReady={isWaveformReady}
                 isConverting={isConverting}
+                streamingPeaks={streamingPeaks}
+                streamingDuration={streamingDuration}
+                isChunkedStreaming={isChunkedStreaming}
                 onDecodeAndPlay={() => handleDecodeAndPlay()}
                 onDownload={handleDownload}
                 onConvertAndDownload={handleConvertAndDownload}
                 onPlayPause={() => {
-                  if (forceNativeAudio) {
+                  if (forceNativeAudio || isChunkedStreaming) {
                     if (!audioRef.current) return
                     if (nativePlaying) {
                       audioRef.current.pause()

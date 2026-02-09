@@ -25,6 +25,9 @@ export function Player({
   canDirectPlay,
   isWaveformReady,
   isConverting,
+  streamingPeaks,
+  streamingDuration,
+  isChunkedStreaming,
   onDecodeAndPlay,
   onDownload,
   onConvertAndDownload,
@@ -72,6 +75,10 @@ export function Player({
           waveformRef={waveformRef}
           currentTime={currentTime}
           duration={duration}
+          attachHiddenAudio={!useNativeAudio}
+          streamingPeaks={streamingPeaks || undefined}
+          streamingDuration={streamingDuration ?? undefined}
+          showStreamingWaveform={!!isChunkedStreaming}
         />
 
         <PlayerControlGrid

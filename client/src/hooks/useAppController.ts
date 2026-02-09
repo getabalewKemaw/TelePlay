@@ -56,7 +56,10 @@ export function useAppController() {
     handleSeek,
     handleSkip,
     handleVolumeChange,
-    playPause
+    playPause,
+    streamingPeaks,
+    streamingDuration,
+    isChunkedStreaming
   } = usePlaybackState({
     selectedFile,
     setSelectedFile,
@@ -112,6 +115,9 @@ export function useAppController() {
     toggleSidebar,
     toggleTable,
     toggleTheme,
-    isDirectPlayable
+    isDirectPlayable,
+    streamingPeaks,
+    streamingDuration,
+    isChunkedStreaming
   }
 }

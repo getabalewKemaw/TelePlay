@@ -18,6 +18,9 @@ export interface PlayerProps {
   canDirectPlay: boolean
   isWaveformReady: boolean
   isConverting: boolean
+  streamingPeaks?: number[] | null
+  streamingDuration?: number | null
+  isChunkedStreaming?: boolean
   onDecodeAndPlay: () => void
   onDownload: () => void
   onConvertAndDownload: () => void
