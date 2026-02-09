@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 import { createStreamingSession, decodeFile } from '../../api/api'
 import type { MediaFile } from '../../api/api'
-import { getDecodedFormat, isDirectPlayable, isLargeFile } from '../../utils/appControllerUtils'
+import { getDecodedFormat, getG726BitrateKbps, isDirectPlayable, isLargeFile } from '../../utils/appControllerUtils'
 
 interface DecodeDeps {
   selectedFile: MediaFile | null
@@ -49,7 +49,7 @@ export function useDecodeAndPlay({
         : (directPlayable ? targetFile.originalPath : undefined)
 
       const wantsLiveTranscode = !finalPath && !directPlayable
-      const useNativeAudio = wantsLiveTranscode || isLargeFile(targetFile)
+      const useNativeAudio = isLargeFile(targetFile)
       setForceNativeAudio(useNativeAudio)
 
       if (!finalPath && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {
@@ -79,7 +79,7 @@ export function useDecodeAndPlay({
           codec: targetFile.codec || 'g711',
           sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
           channels: 1,
-          bitrate: targetFile.codec === 'g726' ? 32 : undefined
+          bitrate: targetFile.codec === 'g726' ? (getG726BitrateKbps(targetFile) || 32) : undefined
         })
         finalPath = decodeResult.outputPath
         const updatedFile = { ...targetFile, decodedPath: finalPath }
@@ -103,7 +103,7 @@ export function useDecodeAndPlay({
         inputCodec: inferredCodec,
         sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
         channels: 1,
-        bitrate: targetFile.codec === 'g726' ? 32 : undefined,
+        bitrate: targetFile.codec === 'g726' ? (getG726BitrateKbps(targetFile) || 32) : undefined,
         saveOutputPath: `processed/${targetFile.filename.replace(/\.[^/.]+$/, '')}_decoded.${outputFormat}`,
         fileId: targetFile.id
       } : {

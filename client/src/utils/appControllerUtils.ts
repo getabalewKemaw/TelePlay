@@ -32,3 +32,11 @@ export function inferBaseChannels(file: MediaFile) {
   if (codec === 'g711' || codec === 'g726' || codec === 'g728') return 1
   return 2
 }
+
+export function getG726BitrateKbps(file: MediaFile) {
+  const raw = file.bitrate
+  if (!raw) return undefined
+  const asNumber = typeof raw === 'string' ? parseInt(raw, 10) : raw
+  if (!Number.isFinite(asNumber)) return undefined
+  return asNumber >= 1000 ? Math.round(asNumber / 1000) : asNumber
+}
