@@ -16,49 +16,49 @@ This document summarizes the end-to-end decoding and streaming flow, including d
 
 ```mermaid
 flowchart LR
-  UI[Client UI] --> API[Express API]
+  UI["Client UI"] --> API["Express API"]
 
   subgraph Server
-    API --> FS[FileService]
-    API --> FF[FFmpegService]
-    API --> SS[StreamingController]
-    API --> CHK[ChunkingService]
-    API --> DB[(Prisma DB)]
+    API --> FS["FileService"]
+    API --> FF["FFmpegService"]
+    API --> SS["StreamingController"]
+    API --> CHK["ChunkingService"]
+    API --> DB[("Prisma DB")]
   end
 
   FS --> DB
-  FF --> FSYS[(Disk: uploads/, processed/)]
+  FF --> FSYS[("Disk: uploads, processed")]
   SS --> FF
   SS --> CHK
   SS --> FSYS
 
-  UI <-->|Audio Stream| SS
+  UI <-->|"Audio Stream"| SS
 ```
 
 ## End-to-End Data Flow
 
 ```mermaid
 flowchart TD
-  A[File Upload or Discovery] --> B[FileService.processFile]
-  B --> C[FFprobeMetadataProvider]
-  C --> D[Prisma DB: mediaFile]
-  D --> E[Client fetchFiles]
-  E --> F[User selects file]
+  A["File Upload or Discovery"] --> B["FileService.processFile"]
+  B --> C["FFprobeMetadataProvider"]
+  C --> D["Prisma DB: mediaFile"]
+  D --> E["Client fetchFiles"]
+  E --> F["User selects file"]
 
   F --> G{Decoded file exists?}
-  G -- Yes --> H[File-based streaming]
-  G -- No --> I[Chunked live streaming]
+  G -- Yes --> H["File-based streaming"]
+  G -- No --> I["Chunked live streaming"]
 
-  H --> J[GET /stream (byte-range)]
-  I --> K[POST /streaming/sessions (live)]
-  K --> L[GET /chunks + /chunks/:index/stream]
-  L --> M[MSE append in client]
-  M --> N[Audio plays]
-  I --> P[GET /chunks/:index/peaks]
-  P --> Q[Streaming waveform drawn]
+  H --> J["GET /stream - byte-range"]
+  I --> K["POST /streaming/sessions - live"]
+  K --> L["GET /chunks + /chunks/:index/stream"]
+  L --> M["MSE append in client"]
+  M --> N["Audio plays"]
+  I --> P["GET /chunks/:index/peaks"]
+  P --> Q["Streaming waveform drawn"]
 
-  I --> R[Background decode to processed/]
-  R --> S[Switch to file-based when ready]
+  I --> R["Background decode to processed"]
+  R --> S["Switch to file-based when ready"]
 ```
 
 ## Streaming Modes
