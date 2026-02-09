@@ -30,7 +30,6 @@ export default function App() {
     nativeDuration,
     nativePlaying,
     forceNativeAudio,
-    wavesurfer,
     isWaveformReady,
     isPlaying,
     currentTime,
@@ -129,7 +128,6 @@ export default function App() {
                 volume={volume}
                 outputFormat={outputFormat}
                 convertFormat={convertFormat}
-                wavesurfer={wavesurfer}
                 waveformRef={waveformRef}
                 audioRef={audioRef}
                 useNativeAudio={forceNativeAudio}
