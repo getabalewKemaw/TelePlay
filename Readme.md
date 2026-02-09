@@ -1,119 +1,349 @@
-# I-Player Decode & Streaming Overview
+# I-Player
 
-This document explains **how decoding and streaming work** in the current implementation, for both backend and frontend. It also covers what happens with very large inputs (e.g., **1 GB / 3 hours**).
+Custom media player for telecom/raw codecs with decoding, streaming, and waveform playback.
 
-## What Is Implemented (Current State)
+## Project Summary
+I-Player is a custom media player that supports non-standard telecom codecs (G711, G726, G728) and enables:
+- decoding to WAV/MP3
+- instant playback via live chunked streaming
+- stable file-based playback with waveform
+- server-generated waveform for live streams
 
-### Backend
-- **File registration & metadata** via FFprobe with raw codec fallbacks for telecom formats.
-- **Decode / convert** endpoint (`POST /api/ffmpeg/decode`) supporting:
-  - G.711 (µ-law / A-law), G.726, G.728, PCM
-  - Output to WAV or MP3
-- **Streaming sessions** (`POST /api/streaming/sessions`)
-  - **File-based streaming** with HTTP Range support
-  - **Live streaming** mode for large files (stream as FFmpeg transcodes)
-- **Download** returns decoded file with correct extension.
+## Tech Stack
 
-### Frontend
-- **File list** with sorting/filtering
-- **Decode & Play** in WAV or MP3
-- **WaveSurfer** waveform for normal-size files
-- **Native audio player** for large/live streams to avoid out-of-memory issues
-- **Seek / FF / Rewind / Volume**
+**Client**
+- React + TypeScript (Vite)
+- WaveSurfer.js (file-based waveform)
+- Custom canvas waveform (live chunked streaming)
+
+**Server**
+- Node.js + Express + TypeScript
+- FFmpeg (decode/transcode/stream)
+- Prisma (metadata storage)
+
+## Prerequisites
+- Node.js 18+ (recommended)
+- npm 9+ (or pnpm/yarn)
+- FFmpeg available in PATH
+- SQLite (default Prisma DB)
+
+Repository URL (for reference):
+```
+https://github.com/getabalewKemaw/I-Player
+```
+
+## How to Clone
+
+```
+git clone https://github.com/getabalewKemaw/I-Player.git
+cd I-Player
+```
+
+## How to Run
+
+### 1) Install Dependencies
+```
+cd C:\Users\Hp\Desktop\I-Player\I-Player\client
+npm install
+
+cd C:\Users\Hp\Desktop\I-Player\I-Player\server
+npm install
+```
+create .env file in the root of the server folder and create like 
+
+```
+DATABASE_URL="postgresql://Username:Password@localhost:Port/Dbname?schema=public"
+PORT=
+FFMPEG_PATH=
+FFPROBE_PATH=
+UPLOADS_DIR=./uploads
+PROCESSED_DIR=./processed
+TEMP_DIR=./temp
+
+
+```
+### 2) Start the Server
+```
+cd C:\Users\Hp\Desktop\I-Player\I-Player\server
+npm run dev
+```
+
+### 3) Start the Client
+```
+cd C:\Users\Hp\Desktop\I-Player\I-Player\client
+npm run dev
+```
+
+### 4) Open the App
+```
+http://localhost:5173
+```
+
+## What We Built
+
+**Core features**
+- Decode telecom codecs to WAV/MP3
+- File-based streaming with HTTP Range
+- Live chunked streaming with MSE for instant playback
+- Server-generated waveform peaks for live streams
+- Seamless switch to file-based playback after decode
+- Playback controls: play/pause, seek, skip, volume, rate
+
+**Operational flow**
+- File discovery and metadata extraction
+- Store metadata in Prisma DB
+- Stream from `uploads/` (live) or `processed/` (file-based)
+
+## Folder Structure (Overview)
+
+```
+client/        # React UI + hooks + components
+server/        # Express API + ffmpeg + chunking
+docs/          # Architecture and implementation docs
+```
+
+## File Tree (Full)
+
+# File Tree: I-Player
+
+**Generated:** 2/9/2026, 10:26:48 PM
+**Root Path:** `c:\Users\Hp\Desktop\I-Player\I-Player`
+
+```
+📁 client
+   📁 public
+      🖼 vite.svg
+   📁 src
+      📁 api
+         📄 api.ts
+      📁 assets
+         🖼 react.svg
+      📁 components
+         📁 App
+            📄 AppHeader.tsx
+            📄 EmptyState.tsx
+            📄 FileTableCard.tsx
+         📁 FileTable
+            📄 FileTable.tsx
+         📁 Player
+            📄 MobileSeekBar.tsx
+            📄 Player.tsx
+            📄 PlayerControlGrid.tsx
+            📄 PlayerFileCard.tsx
+            📄 PlayerHeader.tsx
+            📄 PlayerTransport.tsx
+            📄 StreamingWaveform.tsx
+            📄 WaveformPanel.tsx
+         📁 Sidebar
+            📄 FileItem.tsx
+            📄 Sidebar.tsx
+         📁 ui
+             📄 ActionCard.tsx
+             📄 Badge.tsx
+      📁 hooks
+         📁 playback
+            📄 useDecodeAndPlay.ts
+            📄 useDownloadActions.ts
+            📄 useNativeAudioState.ts
+            📄 useTransportControls.ts
+            📄 useWaveformState.ts
+         📄 useAppController.ts
+         📄 useFileState.ts
+         📄 usePlaybackState.ts
+         📄 useWaveSurfer.ts
+      📁 types
+         📄 player.ts
+      📁 utils
+         📄 appControllerFilters.ts
+         📄 appControllerUtils.ts
+         📄 utils.ts
+      🎨 App.css
+      📄 App.tsx
+      🎨 index.css
+      📄 main.tsx
+    .gitignore
+   📝 README.md
+   📄 eslint.config.js
+   🌐 index.html
+    package-lock.json
+    package.json
+    tsconfig.app.json
+    tsconfig.json
+    tsconfig.node.json
+   📄 vite.config.ts
+📁 docs
+   📝 ARCHITECTURE.md
+   📝 CURRENT_IMPLEMENTATION.md
+📁 server
+   📁 generated
+      📁 prisma
+          📁 internal
+             📄 class.ts
+             📄 prismaNamespace.ts
+             📄 prismaNamespaceBrowser.ts
+          📁 models
+          📄 browser.ts
+          📄 client.ts
+          📄 commonInputTypes.ts
+          📄 enums.ts
+          📄 models.ts
+   📁 prisma
+      📁 migrations
+         📁 0_init
+             📄 migration.sql
+      📄 schema.prisma
+   📁 src
+      📁 __test__
+         📁 chunking
+            📄 ChunkingService.test.ts
+            📄 FFprobeMetadataProvider.test.ts
+         📁 compression
+            📄 CompressionPresets.test.ts
+            📄 CompressionService.test.ts
+            📄 CompressionValidator.test.ts
+         📁 ffmpeg
+            📄 FFmpegExecutor.test.ts
+            📄 FFmpegService.integration.test.ts
+            📄 FFmpegService.test.ts
+            📄 FFmpegValidator.test.ts
+         📁 segmentation
+            📄 SegmentationService.test.ts
+            📄 SegmentationStrategies.test.ts
+         📁 streaming
+            📄 StreamingPreparationService.test.ts
+         📁 transcoding
+             📄 TranscodingService.test.ts
+      📁 constants
+         📁 ffmpeg
+             📄 index.ts
+      📁 controllers
+         📄 ChunkingController.ts
+         📄 CompressionController.ts
+         📄 FFmpegController.ts
+         📄 FileController.ts
+         📝 README.md
+         📄 SegmentationController.ts
+         📄 StreamingController.ts
+         📄 TranscodingController.ts
+      📁 dto
+         📄 base.dto.ts
+         📄 chunking.dto.ts
+         📄 compression.dto.ts
+         📄 ffmpeg.dto.ts
+         📄 file.dto.ts
+         📄 streaming.dto.ts
+      📁 errors
+         📁 chunking
+            📄 ChunkingErrors.ts
+         📁 compression
+            📄 CompressionErrors.ts
+         📁 ffmpeg
+            📄 FFmpegErrors.ts
+         📁 segmentation
+            📄 SegmentationErrors.ts
+         📁 streaming
+            📄 StreamingErrors.ts
+         📁 transcoding
+             📄 TranscodingErrors.ts
+      📁 interfaces
+         📁 chunking
+            📄 IChunkingService.ts
+            📄 IMediaMetadataProvider.ts
+         📁 compression
+            📄 ICompressionService.ts
+            📄 IFfmpegService.ts
+         📁 ffmpeg
+            📄 IFfmpegExecutor.ts
+            📄 IFfmpegService.ts
+         📁 file
+            📄 IFileService.ts
+         📁 segmentation
+            📄 ISegmentationService.ts
+         📁 streaming
+            📄 IStreamingPreparationService.ts
+         📁 transcoding
+             📄 IFfmpegService.ts
+             📄 ITranscodingService.ts
+      📁 lib
+         📄 prisma.ts
+      📁 middleware
+         📄 errorHandler.ts
+      📁 routes
+         📄 chunkingRoutes.ts
+         📄 compressionRoutes.ts
+         📄 ffmpegRoutes.ts
+         📄 fileRoutes.ts
+         📄 index.ts
+         📄 segmentationRoutes.ts
+         📄 streamingRoutes.ts
+         📄 transcodingRoutes.ts
+      📁 services
+         📁 chunking
+            📁 implementations
+               📄 FFprobeMetadataProvider.ts
+            📄 ChunkingService.ts
+         📁 compression
+            📁 presets
+               📄 CompressionPresets.ts
+            📄 CompressionService.ts
+         📁 ffmpeg
+            📁 implementations
+               📄 FFmpegExecutor.ts
+            📄 FFmpegService.ts
+         📁 file
+            📄 FileService.ts
+         📁 segmentation
+            📁 strategies
+               📄 AdaptiveSegmentationStrategy.ts
+               📄 FixedSegmentationStrategy.ts
+               📄 ISegmentationStrategy.ts
+               📄 LowLatencySegmentationStrategy.ts
+               📄 ProgressiveSegmentationStrategy.ts
+               📄 SegmentationStrategyFactory.ts
+            📄 SegmentationService.ts
+         📁 streaming
+            📄 StreamingPreparationService.ts
+         📁 transcoding
+             📄 TranscodingService.ts
+      📁 tests
+         📄 db_test.ts
+          postman_data.json
+         📄 prisma_test.ts
+      📁 types
+         📁 chunking
+            📄 ChunkingTypes.ts
+         📁 compression
+            📄 CompressionTypes.ts
+         📁 ffmpeg
+            📄 FFmpegTypes.ts
+         📁 segmentation
+            📄 SegmentationTypes.ts
+         📁 streaming
+            📄 StreamingTypes.ts
+         📁 transcoding
+             📄 TranscodingTypes.ts
+      📁 validator
+         📁 compression
+            📄 CompressionValidator.ts
+         📁 ffmpeg
+            📄 FFmpegValidator.ts
+         📁 segementation
+         📁 streaming
+         📁 transcoding
+      📄 index.ts
+    .gitignore
+    package-lock.json
+    package.json
+   📄 prisma.config.ts
+   📄 prisma_error.txt
+    tsconfig.json
+   📄 vitest.config.d.ts
+   📄 vitest.config.js
+   📄 vitest.config.ts
+.gitignore
+📝 Readme.md
+ package-lock.json
+```
 
 ---
-
-## Backend Flow (Decode + Stream)
-
-### 1) Upload & Metadata
-Files are uploaded to `server/uploads`. The server extracts metadata and stores it in the database:
-- `server/src/services/file/FileService.ts`
-- `server/src/services/chunking/implementations/FFprobeMetadataProvider.ts`
-
-### 2) Decode / Convert
-Endpoint: `POST /api/ffmpeg/decode`
-
-Main files:
-- `server/src/controllers/FFmpegController.ts`
-- `server/src/services/ffmpeg/FFmpegService.ts`
-- `server/src/services/ffmpeg/implementations/FFmpegExecutor.ts`
-
-Behavior:
-- Validates input/output paths.
-- For telecom codecs, applies the correct raw input args before `-i`.
-- Output format is controlled by `output.format` (`wav` or `mp3`).
-- For MP3 output, FFmpeg uses `libmp3lame`.
-
-### 3) Streaming
-Endpoint: `POST /api/streaming/sessions`
-
-Main files:
-- `server/src/controllers/StreamingController.ts`
-- `server/src/services/streaming/StreamingPreparationService.ts`
-- `server/src/types/streaming/StreamingTypes.ts`
-
-Two modes:
-
-1) **File-based streaming**  
-   - Used when a decoded output file already exists.  
-   - Uses HTTP Range support (`206 Partial Content`).
-
-2) **Live streaming (large files)**  
-   - Used when file is large or when no decoded output exists.
-   - FFmpeg **transcodes and streams immediately** via `pipe:1`.
-   - Optional **tee** output saves the final file (`processed/..._decoded.mp3` or `.wav`).
-
----
-
-## Frontend Flow (Decode + Play)
-
-Main files:
-- `client/src/hooks/useAppController.ts`
-- `client/src/hooks/useWaveSurfer.ts`
-- `client/src/components/Player/Player.tsx`
-
-Logic:
-- If output already exists, **play immediately**.
-- If not, either:
-  - decode via `/ffmpeg/decode`, or
-  - start live streaming if file is large.
-
-Playback:
-- **Normal files** -> WaveSurfer waveform.
-- **Large files / live streams** -> native `<audio>` element to prevent memory crashes.
-
----
-
-## Large File Scenario (1 GB / 3 Hours)
-
-### What happens
-1. File is uploaded to `server/uploads`.
-2. Frontend detects large file size.
-3. **Live streaming mode** is used.
-4. FFmpeg:
-   - streams output immediately to the client
-   - continues decoding in the background
-   - optionally saves compressed MP3 in `server/processed`
-5. User can **play immediately**, without waiting for full decode.
-
-### Why native audio is used
-WaveSurfer loads full buffers and can cause **out-of-memory crashes** on very large files.  
-The native player avoids this and is more stable for long recordings.
-
----
-
-## Reference Files
-
-Backend
-- `server/src/controllers/FFmpegController.ts`
-- `server/src/controllers/StreamingController.ts`
-- `server/src/controllers/FileController.ts`
-- `server/src/services/ffmpeg/FFmpegService.ts`
-- `server/src/services/streaming/StreamingPreparationService.ts`
-- `server/src/services/chunking/implementations/FFprobeMetadataProvider.ts`
-
-Frontend
-- `client/src/hooks/useAppController.ts`
-- `client/src/hooks/useWaveSurfer.ts`
-- `client/src/components/Player/Player.tsx`
-- `client/src/components/FileTable/FileTable.tsx`
+*Generated by FileTree Pro Extension*
