@@ -1,60 +1,151 @@
-# Current Implementation Overview
+# Current Implementation Overview (Updated)
+
+This document summarizes the end-to-end decoding and streaming flow, including database interactions, chunked streaming, and where each module fits. It is written for a project status briefing.
 
 ## At A Glance
-- **Client streaming uses:**
-  - Live streaming: `ffmpeg` piping to HTTP response (`Transfer-Encoding: chunked`)
-  - File-based streaming: HTTP **byte-range** reads from a file
+- **File-based playback (stable waveform)**  
+  Uses HTTP byte-range streaming from decoded files (`processed/`).
+- **Chunked live streaming (play-now)**  
+  Uses server-side chunk streaming + client-side MSE append, with **server-generated peaks** for real waveform during live chunk playback.
+- **Decoding**  
+  Raw codec files (G711/G726/G728) are decoded by ffmpeg into WAV/MP3.
+- **Database**  
+  Media metadata is stored in Prisma DB and used by the UI and streaming services.
 
-## High-Level Flow
+## System Architecture
 
 ```mermaid
 flowchart LR
-  A[Client UI] -->|createStreamingSession| B[POST /api/streaming/sessions]
-  B --> C[StreamingPreparationService.createSession]
-  A -->|GET /api/streaming/sessions/:id/stream| D[StreamingController.stream]
+  UI[Client UI] --> API[Express API]
 
-  D -->|mode=live| E[ffmpeg -> pipe:1]
-  D -->|mode=file-based| F[fs.createReadStream + Range]
+  subgraph Server
+    API --> FS[FileService]
+    API --> FF[FFmpegService]
+    API --> SS[StreamingController]
+    API --> CHK[ChunkingService]
+    API --> DB[(Prisma DB)]
+  end
 
-  E --> G[HTTP chunked response]
-  F --> G
-  G --> A
+  FS --> DB
+  FF --> FSYS[(Disk: uploads/, processed/)]
+  SS --> FF
+  SS --> CHK
+  SS --> FSYS
+
+  UI <-->|Audio Stream| SS
 ```
 
-## Live Streaming (ffmpeg)
+## End-to-End Data Flow
 
-**Used when**:
-- The client creates a session with `mode: "live"`.
+```mermaid
+flowchart TD
+  A[File Upload or Discovery] --> B[FileService.processFile]
+  B --> C[FFprobeMetadataProvider]
+  C --> D[Prisma DB: mediaFile]
+  D --> E[Client fetchFiles]
+  E --> F[User selects file]
 
-**What happens**:
-1. Client calls `POST /api/streaming/sessions` with options including input codec, sample rate, bitrate, and output format.
-2. Client calls `GET /api/streaming/sessions/:id/stream`.
-3. Server spawns `ffmpeg` and pipes `stdout` directly to the HTTP response.
+  F --> G{Decoded file exists?}
+  G -- Yes --> H[File-based streaming]
+  G -- No --> I[Chunked live streaming]
 
-**Key properties**:
-- Response is `Transfer-Encoding: chunked`.
-- Chunk size is **not fixed** by the app.
-  - It depends on ffmpeg output buffering + Node stream buffering.
+  H --> J[GET /stream (byte-range)]
+  I --> K[POST /streaming/sessions (live)]
+  K --> L[GET /chunks + /chunks/:index/stream]
+  L --> M[MSE append in client]
+  M --> N[Audio plays]
+  I --> P[GET /chunks/:index/peaks]
+  P --> Q[Streaming waveform drawn]
 
-## File-Based Streaming (Byte-Range)
+  I --> R[Background decode to processed/]
+  R --> S[Switch to file-based when ready]
+```
 
-**Used when**:
-- The client creates a session with `mode: "file-based"`.
+## Streaming Modes
 
-**What happens**:
-1. Client requests `GET /api/streaming/sessions/:id/stream`.
-2. Server reads the file directly from disk.
-3. If `Range` header exists, server sends that byte range.
+### 1) File-Based Streaming (Default)
+**Used when:** decoded file exists in `processed/`.  
+**How it works:**
+1. Client creates a session with `mode: "file-based"`.
+2. Server streams file using HTTP byte ranges.
+3. Browser controls range sizes, seeks are instant.
+4. WaveSurfer loads the file URL and renders waveform.
 
-**Key properties**:
-- `Accept-Ranges: bytes` is enabled.
-- The **browser/player decides the range size**.
+### 2) Chunked Live Streaming (Play-Now)
+**Used when:** decoded file does not exist.  
+**How it works:**
+1. Client creates a session with `mode: "live"`.
+2. Client fetches chunk metadata.
+3. Each chunk is streamed by ffmpeg (`/chunks/:index/stream`).
+4. Client appends chunks to a single MSE buffer.
+5. Server provides waveform peaks per chunk (`/chunks/:index/peaks`) so waveform is visible during live streaming.
+6. Background decode runs; once completed, client switches to file-based streaming seamlessly.
 
-## Chunking Service (Currently Not Used by Client)
+## Database Interaction (Prisma)
 
-There is a backend chunking pipeline:
-- `StreamingPreparationService.prepareChunks`
-- `StreamingPreparationService.handlePlaybackControl`
-- `ChunkingService` splits files into time-based chunks
+**Tables:**
+- `mediaFile` stores:
+  - `originalPath`, `decodedPath`
+  - `duration`, `codec`, `format`, `bitrate`
+  - `fileSize`, `status`
 
-Right now, the client does **not** call these endpoints during playback.
+**Usage:**
+- File discovery and metadata extraction populate `mediaFile`.
+- UI uses these values for filtering, duration display, and codec selection.
+- Decoding updates `decodedPath` when completed.
+
+## Key Endpoints
+
+**Files**
+- `GET /api/files` - list files from DB
+- `POST /api/files/upload` - upload and register file
+
+**Decoding**
+- `POST /api/ffmpeg/decode` - decode raw codecs to WAV/MP3
+
+**Streaming**
+- `POST /api/streaming/sessions` - create session
+- `GET /api/streaming/sessions/:id/stream` - file-based stream
+- `GET /api/streaming/sessions/:id/chunks` - chunk list
+- `GET /api/streaming/sessions/:id/chunks/:index/stream` - chunk stream
+- `GET /api/streaming/sessions/:id/chunks/:index/peaks` - waveform peaks
+
+## Component Responsibilities (Selected Files)
+
+**Client**
+- `client/src/hooks/useAppController.ts`  
+  Orchestrates file state + playback state for the whole UI.
+- `client/src/hooks/usePlaybackState.ts`  
+  Controls decode/streaming mode, waveform, and transport controls.
+- `client/src/hooks/playback/useDecodeAndPlay.ts`  
+  Switches between file-based and chunked live streaming, triggers decoding.
+- `client/src/components/Player/WaveformPanel.tsx`  
+  Renders file-based WaveSurfer or streaming waveform.
+- `client/src/components/Player/StreamingWaveform.tsx`  
+  Draws server-generated peaks for live chunk streaming.
+
+**Server**
+- `server/src/services/file/FileService.ts`  
+  File discovery, metadata extraction, DB insert/update.
+- `server/src/services/chunking/ChunkingService.ts`  
+  Generates time-based chunk metadata.
+- `server/src/controllers/StreamingController.ts`  
+  Streams chunks, file-based audio, and serves chunk peaks.
+- `server/src/services/ffmpeg/FFmpegService.ts`  
+  Runs decode/encode/transcode operations.
+
+## How the Project Meets Requirements
+- **Supports G711/G726/G728** via FFmpeg decode options.
+- **Streaming available**: file-based and live chunked.
+- **Waveform available in all modes**:
+  - File-based: WaveSurfer on decoded file
+  - Live: server-generated peaks
+- **Large file support**:  
+  Instant playback with chunked streaming, then smooth switch to file-based once decode completes.
+
+## Current Status
+- Phase 1 complete (file-based streaming + decoding).
+- Phase 2 implemented:
+  - Chunked live streaming with MSE
+  - Server-generated waveform peaks for live stream
+  - Seamless switch to decoded file
