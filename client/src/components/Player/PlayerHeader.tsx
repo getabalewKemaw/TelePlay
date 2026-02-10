@@ -34,7 +34,7 @@ export function PlayerHeader({
               <span className="hidden md:inline">Speed: </span>{playbackRate}x
             </button>
             {showSpeedMenu && (
-              <div className="absolute right-0 bottom-15 mb-2 bg-white rounded-xl shadow-2xl p-2 min-w-[80px] z-[90] animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 bottom-15 mb-2 bg-white rounded-xl shadow-2xl p-2 min-w-[80px] z-[80] animate-in fade-in zoom-in-95 duration-200">
                 {speeds.map(s => (
                   <button
                     key={s}

@@ -48,7 +48,7 @@ export function PlayerFileCard({
   return (
     <div className={cn(
       "bg-transparent md:bg-white/70 backdrop-blur-xl p-0 md:p-8 rounded-[2.5rem] md:shadow-2xl md:shadow-coffee-200/40 flex flex-col md:flex-row gap-6 md:gap-8 items-center relative overflow-visible md:overflow-hidden group transition-all",
-      showMobileMenu ? "z-[70]" : "z-30"
+      showMobileMenu ? "z-60" : "z-10"
     )}>
       <div className="absolute top-0 right-0 p-8 opacity-5 hidden md:block">
         <Music size={120} className='border-4' />
