@@ -28,6 +28,7 @@ export function usePlaybackState({
   const [streamingPeaks, setStreamingPeaks] = useState<number[] | null>(null)
   const [streamingDuration, setStreamingDuration] = useState<number | null>(null)
   const [isChunkedStreaming, setIsChunkedStreaming] = useState(false)
+  const [chunkSeekHandler, setChunkSeekHandler] = useState<((time: number) => void) | null>(null)
 
   const { audioRef, nativeTime, nativeDuration, nativePlaying } = useNativeAudioState({ forceRaf: isChunkedStreaming })
 
@@ -50,11 +51,13 @@ export function usePlaybackState({
   } = useTransportControls({
     wavesurferRef,
     audioRef,
-    currentTime,
-    duration,
+    currentTime: isChunkedStreaming ? nativeTime : currentTime,
+    duration: isChunkedStreaming ? (streamingDuration ?? nativeDuration) : duration,
     forceNativeAudio: forceNativeAudio || isChunkedStreaming,
     volume,
-    setVolume
+    setVolume,
+    isChunkedStreaming,
+    chunkSeekHandler
   })
 
   const handleDecodeAndPlay = useDecodeAndPlay({
@@ -69,6 +72,7 @@ export function usePlaybackState({
     setStreamingPeaks,
     setStreamingDuration,
     setIsChunkedStreaming,
+    setChunkSeekHandler,
     wavesurferRef,
     isWaveformReady,
     audioRef

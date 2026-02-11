@@ -2,8 +2,6 @@ import { FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } 
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
 import { cn } from '../../utils/utils'
-
-
 interface SidebarProps {
     files: MediaFile[]
     selectedFile: MediaFile | null

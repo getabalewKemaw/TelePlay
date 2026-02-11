@@ -17,7 +17,12 @@ export interface MediaFile {
 }
 
 export const fetchFiles = async () => {
-    const response = await api.get('/files');
+    const response = await api.get('/files', {
+        params: {
+            page: 1,
+            limit: 5000,
+        }
+    });
     return response.data.data;
 };
 
@@ -79,6 +84,11 @@ export const fetchStreamingChunks = async (sessionId: string) => {
     return response.data.data;
 };
 
+export const fetchStreamingSegments = async (sessionId: string) => {
+    const response = await api.get(`/streaming/sessions/${sessionId}/segments`);
+    return response.data.data;
+};
+
 export const fetchStreamingChunkPeaks = async (sessionId: string, index: number, bins: number) => {
     const response = await api.get(`/streaming/sessions/${sessionId}/chunks/${index}/peaks`, {
         params: { bins }
@@ -87,7 +97,7 @@ export const fetchStreamingChunkPeaks = async (sessionId: string, index: number,
 };
 
 export const discoverFiles = async (path?: string) => {
-    const response = await api.post('/discover', { path });
+    const response = await api.post('/files/discover', { path });
     return response.data;
 };
 

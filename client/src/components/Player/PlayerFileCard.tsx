@@ -53,7 +53,6 @@ export function PlayerFileCard({
       <div className="absolute top-0 right-0 p-8 opacity-5 hidden md:block">
         <Music size={120} className='border-4' />
       </div>
-
       <div className="w-28 h-28 md:w-40 md:h-40 bg-coffee-100/50 rounded-3xl flex items-center justify-center text-coffee-600 relative overflow-hidden shadow-inner shrink-0 group-hover:scale-105 transition-transform duration-500">
         {isPlaying ? (
           <div className="flex items-center gap-1">
@@ -82,7 +81,7 @@ export function PlayerFileCard({
         <div className="hidden md:flex flex-wrap gap-2 justify-center md:justify-start">
           <Badge icon={<Activity size={12} />} label={selectedFile.codec?.toUpperCase() || 'RAW'} />
           <Badge icon={<Zap size={12} />} label={`${convertedDuartions || 0}`} />
-          <Badge icon={<FolderOpen size={12} />} label={selectedFile.format || 'BINARY'} />
+          {/* <Badge icon={<FolderOpen size={12} />} label={selectedFile.format || 'BINARY'} /> */}
         </div>
       </div>
 
@@ -104,7 +103,7 @@ export function PlayerFileCard({
             <div className="flex flex-wrap gap-2 px-2 pb-2">
               <Badge icon={<Activity size={12} />} label={selectedFile.codec?.toUpperCase() || 'RAW'} />
               <Badge icon={<Zap size={12} />} label={`${convertedDuartions || 0}`} />
-              <Badge icon={<FolderOpen size={12} />} label={selectedFile.format || 'BINARY'} />
+              {/* <Badge icon={<FolderOpen size={12} />} label={selectedFile.format || 'BINARY'} /> */}
             </div>
             <div className="px-3 py-2 text-[10px] font-black text-coffee-400 uppercase tracking-widest border-b border-coffee-100/50 mb-1">
               Actions

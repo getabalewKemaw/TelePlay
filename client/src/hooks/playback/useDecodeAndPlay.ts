@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { toast } from 'react-hot-toast'
-import { createStreamingSession, decodeFile, fetchStreamingChunks, fetchStreamingChunkPeaks } from '../../api/api'
+import { createStreamingSession, decodeFile, fetchStreamingChunks, fetchStreamingChunkPeaks, fetchStreamingSegments } from '../../api/api'
 import type { MediaFile } from '../../api/api'
 import { getDecodedFormat, getG726BitrateKbps, isDirectPlayable, isLargeFile } from '../../utils/appControllerUtils'
 
@@ -16,6 +16,7 @@ interface DecodeDeps {
   setStreamingPeaks: (next: number[] | null) => void
   setStreamingDuration: (next: number | null) => void
   setIsChunkedStreaming: (next: boolean) => void
+  setChunkSeekHandler: (handler: ((time: number) => void) | null) => void
   wavesurferRef: React.MutableRefObject<any>
   isWaveformReady: boolean
   audioRef: React.RefObject<HTMLAudioElement | null>
@@ -33,6 +34,7 @@ export function useDecodeAndPlay({
   setStreamingPeaks,
   setStreamingDuration,
   setIsChunkedStreaming,
+  setChunkSeekHandler,
   wavesurferRef,
   isWaveformReady,
   audioRef
@@ -43,10 +45,16 @@ export function useDecodeAndPlay({
     mediaUrl?: string
     isActive?: boolean
   }>({})
+  const seekDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   return useCallback(async (fileOverride?: MediaFile) => {
     const targetFile = fileOverride || selectedFile
     if (!targetFile) return
+    if (seekDebounceRef.current) {
+      clearTimeout(seekDebounceRef.current)
+      seekDebounceRef.current = null
+    }
+    setChunkSeekHandler(null)
 
     const decodedFormat = getDecodedFormat(targetFile)
     const directPlayable = outputFormat === 'wav' && isDirectPlayable(targetFile)
@@ -72,6 +80,11 @@ export function useDecodeAndPlay({
       if (!useChunkedStreaming) {
         setStreamingPeaks(null)
         setStreamingDuration(null)
+        if (seekDebounceRef.current) {
+          clearTimeout(seekDebounceRef.current)
+          seekDebounceRef.current = null
+        }
+        setChunkSeekHandler(null)
       }
 
       if (useChunkedStreaming && !finalPath) {
@@ -118,12 +131,20 @@ export function useDecodeAndPlay({
                 setUseExternalAudio(false)
                 setStreamingPeaks(null)
                 setStreamingDuration(null)
+                if (seekDebounceRef.current) {
+                  clearTimeout(seekDebounceRef.current)
+                  seekDebounceRef.current = null
+                }
+                setChunkSeekHandler(null)
               } catch {
                 // ignore switch errors
               }
             }
           }
-        }).catch(() => undefined)
+        }).catch((err) => {
+          console.error('Background decode failed:', err)
+          toast.error('Background decode failed. File was streamed but not saved as decoded.')
+        })
       }
 
       if (!finalPath && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {
@@ -216,56 +237,68 @@ export function useDecodeAndPlay({
 
           const chunks = await fetchStreamingChunks(session.sessionId)
           if (Array.isArray(chunks) && chunks.length > 0) {
+            const segments = await fetchStreamingSegments(session.sessionId).catch(() => [])
             const totalDuration = chunks[chunks.length - 1]?.endTime || 0
             const binsPerChunk = 100
             const totalBins = chunks.length * binsPerChunk
             setStreamingDuration(totalDuration)
             setStreamingPeaks(new Array(totalBins).fill(Number.NaN))
+            const streamState = {
+              requestId: 0,
+              startFromIndex: 0,
+              seekTime: 0
+            }
 
-            const mediaSource = new MediaSource()
-            const mediaUrl = URL.createObjectURL(mediaSource)
-            chunkSessionRef.current = { sessionId: session.sessionId, mediaUrl, abort: new AbortController(), isActive: true }
-            audioRef.current.src = mediaUrl
-            audioRef.current.play().catch(() => undefined)
-
-            mediaSource.addEventListener('sourceopen', async () => {
-              const mime = 'audio/mpeg'
-              if (!MediaSource.isTypeSupported(mime)) {
-                throw new Error('MSE does not support audio/mpeg')
+            const getChunkIndexForTime = (time: number) => {
+              const safeTime = Math.min(Math.max(time, 0), totalDuration || 0)
+              if (Array.isArray(segments) && segments.length > 0) {
+                const segment = segments.find((s: any) => s.startTime <= safeTime && s.endTime > safeTime)
+                const segChunkIndex = segment?.chunks?.[0]?.index
+                if (typeof segChunkIndex === 'number') return segChunkIndex
               }
-              const sourceBuffer = mediaSource.addSourceBuffer(mime)
-              if (totalDuration > 0) {
-                try {
-                  mediaSource.duration = totalDuration
-                } catch {
-                  // ignore
-                }
+              const indexFromChunks = chunks.findIndex((c: any) => c.startTime <= safeTime && c.endTime > safeTime)
+              return indexFromChunks >= 0 ? indexFromChunks : Math.max(0, Math.min(chunks.length - 1, Math.floor(safeTime / (session.chunkDuration || 10))))
+            }
+
+            const startChunkPipeline = (startIndex: number, seekTime: number) => {
+              streamState.requestId += 1
+              const requestId = streamState.requestId
+              streamState.startFromIndex = startIndex
+              streamState.seekTime = seekTime
+              const baseChunkStart = chunks[startIndex]?.startTime ?? 0
+
+              chunkSessionRef.current.abort?.abort()
+              if (chunkSessionRef.current.mediaUrl) {
+                URL.revokeObjectURL(chunkSessionRef.current.mediaUrl)
               }
 
-              let index = 0
-              const appendChunk = async () => {
-                if (index >= chunks.length) {
-                  try { mediaSource.endOfStream() } catch { /* ignore */ }
-                  return
+              const mediaSource = new MediaSource()
+              const mediaUrl = URL.createObjectURL(mediaSource)
+              chunkSessionRef.current = { sessionId: session.sessionId, mediaUrl, abort: new AbortController(), isActive: true }
+
+              if (!audioRef.current) return
+              audioRef.current.src = mediaUrl
+              audioRef.current.play().catch(() => undefined)
+
+              mediaSource.addEventListener('sourceopen', async () => {
+                if (requestId !== streamState.requestId) return
+
+                const mime = 'audio/mpeg'
+                if (!MediaSource.isTypeSupported(mime)) {
+                  throw new Error('MSE does not support audio/mpeg')
                 }
-                // load peaks for this chunk (server-generated)
-                fetchStreamingChunkPeaks(session.sessionId, index, binsPerChunk).then((peaks) => {
-                  if (Array.isArray(peaks)) {
-                    setStreamingPeaks((prev) => {
-                      if (!prev) return prev
-                      const next = prev.slice()
-                      const offset = index * binsPerChunk
-                      for (let i = 0; i < binsPerChunk; i++) {
-                        next[offset + i] = peaks[i] ?? Number.NaN
-                      }
-                      return next
-                    })
+
+                const sourceBuffer = mediaSource.addSourceBuffer(mime)
+                if (totalDuration > 0) {
+                  try {
+                    mediaSource.duration = totalDuration
+                  } catch {
+                    // ignore
                   }
-                }).catch(() => undefined)
+                }
 
-                const chunkUrl = `http://localhost:3000/api/streaming/sessions/${session.sessionId}/chunks/${index}/stream?format=${chunkedOutputFormat}`
-                const response = await fetch(chunkUrl, { signal: chunkSessionRef.current.abort?.signal })
-                const buffer = await response.arrayBuffer()
+                let index = startIndex
+                let firstChunkAppended = false
 
                 const waitForBuffer = () => new Promise<void>((resolve) => {
                   if (!sourceBuffer.updating) {
@@ -279,19 +312,73 @@ export function useDecodeAndPlay({
                   sourceBuffer.addEventListener('updateend', onUpdate)
                 })
 
-                await waitForBuffer()
-                sourceBuffer.appendBuffer(buffer)
+                const appendChunk = async () => {
+                  if (requestId !== streamState.requestId) return
+                  if (index >= chunks.length) {
+                    try { mediaSource.endOfStream() } catch { /* ignore */ }
+                    return
+                  }
 
-                const onAppended = () => {
-                  sourceBuffer.removeEventListener('updateend', onAppended)
-                  index += 1
-                  appendChunk().catch(() => undefined)
+                  fetchStreamingChunkPeaks(session.sessionId, index, binsPerChunk).then((peaks) => {
+                    if (Array.isArray(peaks)) {
+                      setStreamingPeaks((prev) => {
+                        if (!prev) return prev
+                        const next = prev.slice()
+                        const offset = index * binsPerChunk
+                        for (let i = 0; i < binsPerChunk; i++) {
+                          next[offset + i] = peaks[i] ?? Number.NaN
+                        }
+                        return next
+                      })
+                    }
+                  }).catch(() => undefined)
+
+                  const chunkUrl = `http://localhost:3000/api/streaming/sessions/${session.sessionId}/chunks/${index}/stream?format=${chunkedOutputFormat}`
+                  const response = await fetch(chunkUrl, { signal: chunkSessionRef.current.abort?.signal })
+                  if (!response.ok) throw new Error(`Chunk request failed: ${response.status}`)
+                  const buffer = await response.arrayBuffer()
+
+                  await waitForBuffer()
+                  if (requestId !== streamState.requestId) return
+                  sourceBuffer.appendBuffer(buffer)
+
+                  const onAppended = () => {
+                    sourceBuffer.removeEventListener('updateend', onAppended)
+                    if (requestId !== streamState.requestId) return
+
+                    if (!firstChunkAppended && audioRef.current) {
+                      firstChunkAppended = true
+                      const boundedSeek = Math.min(Math.max(streamState.seekTime, 0), totalDuration || streamState.seekTime)
+                      const localSeek = Math.max(0.01, boundedSeek - baseChunkStart)
+                      try {
+                        audioRef.current.currentTime = localSeek
+                        audioRef.current.play().catch(() => undefined)
+                      } catch {
+                        // ignore seek set errors while buffer initializes
+                      }
+                    }
+
+                    index += 1
+                    appendChunk().catch(() => undefined)
+                  }
+                  sourceBuffer.addEventListener('updateend', onAppended)
                 }
-                sourceBuffer.addEventListener('updateend', onAppended)
-              }
 
-              appendChunk().catch(() => undefined)
+                appendChunk().catch(() => undefined)
+              })
+            }
+
+            setChunkSeekHandler((time: number) => {
+              if (seekDebounceRef.current) {
+                clearTimeout(seekDebounceRef.current)
+              }
+              seekDebounceRef.current = setTimeout(() => {
+                const targetIndex = getChunkIndexForTime(time)
+                startChunkPipeline(targetIndex, time)
+              }, 180)
             })
+
+            startChunkPipeline(0, 0)
 
             toast.success('Live chunk playback started', { id: toastId })
             return
@@ -379,5 +466,5 @@ export function useDecodeAndPlay({
     } finally {
       setIsDecoding(false)
     }
-  }, [audioRef, isWaveformReady, loadFiles, outputFormat, selectedFile, setActiveSession, setForceNativeAudio, setIsChunkedStreaming, setIsDecoding, setSelectedFile, setStreamingDuration, setStreamingPeaks, setUseExternalAudio, wavesurferRef])
+  }, [audioRef, isWaveformReady, loadFiles, outputFormat, selectedFile, setActiveSession, setChunkSeekHandler, setForceNativeAudio, setIsChunkedStreaming, setIsDecoding, setSelectedFile, setStreamingDuration, setStreamingPeaks, setUseExternalAudio, wavesurferRef])
 }
