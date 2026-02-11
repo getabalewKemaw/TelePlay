@@ -74,6 +74,24 @@ export class ChunkingService implements IChunkingService {
     const result = await this.generateChunks(filePath, options);
     return result.chunks;
   }
+
+  async getChunkAtTime(filePath: string, time: number, options?: ChunkingOptions): Promise<ChunkMetadata> {
+    if (!Number.isFinite(time) || time < 0) {
+      throw new ChunkingSeekError(`Invalid seek time: ${time}`, time, filePath);
+    }
+    const chunks = await this.getAllChunks(filePath, options);
+    if (chunks.length === 0) {
+      throw new ChunkingSeekError('No chunks available for seek operation', time, filePath);
+    }
+
+    const chunk = chunks.find((c) => c.startTime <= time && c.endTime > time)
+      ?? chunks[chunks.length - 1];
+    if (!chunk) {
+      throw new ChunkingSeekError('Seek target chunk not found', time, filePath);
+    }
+    return chunk;
+  }
+
   private calculateChunks(config: ChunkingConfig): ChunkMetadata[] {
     const chunks: ChunkMetadata[] = [];
     const totalDuration = config.totalDuration;

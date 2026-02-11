@@ -8,7 +8,6 @@ import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMedia
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { ChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 const FFPROBE_EXECUTABLE = 'ffprobe';
-
 type  rawFileTypes={
   format: string,
    codec: string; 
