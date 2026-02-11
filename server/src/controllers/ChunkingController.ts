@@ -4,15 +4,9 @@ import { ChunkingService } from '../services/chunking/ChunkingService.js';
 import type { IChunkingService } from '../interfaces/chunking/IChunkingService.js';
 export class ChunkingController {
     private chunkingService: IChunkingService;
-
     constructor(chunkingService?: IChunkingService) {
         this.chunkingService = chunkingService || new (ChunkingService as any)();
     }
-
-    /**
-     * GET /api/chunks
-     * Query params: filePath
-     */
     getAllChunks = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const filePath = req.query.filePath as string;

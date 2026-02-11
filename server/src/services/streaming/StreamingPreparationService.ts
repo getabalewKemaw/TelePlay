@@ -91,7 +91,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
       : chunks;
 
     const preparedChunks: PreparedChunk[] = [];
-
     for (const chunk of chunksToPrepare) {
       const prepared = await this.prepareSingleChunk(session, chunk);
       preparedChunks.push(prepared);
@@ -116,7 +115,6 @@ export class StreamingPreparationService implements IStreamingPreparationService
           newState = 'playing';
         }
         break;
-
       case 'pause':
         if (session.state === 'playing') {
           newState = 'paused';
