@@ -19,7 +19,7 @@ export class FileService implements IFileService {
                     await scan(fullPath);
                 } else if (entry.isFile()) {
                     const ext = path.extname(entry.name).toLowerCase();
-                    if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav'].includes(ext)) {
+                    if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav', '.mp3', '.aac', '.ogg'].includes(ext)) {
                         await this.processFile(fullPath);
                     }
                 }
@@ -30,7 +30,7 @@ export class FileService implements IFileService {
     }
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
-        const { query, sort = 'createdAt', order = 'desc', page = 1, limit = 10 } = criteria;
+        const { query, sort = 'createdAt', order = 'desc', page, limit } = criteria;
         const where = query ? {
             OR: [
                 { filename: { contains: query, mode: 'insensitive' as any } },
@@ -39,13 +39,19 @@ export class FileService implements IFileService {
             ]
         } : {};
 
+        const hasPagination = typeof page === 'number' && typeof limit === 'number' && page > 0 && limit > 0;
+        const queryOptions: any = {
+            where,
+            orderBy: { [sort]: order },
+        };
+
+        if (hasPagination) {
+            queryOptions.skip = (page - 1) * limit;
+            queryOptions.take = limit;
+        }
+
         const [files, total] = await Promise.all([
-            prisma.mediaFile.findMany({
-                where,
-                orderBy: { [sort]: order },
-                skip: (page - 1) * limit,
-                take: limit,
-            }),
+            prisma.mediaFile.findMany(queryOptions),
             prisma.mediaFile.count({ where }),
         ]);
 
@@ -70,11 +76,45 @@ export class FileService implements IFileService {
                 OR: [
                     { originalPath: normalizedPath },
                     { originalPath: filePath },
-                    { originalPath: relativePath }
+                    { originalPath: relativePath },
+                    { decodedPath: normalizedPath },
+                    { decodedPath: filePath },
+                    { decodedPath: relativePath }
                 ]
             }
         });
         if (existing) return existing;
+
+        const decodedMatch = filename.match(/^(.*)_decoded\.(wav|mp3|aac|ogg)$/i);
+        if (decodedMatch?.[1]) {
+            const sourceStem = decodedMatch[1];
+            const sourceFile = await prisma.mediaFile.findFirst({
+                where: {
+                    OR: [
+                        { filename: `${sourceStem}.g711` },
+                        { filename: `${sourceStem}.g711a` },
+                        { filename: `${sourceStem}.g711u` },
+                        { filename: `${sourceStem}.g726` },
+                        { filename: `${sourceStem}.g728` },
+                        { filename: `${sourceStem}.pcm` },
+                        { filename: `${sourceStem}.wav` },
+                        { filename: `${sourceStem}.mp3` }
+                    ]
+                },
+                orderBy: { updatedAt: 'desc' }
+            });
+
+            if (sourceFile) {
+                const updated = await prisma.mediaFile.update({
+                    where: { id: sourceFile.id },
+                    data: {
+                        decodedPath: normalizedPath,
+                        status: 'ready'
+                    }
+                });
+                return { ...updated, fileSize: updated.fileSize?.toString() };
+            }
+        }
 
         try {
             const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(normalizedPath);

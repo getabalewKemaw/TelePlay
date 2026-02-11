@@ -13,21 +13,24 @@ export class FileController {
     listFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { query, sort, order, page, limit } = req.query;
+            const parsedPage = page ? parseInt(page as string, 10) : undefined;
+            const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
+
             const result = await this.fileService.listFiles({
                 query: query as string,
                 sort: (sort as string) || 'createdAt',
                 order: (order as 'asc' | 'desc') || 'desc',
-                page: page ? parseInt(page as string) : 1,
-                limit: limit ? parseInt(limit as string) : 10,
+                page: Number.isFinite(parsedPage as number) ? parsedPage : undefined,
+                limit: Number.isFinite(parsedLimit as number) ? parsedLimit : undefined,
             });
+
             res.json({
                 success: true,
                 data: result.files,
-                
                 meta: {
                     total: result.total,
-                    page: page ? parseInt(page as string) : 1,
-                    limit: limit ? parseInt(limit as string) : 10,
+                    page: Number.isFinite(parsedPage as number) ? parsedPage : null,
+                    limit: Number.isFinite(parsedLimit as number) ? parsedLimit : null,
                     timestamp: new Date().toISOString(),
                     version: '1.0.0'
                 }

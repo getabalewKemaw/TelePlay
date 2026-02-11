@@ -14,18 +14,15 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 const PORT = process.env.PORT || 3000;
 const fileService = new FileService(new ChunkingService() as any);
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR || './uploads');
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.mkdirSync(uploadsDir, { recursive: true });// it createsnna dir and also with recursive true we can make does is add a parent folders
 }
 const runDiscovery = async () => {
     try {
         await fileService.discoverFiles(uploadsDir);
-
-        // scan MEDIA_ROOT if defined
         if (process.env.MEDIA_ROOT) {
             const mediaRoot = path.resolve(process.env.MEDIA_ROOT);
             if (fs.existsSync(mediaRoot)) {
