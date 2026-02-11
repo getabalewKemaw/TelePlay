@@ -43,5 +43,6 @@ export interface SegmentationOptions {
   chunksPerSegment?: number;
   targetSegmentDuration?: number;
   optimizeForLowLatency?: boolean;
+  baseChunkDuration?: number;
 
 }

@@ -2,6 +2,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { StreamingPreparationService } from '../services/streaming/StreamingPreparationService.js';
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
+import { SegmentationService } from '../services/segmentation/SegmentationService.js';
 import type { CreateSessionRequestDto, PlaybackControlRequestDto, PrepareItemsRequestDto } from '../dto/streaming.dto.js';
 import type { IStreamingPreparationService } from '../interfaces/streaming/IStreamingPreparationService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
@@ -13,10 +14,12 @@ import prisma from '../lib/prisma.js';
 export class StreamingController {
     private streamingService: IStreamingPreparationService;
     private chunkingService: ChunkingService;
+    private segmentationService: SegmentationService;
 
     constructor(streamingService?: IStreamingPreparationService) {
         this.streamingService = streamingService || new (StreamingPreparationService as any)();
         this.chunkingService = new (ChunkingService as any)();
+        this.segmentationService = new (SegmentationService as any)(this.chunkingService);
     }
 
     createSession = async (req: Request<{}, {}, CreateSessionRequestDto>, res: Response, next: NextFunction) => {
@@ -93,6 +96,41 @@ export class StreamingController {
             const response: ApiResponse<any> = {
                 success: true,
                 data: chunks,
+                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
+            };
+            res.status(200).json(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    getSegments = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
+        try {
+            const { sessionId } = req.params;
+            const session = await this.streamingService.getSession(sessionId);
+            if (!session) {
+                return res.status(404).json({ success: false, message: 'Session not found' });
+            }
+
+            const chunksPerSegmentRaw = typeof req.query.chunksPerSegment === 'string'
+                ? parseInt(req.query.chunksPerSegment, 10)
+                : 3;
+            const chunksPerSegment = Number.isFinite(chunksPerSegmentRaw) && chunksPerSegmentRaw > 0
+                ? chunksPerSegmentRaw
+                : 3;
+            const baseChunkDuration = session.chunkDuration ?? 10;
+
+            const segments = await this.segmentationService.getAllSegments(session.filePath, {
+                strategy: 'adaptive',
+                chunksPerSegment,
+                targetSegmentDuration: Math.max(baseChunkDuration * chunksPerSegment, baseChunkDuration),
+                optimizeForLowLatency: true,
+                baseChunkDuration
+            });
+
+            const response: ApiResponse<any> = {
+                success: true,
+                data: segments,
                 meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
             };
             res.status(200).json(response);
