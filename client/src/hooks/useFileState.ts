@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState ,useRef} from 'react'
 import { toast } from 'react-hot-toast'
 import { fetchFiles, uploadFile } from '../api/api'
 import type { MediaFile } from '../api/api'
 import type { SortDir, SortKey } from '../components/FileTable/FileTable'
 import { filterAndSortFiles } from '../utils/appControllerFilters'
-
 export function useFileState() {
   const [files, setFiles] = useState<MediaFile[]>([])
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null)
@@ -13,6 +12,8 @@ export function useFileState() {
   const [sortKey, setSortKey] = useState<SortKey>('filename')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [isTableOpen, setIsTableOpen] = useState(true)
+  // guard to prevent network request stacking
+  const isLoadingRef=useRef(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768
@@ -30,6 +31,9 @@ export function useFileState() {
   })
 
   const loadFiles = useCallback(async (quiet = false) => {
+    // opt(do not start a new request if the one is aleady in progress)
+    if(isLoadingRef.current)return;
+    isLoadingRef.current=true;
     try {
       const data = await fetchFiles()
       const filesArray = Array.isArray(data) ? data : (data?.files || [])
@@ -64,7 +68,7 @@ export function useFileState() {
 
   const handleFileSelect = useCallback((file: MediaFile) => {
     setSelectedFile(file)
-    toast(`Focusing on ${file.filename}`, { icon: 'ðŸŽ¯' })
+    toast(`Focusing on ${file.filename}`, { icon: '🫡' })
   }, [])
 
   const handleNext = useCallback(() => {

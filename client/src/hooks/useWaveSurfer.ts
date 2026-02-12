@@ -42,7 +42,7 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
             ws.on('play', () => setIsPlaying(true));
             ws.on('pause', () => setIsPlaying(false));
             ws.on('timeupdate', (time) => setCurrentTime(time));
-            ws.on('ready', () => setDuration(ws.getDuration()));
+            ws.on('ready', () => setDuration(ws!.getDuration()));
         };
 
         init();
