@@ -9,7 +9,14 @@ interface DownloadDeps {
   convertFormat: 'aac' | 'ogg' | 'mp3' | 'wav'
   setIsConverting: (next: boolean) => void
 }
-
+const API_BASE_URL = 
+  import.meta.env?.VITE_API_BASE_URL ||'http://localhost:3000';  
+const CODEC_MAP = {
+  wav: { codec: 'pcm_s16le', format: 'wav' },
+  mp3: { codec: 'mp3', format: 'mp3' },
+  ogg: { codec: 'opus', format: 'ogg' },
+  aac: { codec: 'aac', format: 'adts' },
+};
 export function useDownloadActions({
   selectedFile,
   convertFormat,
@@ -22,7 +29,7 @@ export function useDownloadActions({
       return
     }
     toast.success('Initiating secure download...')
-    window.open(`http://localhost:3000/api/files/${selectedFile.id}/download`, '_blank')
+    window.open(`${API_BASE_URL}/api/files/${selectedFile.id}/download`, '_blank')
   }, [selectedFile])
 
   const handleConvertAndDownload = useCallback(async () => {
@@ -37,7 +44,7 @@ export function useDownloadActions({
 
     try {
       const inputPath = selectedFile.decodedPath
-      const baseName = selectedFile.filename.replace(/\.[^/.]+$/, '')
+      const baseName = selectedFile.filename.replace(/\.[^/.]+$/, '')//song.mp3 to song
       const targetExt = convertFormat
       const outputDir = 'processed'
       const outputFilename = `${baseName}_converted.${targetExt}`
@@ -46,25 +53,13 @@ export function useDownloadActions({
       const decodedFormat = getDecodedFormat(selectedFile)
       const baseSampleRate = inferBaseSampleRate(selectedFile)
       const baseChannels = inferBaseChannels(selectedFile)
-
       const sourceEncoding = {
         codec: decodedFormat === 'mp3' ? 'mp3' : decodedFormat === 'aac' ? 'aac' : decodedFormat === 'ogg' ? 'opus' : 'pcm_s16le',
         sampleRate: baseSampleRate,
         channels: baseChannels
       }
 
-      const targetConfig = (() => {
-        if (convertFormat === 'wav') {
-          return { codec: 'pcm_s16le', format: 'wav' }
-        }
-        if (convertFormat === 'mp3') {
-          return { codec: 'mp3', format: 'mp3' }
-        }
-        if (convertFormat === 'ogg') {
-          return { codec: 'opus', format: 'ogg' }
-        }
-        return { codec: 'aac', format: 'adts' }
-      })()
+    const targetConfig = CODEC_MAP[convertFormat];
 
       const targetEncoding = {
         codec: targetConfig.codec,

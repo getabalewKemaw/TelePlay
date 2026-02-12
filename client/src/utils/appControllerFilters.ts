@@ -14,7 +14,7 @@ export function filterAndSortFiles(files: MediaFile[], options: FilterOptions) {
     const matchesSearch = term.length === 0 || file.filename.toLowerCase().includes(term)
     const matchesType = options.filterDecoded ? !!file.decodedPath : true
     return matchesSearch && matchesType
-  })
+  });
 
   const sorted = [...base].sort((a, b) => {
     const dir = options.sortDir === 'asc' ? 1 : -1
