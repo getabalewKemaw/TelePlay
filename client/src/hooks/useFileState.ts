@@ -8,6 +8,8 @@ export function useFileState() {
   const [files, setFiles] = useState<MediaFile[]>([])
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+    // state for the actual filtering logic
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [filterDecoded, setFilterDecoded] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('filename')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -53,9 +55,19 @@ export function useFileState() {
     return () => clearInterval(interval)
   }, [loadFiles])
 
+
+    //  EFFECT: Update the internal term only when typing stops
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300) 
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   const filteredFiles = useMemo(() => {
-    return filterAndSortFiles(files, { searchTerm, filterDecoded, sortKey, sortDir })
-  }, [files, searchTerm, filterDecoded, sortKey, sortDir])
+    return filterAndSortFiles(files, { searchTerm:debouncedSearchTerm, filterDecoded, sortKey, sortDir })
+  }, [files, filterDecoded, sortKey, sortDir,debouncedSearchTerm])
 
   const handleSortChange = useCallback((key: SortKey) => {
     if (key === sortKey) {
