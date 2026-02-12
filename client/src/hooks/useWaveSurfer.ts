@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | null>, options: any, enabled: boolean = true) => {
     const wavesurfer = useRef<WaveSurfer | null>(null);
@@ -6,17 +6,25 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isReady, setIsReady] = useState(false);
+
+    // helper to reset all states at once
+    const resetState=useCallback(()=>{
+        setIsReady(false);
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setDuration(0);
+    },[])
+
     useEffect(() => {
         if (!enabled) {
             if (wavesurfer.current) {
                 wavesurfer.current.destroy();
                 wavesurfer.current = null;
+                // FIX: queueMicrotask avoids the "synchronous setState" error
+                queueMicrotask(() => resetState());
             }
-            setIsReady(false);
-            setIsPlaying(false);
-            setCurrentTime(0);
-            setDuration(0);
             return;
+
         }
         let rafId: number | null = null;
         let ws: WaveSurfer | null = null;
@@ -53,7 +61,7 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
             ws?.destroy();
             wavesurfer.current = null;
         };
-    }, [containerRef, options, enabled]);
+    }, [containerRef, options, enabled,resetState]);
     return {
         wavesurferRef: wavesurfer,
         isWaveformReady: isReady,
