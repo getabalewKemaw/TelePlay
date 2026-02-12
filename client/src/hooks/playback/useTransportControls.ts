@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import { toast } from 'react-hot-toast'
-
 interface TransportDeps {
   wavesurferRef: React.MutableRefObject<any>
   audioRef: React.RefObject<HTMLAudioElement | null>
@@ -19,7 +18,7 @@ export function useTransportControls({
   currentTime,
   duration,
   forceNativeAudio,
-  volume,
+  volume:_volume,// to satifsy unused variable linting
   setVolume,
   isChunkedStreaming,
   chunkSeekHandler
@@ -35,43 +34,29 @@ export function useTransportControls({
     if (audioRef.current) {
       audioRef.current.playbackRate = rate
     }
-  }, [audioRef, wavesurferRef])
+  }, [audioRef, wavesurferRef, setPlaybackRate])
 
   const handleSeek = useCallback((time: number) => {
+    const targetTime = Math.min(Math.max(time, 0), duration || 0)
+
     if (isChunkedStreaming && chunkSeekHandler) {
-      const bounded = Math.min(Math.max(time, 0), duration || 0)
-      chunkSeekHandler(bounded)
+      chunkSeekHandler(targetTime)
       return
     }
 
     if (forceNativeAudio) {
       if (audioRef.current) {
-        audioRef.current.currentTime = time
+        audioRef.current.currentTime = targetTime
       }
       return
     }
-    if (!wavesurferRef.current) return
-    const bounded = Math.min(Math.max(time, 0), duration || 0)
-    wavesurferRef.current.setTime(bounded)
+    
+    wavesurferRef.current?.setTime(targetTime)
   }, [audioRef, chunkSeekHandler, duration, forceNativeAudio, isChunkedStreaming, wavesurferRef])
 
   const handleSkip = useCallback((delta: number) => {
-    if (isChunkedStreaming && chunkSeekHandler) {
-      const next = Math.min(Math.max(currentTime + delta, 0), duration || 0)
-      chunkSeekHandler(next)
-      return
-    }
-
-    if (forceNativeAudio) {
-      if (audioRef.current) {
-        audioRef.current.currentTime = Math.min(Math.max(audioRef.current.currentTime + delta, 0), audioRef.current.duration || 0)
-      }
-      return
-    }
-    if (!wavesurferRef.current) return
-    const next = Math.min(Math.max(currentTime + delta, 0), duration || 0)
-    wavesurferRef.current.setTime(next)
-  }, [audioRef, chunkSeekHandler, currentTime, duration, forceNativeAudio, isChunkedStreaming, wavesurferRef])
+    handleSeek(currentTime + delta)
+  }, [handleSeek, currentTime])
 
   const handleVolumeChange = useCallback((nextVolume: number) => {
     setVolume(nextVolume)
@@ -79,7 +64,7 @@ export function useTransportControls({
     if (audioRef.current) {
       audioRef.current.volume = nextVolume
     }
-  }, [audioRef, wavesurferRef])
+  }, [audioRef, wavesurferRef,setVolume])
 
   return {
     playbackRate,
