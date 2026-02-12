@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useWaveSurfer } from '../useWaveSurfer'
-
 interface WaveformStateOptions {
   volume: number
   disabled: boolean
@@ -10,7 +9,7 @@ interface WaveformStateOptions {
 
 export function useWaveformState({ volume, disabled, useExternalAudio, mediaRef }: WaveformStateOptions) {
   const waveformRef = useRef<HTMLDivElement>(null)
-  const lastMediaSrc = useRef<string | null>(null)
+  // const lastMediaSrc = useRef<string | null>(null)
   const waveformOptions = useMemo(() => ({
     waveColor: '#989f9eff',
     progressColor: '#0f172a',
@@ -24,36 +23,37 @@ export function useWaveformState({ volume, disabled, useExternalAudio, mediaRef 
     height: 80,
     backend: 'MediaElement',
     mediaControls: false,
-    media: useExternalAudio ? mediaRef?.current : undefined
-  }), [mediaRef, useExternalAudio])
-
+    // media: useExternalAudio ? mediaRef?.current : undefined
+  }), [])// we use []to ensure the wavesuffer renders ones as well
+// intialize wave suffer 
   const { wavesurferRef, isWaveformReady, isPlaying, playPause, currentTime, duration } = useWaveSurfer(
     waveformRef,
     waveformOptions,
     !disabled
   )
 
+
   useEffect(() => {
-    if (wavesurferRef.current) {
+    if (!useExternalAudio || !mediaRef?.current || !wavesurferRef.current) return
+
+    const ws = wavesurferRef.current
+    const media = mediaRef.current
+
+    try {
+      // Instead of .load(), we set the media element directly in the options
+      // This is the most efficient way to sync WaveSurfer with a native <audio> tag
+      ws.setOptions({ media })
+    } catch (error) {
+      console.warn('Waveform: Failed to sync external media', error)
+    }
+
+  })
+  
+ useEffect(() => {
+    if (wavesurferRef.current && isWaveformReady) {
       wavesurferRef.current.setVolume(volume)
     }
-  }, [volume, wavesurferRef])
-
-  useEffect(() => {
-    if (!useExternalAudio) return
-    if (!mediaRef?.current) return
-    if (!wavesurferRef.current) return
-    try {
-      const currentSrc = mediaRef.current.currentSrc || mediaRef.current.src
-      if (currentSrc && currentSrc !== lastMediaSrc.current) {
-        lastMediaSrc.current = currentSrc
-        wavesurferRef.current.load(mediaRef.current as any)
-      }
-    } catch {
-      // ignore load errors for streaming media elements
-    }
-  }, [mediaRef, useExternalAudio, wavesurferRef])
-
+  }, [volume, wavesurferRef, isWaveformReady])
   return {
     waveformRef,
     wavesurferRef,
