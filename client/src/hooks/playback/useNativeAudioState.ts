@@ -13,39 +13,45 @@ export function useNativeAudioState(options: NativeAudioOptions = {}) {
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
-    const onTime = () => setNativeTime(audio.currentTime || 0)
-    const onDur = () => setNativeDuration(audio.duration || 0)
-    const onPlay = () => setNativePlaying(true)
-    const onPause = () => setNativePlaying(false)
-    audio.addEventListener('timeupdate', onTime)
-    audio.addEventListener('loadedmetadata', onDur)
-    audio.addEventListener('play', onPlay)
-    audio.addEventListener('pause', onPause)
-    return () => {
-      audio.removeEventListener('timeupdate', onTime)
-      audio.removeEventListener('loadedmetadata', onDur)
-      audio.removeEventListener('play', onPlay)
-      audio.removeEventListener('pause', onPause)
-    }
-  }, [])
 
-  useEffect(() => {
-    if (!options.forceRaf) return
     let rafId: number | null = null
-    const tick = () => {
-      const audio = audioRef.current
-      if (audio) {
-        setNativeTime(audio.currentTime || 0)
-        setNativeDuration(audio.duration || 0)
-        setNativePlaying(!audio.paused)
+
+    // single source of truth for updating state
+    const syncState = () => {
+      setNativeTime(audio.currentTime || 0)
+      setNativeDuration(audio.duration || 0)
+      setNativePlaying(!audio.paused)
+
+      // Only continue the high-speed loop if forceRaf is on AND music is playing
+      if (options.forceRaf && !audio.paused) {
+        rafId = requestAnimationFrame(syncState)
       }
-      rafId = requestAnimationFrame(tick)
     }
-    rafId = requestAnimationFrame(tick)
+
+    const handlePlay = () => {
+      setNativePlaying(true)
+      if (options.forceRaf) rafId = requestAnimationFrame(syncState)
+    }
+
+    const handlePause = () => {
+      setNativePlaying(false)
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+
+    // Standard events for metadata and manual seeking
+    audio.addEventListener('timeupdate', syncState)
+    audio.addEventListener('loadedmetadata', syncState)
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
+
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId)
+      audio.removeEventListener('timeupdate', syncState)
+      audio.removeEventListener('loadedmetadata', syncState)
+      audio.removeEventListener('play', handlePlay)
+      audio.removeEventListener('pause', handlePause)
+      if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [options.forceRaf])
+  }, [options.forceRaf]) // Only re-run if the RAF setting changes
 
   return {
     audioRef,

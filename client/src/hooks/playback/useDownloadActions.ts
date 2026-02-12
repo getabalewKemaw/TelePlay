@@ -73,8 +73,8 @@ export function useDownloadActions({
         sourceEncoding,
         targetEncoding
       })
-      const blob = new Blob([response.data])
-      const url = window.URL.createObjectURL(blob)
+      const blob = new Blob([response.data])//Binary Large object  used to hold raw data sent from the backend
+      const url = window.URL.createObjectURL(blob)// these create  a temporary unique url that points to the specified blob
       const a = document.createElement('a')
       a.href = url
       a.download = outputFilename
