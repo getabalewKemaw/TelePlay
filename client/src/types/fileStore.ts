@@ -1,6 +1,5 @@
 import type { MediaFile } from '../api/api'
 import type { SortDir, SortKey } from '../components/FileTable/FileTable'
-
 export interface FileState {
   files: MediaFile[]
   filteredFiles: MediaFile[]

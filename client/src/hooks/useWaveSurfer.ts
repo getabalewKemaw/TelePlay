@@ -27,15 +27,13 @@ export const useWaveSurfer = (
             if (wavesurfer.current) {
                 wavesurfer.current.destroy();
                 wavesurfer.current = null;
-                // FIX: queueMicrotask avoids the "synchronous setState" error
+                // fix: queueMicrotask avoids the "synchronous setState" error
                 queueMicrotask(() => resetState());
             }
             return;
-
         }
         let rafId: number | null = null;
         let ws: WaveSurfer | null = null;
-
         const init = () => {
             if (!containerRef.current) {
                 rafId = requestAnimationFrame(init);
@@ -45,21 +43,17 @@ export const useWaveSurfer = (
                 setIsReady(true);
                 return;
             }
-
             ws = WaveSurfer.create({
                 container: containerRef.current,
                 ...options,
             });
-
             wavesurfer.current = ws;
             setIsReady(true);
-
             ws.on('play', () => setIsPlaying(true));
             ws.on('pause', () => setIsPlaying(false));
             ws.on('timeupdate', (time) => setCurrentTime(time));
             ws.on('ready', () => setDuration(ws!.getDuration()));
         };
-
         init();
 
         return () => {

@@ -1,21 +1,7 @@
 import { fetchStreamingChunkPeaks, fetchStreamingChunks, fetchStreamingSegments } from '../../api/api'
-import type React from 'react'
-import type { ChunkSessionState } from '../../types/decodePlayback'
+import type { StartChunkedPlaybackArgs } from '../../types/chunkingtypes';
 const API_BASE_URL=import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
-interface StartChunkedPlaybackArgs {
-  sessionId: string
-  chunkDuration?: number
-  chunkedOutputFormat: 'wav' | 'mp3'
-  audioRef: React.RefObject<HTMLAudioElement | null>
-  chunkSessionRef: React.MutableRefObject<ChunkSessionState>
-  seekDebounceRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
-  setStreamingDuration: (next: number | null) => void
-  setStreamingPeaks: (next: number[] | null | ((prev: number[] | null) => number[] | null)) => void
-  setChunkSeekHandler: (handler: ((time: number) => void) | null) => void
-}
-
-const clamp = (time: number, duration: number) => Math.min(Math.max(time, 0), duration || 0)
-
+export const clamp = (time: number, duration: number) => Math.min(Math.max(time, 0), duration || 0)
 export async function startChunkedPlayback({
   sessionId,
   chunkDuration = 10,
@@ -28,31 +14,27 @@ export async function startChunkedPlayback({
   setChunkSeekHandler
 }: StartChunkedPlaybackArgs) {
   if (!audioRef.current) return false
-
   if (chunkSessionRef.current.abort) {
     chunkSessionRef.current.abort.abort()
   }
   if (chunkSessionRef.current.mediaUrl) {
     URL.revokeObjectURL(chunkSessionRef.current.mediaUrl)
   }
-
   const chunks = await fetchStreamingChunks(sessionId)
   if (!Array.isArray(chunks) || chunks.length === 0) return false
-
   const segments = await fetchStreamingSegments(sessionId).catch(() => [])
   const totalDuration = chunks[chunks.length - 1]?.endTime || 0
   const binsPerChunk = 100
   const totalBins = chunks.length * binsPerChunk
-
   setStreamingDuration(totalDuration)
   setStreamingPeaks(new Array(totalBins).fill(Number.NaN))
-
   const streamState = {
     requestId: 0,
     startFromIndex: 0,
     seekTime: 0
   }
 
+// find which chunk containg the given timestamp(segmentation)
   const getChunkIndexForTime = (time: number) => {
     const safeTime = clamp(time, totalDuration)
     if (Array.isArray(segments) && segments.length > 0) {
@@ -65,19 +47,17 @@ export async function startChunkedPlayback({
       ? indexFromChunks
       : Math.max(0, Math.min(chunks.length - 1, Math.floor(safeTime / chunkDuration)))
   }
-
+  // intialize  media sources  and start fetching chunks sequntially 
   const startChunkPipeline = (startIndex: number, seekTime: number) => {
     streamState.requestId += 1
     const requestId = streamState.requestId
     streamState.startFromIndex = startIndex
     streamState.seekTime = seekTime
     const baseChunkStart = chunks[startIndex]?.startTime ?? 0
-
     chunkSessionRef.current.abort?.abort()
     if (chunkSessionRef.current.mediaUrl) {
       URL.revokeObjectURL(chunkSessionRef.current.mediaUrl)
     }
-
     const mediaSource = new MediaSource()
     const mediaUrl = URL.createObjectURL(mediaSource)
     chunkSessionRef.current = {
@@ -152,11 +132,9 @@ export async function startChunkedPlayback({
         await waitForBuffer()
         if (requestId !== streamState.requestId) return
         sourceBuffer.appendBuffer(buffer)
-
         const onAppended = () => {
           sourceBuffer.removeEventListener('updateend', onAppended)
           if (requestId !== streamState.requestId) return
-
           if (!firstChunkAppended && audioRef.current) {
             firstChunkAppended = true
             const boundedSeek = clamp(streamState.seekTime, totalDuration || streamState.seekTime)
@@ -168,13 +146,11 @@ export async function startChunkedPlayback({
               // ignore seek errors during init
             }
           }
-
           index += 1
           appendChunk().catch(() => undefined)
         }
         sourceBuffer.addEventListener('updateend', onAppended)
       }
-
       appendChunk().catch(() => undefined)
     })
   }

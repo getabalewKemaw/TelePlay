@@ -1,8 +1,6 @@
 import type React from 'react'
-
 export type OutputFormat = 'wav' | 'mp3'
 export type ConvertFormat = 'aac' | 'ogg' | 'mp3' | 'wav'
-
 export interface PlayerState {
   isDecoding: boolean
   activeSession: any
