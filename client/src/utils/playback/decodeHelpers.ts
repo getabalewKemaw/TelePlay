@@ -1,5 +1,19 @@
+import { Target } from 'lucide-react';
 import type { MediaFile } from '../../api/api'
 import { getG726BitrateKbps } from '../appControllerUtils'
+
+
+
+// dynamic chunk sizing based on file duration
+// Change the parameter from a number to the MediaFile object
+const getOptimalChunkSize = (targetfile: MediaFile) => {
+  const duration = targetfile.duration;
+
+  if (duration > 3600) return 30; 
+  if (duration > 1800) return 20; 
+  return 10;
+};
+
 
 export const getBaseName = (filename: string) => filename.replace(/\.[^/.]+$/, '')
 
@@ -30,7 +44,7 @@ export const buildDecodePayload = (targetFile: MediaFile, outputPath: string, ou
 export const buildStreamOptions = (targetFile: MediaFile, outputFormat: 'wav' | 'mp3', useChunkedStreaming: boolean) => {
   const inferredCodec = inferCodec(targetFile)
   const streamingOutputFormat = useChunkedStreaming ? 'mp3' : outputFormat
-
+   const d=targetFile.duration;
   return {
     liveOptions: {
       transport: 'http',
@@ -42,7 +56,7 @@ export const buildStreamOptions = (targetFile: MediaFile, outputFormat: 'wav' | 
       bitrate: targetFile.codec === 'g726' ? (getG726BitrateKbps(targetFile) || 32) : undefined,
       saveOutputPath: getOutputPath(targetFile.filename, outputFormat),
       fileId: targetFile.id,
-      chunkDuration: 10
+      chunkDuration:d>3600?30:d>1800?20:10
     },
     fileOptions: {
       transport: 'http',
