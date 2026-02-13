@@ -1,11 +1,14 @@
+import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 interface NativeAudioOptions {
   forceRaf?: boolean
+  audioRef?: React.RefObject<HTMLAudioElement | null>
 }
 
 export function useNativeAudioState(options: NativeAudioOptions = {}) {
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const internalRef = useRef<HTMLAudioElement>(null)
+  const audioRef = options.audioRef ?? internalRef
   const [nativeTime, setNativeTime] = useState(0)
   const [nativeDuration, setNativeDuration] = useState(0)
   const [nativePlaying, setNativePlaying] = useState(false)
@@ -51,7 +54,7 @@ export function useNativeAudioState(options: NativeAudioOptions = {}) {
       audio.removeEventListener('pause', handlePause)
       if (rafId) cancelAnimationFrame(rafId)
     }
-  }, [options.forceRaf]) // Only re-run if the RAF setting changes
+  }, [options.forceRaf,audioRef]) // Only re-run if the RAF setting changes
 
   return {
     audioRef,

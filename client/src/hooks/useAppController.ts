@@ -1,5 +1,9 @@
 import { useFileState } from './useFileState'
-import { usePlaybackState } from './usePlaybackState'
+
+import { usePlayerStore } from '../stores/usePlayerStore'
+import { usePlayerEngine } from './usePlayerEngine'
+import { useUIStore } from '../stores/useUIStore'
+import { useShallow } from 'zustand/shallow'
 import { isDirectPlayable } from '../utils/appControllerUtils'
 
 export function useAppController() {
@@ -7,14 +11,11 @@ export function useAppController() {
     files,
     filteredFiles,
     selectedFile,
-    setSelectedFile,
     searchTerm,
     filterDecoded,
     sortKey,
     sortDir,
-    isTableOpen,
-    isSidebarCollapsed,
-    isDarkMode,
+
     loadFiles,
     setSearchTerm,
     setFilterDecoded,
@@ -22,11 +23,24 @@ export function useAppController() {
     handleFileSelect,
     handleNext,
     handlePrev,
-    pickDirectory,
+    pickDirectory
+  } = useFileState()
+
+  const {
+    isTableOpen,
+    isSidebarCollapsed,
+    isDarkMode,
     toggleSidebar,
     toggleTable,
     toggleTheme
-  } = useFileState()
+  } = useUIStore(useShallow((state) => ({
+    isTableOpen: state.isTableOpen,
+    isSidebarCollapsed: state.isSidebarCollapsed,
+    isDarkMode: state.isDarkMode,
+    toggleSidebar: state.toggleSidebar,
+    toggleTable: state.toggleTable,
+    toggleTheme: state.toggleTheme
+  })))
 
   const {
     isDecoding,
@@ -49,6 +63,36 @@ export function useAppController() {
     duration,
     setOutputFormat,
     setConvertFormat,
+    streamingPeaks,
+    streamingDuration,
+    isChunkedStreaming
+  } = usePlayerStore(useShallow((state) => ({
+    isDecoding: state.isDecoding,
+    activeSession: state.activeSession,
+    playbackRate: state.playbackRate,
+    volume: state.volume,
+    outputFormat: state.outputFormat,
+    convertFormat: state.convertFormat,
+    isConverting: state.isConverting,
+    waveformRef: state.waveformRef,
+    audioRef: state.audioRef,
+    nativeTime: state.nativeTime,
+    nativeDuration: state.nativeDuration,
+    nativePlaying: state.nativePlaying,
+    forceNativeAudio: state.forceNativeAudio,
+    wavesurferRef: state.wavesurferRef,
+    isWaveformReady: state.isWaveformReady,
+    isPlaying: state.isPlaying,
+    currentTime: state.currentTime,
+    duration: state.duration,
+    setOutputFormat: state.setOutputFormat,
+    setConvertFormat: state.setConvertFormat,
+    streamingPeaks: state.streamingPeaks,
+    streamingDuration: state.streamingDuration,
+    isChunkedStreaming: state.isChunkedStreaming
+  })))
+
+  const {
     handleDecodeAndPlay,
     handleDownload,
     handleConvertAndDownload,
@@ -56,15 +100,8 @@ export function useAppController() {
     handleSeek,
     handleSkip,
     handleVolumeChange,
-    playPause,
-    streamingPeaks,
-    streamingDuration,
-    isChunkedStreaming
-  } = usePlaybackState({
-    selectedFile,
-    setSelectedFile,
-    loadFiles
-  })
+    handlePlayPause
+  } = usePlayerEngine()
 
   return {
     files,
@@ -111,7 +148,7 @@ export function useAppController() {
     handleSkip,
     handleVolumeChange,
     pickDirectory,
-    playPause,
+    playPause: handlePlayPause,
     toggleSidebar,
     toggleTable,
     toggleTheme,

@@ -1,7 +1,13 @@
+import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
-export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | null>, options: any, enabled: boolean = true) => {
-    const wavesurfer = useRef<WaveSurfer | null>(null);
+export const useWaveSurfer = (
+    containerRef: React.RefObject<HTMLDivElement | null>,
+    options: any,
+    enabled: boolean = true
+) => {
+    const internalRef = useRef<WaveSurfer | null>(null);
+    const wavesurfer = internalRef;
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -16,6 +22,7 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
     },[])
 
     useEffect(() => {
+        
         if (!enabled) {
             if (wavesurfer.current) {
                 wavesurfer.current.destroy();
@@ -61,7 +68,7 @@ export const useWaveSurfer = (containerRef: React.RefObject<HTMLDivElement | nul
             ws?.destroy();
             wavesurfer.current = null;
         };
-    }, [containerRef, options, enabled,resetState]);
+    }, [containerRef, options, enabled,resetState,wavesurfer]);
     return {
         wavesurferRef: wavesurfer,
         isWaveformReady: isReady,

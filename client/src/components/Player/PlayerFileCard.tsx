@@ -1,9 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   Activity,
   ChevronDown,
   Download,
-  FolderOpen,
   MoreVertical,
   Music,
   Play,

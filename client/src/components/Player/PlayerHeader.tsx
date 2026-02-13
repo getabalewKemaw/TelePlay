@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Gauge, HelpCircle } from 'lucide-react'
 import { cn } from '../../utils/utils'
 

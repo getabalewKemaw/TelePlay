@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 interface TransportDeps {
   wavesurferRef: React.MutableRefObject<any>
@@ -6,7 +6,8 @@ interface TransportDeps {
   currentTime: number
   duration: number
   forceNativeAudio: boolean
-  volume: number
+  playbackRate: number
+  setPlaybackRate: (next: number) => void
   setVolume: (next: number) => void
   isChunkedStreaming: boolean
   chunkSeekHandler: ((time: number) => void) | null
@@ -18,13 +19,12 @@ export function useTransportControls({
   currentTime,
   duration,
   forceNativeAudio,
-  volume:_volume,// to satifsy unused variable linting
+  playbackRate,
+  setPlaybackRate,
   setVolume,
   isChunkedStreaming,
   chunkSeekHandler
 }: TransportDeps) {
-  const [playbackRate, setPlaybackRate] = useState(1)
-
   const handleRateChange = useCallback((rate: number) => {
     setPlaybackRate(rate)
     if (wavesurferRef.current) {
@@ -68,7 +68,6 @@ export function useTransportControls({
 
   return {
     playbackRate,
-    setPlaybackRate,
     handleRateChange,
     handleSeek,
     handleSkip,

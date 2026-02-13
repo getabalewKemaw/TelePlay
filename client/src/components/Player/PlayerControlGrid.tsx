@@ -1,4 +1,3 @@
-import React from 'react'
 import { RotateCcw, RotateCw, Volume2 } from 'lucide-react'
 import { formatTime } from '../../utils/utils'
 

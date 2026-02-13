@@ -5,63 +5,69 @@ import { FileTable } from './components/FileTable/FileTable'
 import { AppHeader } from './components/App/AppHeader'
 import { FileTableCard } from './components/App/FileTableCard'
 import { EmptyState } from './components/App/EmptyState'
-import { useAppController } from './hooks/useAppController'
+import { useEffect } from 'react'
+import { useUIStore } from './stores/useUIStore'
+import { useShallow } from 'zustand/shallow'
+import { useFileStore } from './stores/useFileStore'
+import { useFileActions } from './hooks/useFileActions'
+import { useFileDerivedSync } from './hooks/useFileDerivedSync'
 export default function App() {
+  useFileDerivedSync()
+
   const {
     filteredFiles,
     selectedFile,
-    isDecoding,
-    activeSession,
-    playbackRate,
-    volume,
-    outputFormat,
-    convertFormat,
     searchTerm,
     filterDecoded,
     sortKey,
     sortDir,
+    setSearchTerm,
+    setFilterDecoded
+  } = useFileStore(useShallow((state) => ({
+    filteredFiles: state.filteredFiles,
+    selectedFile: state.selectedFile,
+    searchTerm: state.searchTerm,
+    filterDecoded: state.filterDecoded,
+    sortKey: state.sortKey,
+    sortDir: state.sortDir,
+    setSearchTerm: state.setSearchTerm,
+    setFilterDecoded: state.setFilterDecoded
+  })));
+
+  const {
+    handleSortChange,
+    handleFileSelect,
+    pickDirectory,
+    loadFiles
+  } = useFileActions();
+
+  const {
     isTableOpen,
     isSidebarCollapsed,
     isDarkMode,
-    isConverting,
-    waveformRef,
-    audioRef,
-    nativeTime,
-    nativeDuration,
-    nativePlaying,
-    forceNativeAudio,
-    isWaveformReady,
-    isPlaying,
-    currentTime,
-    duration,
-    streamingPeaks,
-    streamingDuration,
-    isChunkedStreaming,
-    setSearchTerm,
-    setFilterDecoded,
-    setOutputFormat,
-    setConvertFormat,
-    handleSortChange,
-    handleFileSelect,
-    handleDecodeAndPlay,
-    handleDownload,
-    handleConvertAndDownload,
-    handleNext,
-    handlePrev,
-    handleRateChange,
-    handleSeek,
-    handleSkip,
-    handleVolumeChange,
-    pickDirectory,
-    playPause,
     toggleSidebar,
     toggleTable,
-    toggleTheme,
-    isDirectPlayable
-  } = useAppController()
+    toggleTheme
+  } = useUIStore(useShallow((state) => ({
+    isTableOpen: state.isTableOpen,
+    isSidebarCollapsed: state.isSidebarCollapsed,
+    isDarkMode: state.isDarkMode,
+    toggleSidebar: state.toggleSidebar,
+    toggleTable: state.toggleTable,
+    toggleTheme: state.toggleTheme
+  })));
+
+  useEffect(() => {
+    loadFiles(true)
+    const interval = setInterval(() => {
+      loadFiles(true)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [loadFiles]);
 
   return (
     <div
+  
       data-theme={isDarkMode ? 'dark' : 'light'}
       className="flex h-screen bg-coffee-50 text-coffee-Dark font-sans selection:bg-coffee-200 overflow-hidden transition-colors duration-300"
     >
@@ -120,50 +126,7 @@ export default function App() {
             </FileTableCard>
 
             {selectedFile ? (
-              <Player
-                selectedFile={selectedFile}
-                isDecoding={isDecoding}
-                activeSession={activeSession}
-                isPlaying={isChunkedStreaming || forceNativeAudio ? nativePlaying : isPlaying}
-                currentTime={isChunkedStreaming || forceNativeAudio ? nativeTime : currentTime}
-                duration={isChunkedStreaming ? (streamingDuration || nativeDuration) : (forceNativeAudio ? nativeDuration : duration)}
-                playbackRate={playbackRate}
-                volume={volume}
-                outputFormat={outputFormat}
-                convertFormat={convertFormat}
-                waveformRef={waveformRef}
-                audioRef={audioRef}
-                useNativeAudio={forceNativeAudio}
-                canDirectPlay={isDirectPlayable(selectedFile)}
-                isWaveformReady={isWaveformReady}
-                isConverting={isConverting}
-                streamingPeaks={streamingPeaks}
-                streamingDuration={streamingDuration}
-                isChunkedStreaming={isChunkedStreaming}
-                onDecodeAndPlay={() => handleDecodeAndPlay()}
-                onDownload={handleDownload}
-                onConvertAndDownload={handleConvertAndDownload}
-                onPlayPause={() => {
-                  if (forceNativeAudio || isChunkedStreaming) {
-                    if (!audioRef.current) return
-                    if (nativePlaying) {
-                      audioRef.current.pause()
-                    } else {
-                      audioRef.current.play().catch(() => undefined)
-                    }
-                  } else {
-                    playPause()
-                  }
-                }}
-                onNext={handleNext}
-                onPrev={handlePrev}
-                onRateChange={handleRateChange}
-                onSeek={handleSeek}
-                onSkip={handleSkip}
-                onVolumeChange={handleVolumeChange}
-                onOutputFormatChange={setOutputFormat}
-                onConvertFormatChange={setConvertFormat}
-              />
+              <Player />
             ) : (
               <EmptyState />
             )}

@@ -1,5 +1,4 @@
 import { Moon, PanelLeftClose, PanelLeftOpen, Sun } from 'lucide-react'
-
 interface AppHeaderProps {
   fileCount: number
   isSidebarCollapsed: boolean
