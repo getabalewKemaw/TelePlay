@@ -4,8 +4,9 @@ import prisma from '../../lib/prisma.js';
 import type { ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { isdirectoryExists } from '../../utils/fileutils.js';
-import { AUDIO_EXTENSIONS,getPathVariations,parseDecodedFilename } from '../../utils/fileutils.js';
+import { isdirectoryExists } from '../../utils/fileUtils.js';
+
+import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
     async discoverFiles(directoryPath: string): Promise<void> {
@@ -23,11 +24,7 @@ export class FileService implements IFileService {
              }
              if (entry.isFile()){
                 const ext=path.extname(entry.name).toLowerCase();
-                const audioExtensions = [
-                    '.g711', '.g711u', '.g711a', '.g726', '.g728', 
-                    '.pcm', '.wav', '.mp3', '.aac', '.ogg'
-                ];
-                if(audioExtensions.includes(ext)){
+                if(AUDIO_EXTENSIONS.includes(ext)){
                     return await  this.processFile(fullPath);
                 }
              }
@@ -43,8 +40,10 @@ export class FileService implements IFileService {
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
         const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
         //serve side validation for the  page sizes
-        const maxP=Math.min(1,page || 1);
-        const samLimit=Math.max(1,Math.min(limit|| 10,100));// prevent the user from requating  a limit like 99999 and crashing the serve memory
+        const hasPageParam = typeof page === 'number' && Number.isFinite(page);
+        const hasLimitParam = typeof limit === 'number' && Number.isFinite(limit);
+        const safePage = hasPageParam ? Math.max(1, page) : undefined;
+        const safeLimit = hasLimitParam ? Math.max(1, Math.min(limit, 100)) : undefined; // prevent the user from requating  a limit like 99999 and crashing the serve memory
 
         const where: any = query ? {
             OR: [
@@ -57,15 +56,15 @@ export class FileService implements IFileService {
             where.decodedPath = { not: null };
         }
 
-        const hasPagination = typeof page === 'number' && typeof limit === 'number' && page > 0 && limit > 0;
+        const hasPagination = typeof safePage === 'number' && typeof safeLimit === 'number' && safePage > 0 && safeLimit > 0;
         const queryOptions: any = {
             where,
             orderBy: { [sort]: order },
         };
 
         if (hasPagination) {
-            queryOptions.skip = (page - 1) * limit;
-            queryOptions.take = limit;
+            queryOptions.skip = (safePage - 1) * safeLimit;
+            queryOptions.take = safeLimit;
         }
 
         const [files, total] = await Promise.all([
@@ -88,43 +87,29 @@ export class FileService implements IFileService {
 
     // taking a file path and either linking to the existing database or creating a record in a database 
     async processFile(filePath: string): Promise<any> {
-        const variations=getPathVariations(filePath);
         const normalizedPath = path.resolve(filePath);
-        // const filename=path.basename(filePath);
-        // const relativePath = path.relative(process.cwd(), normalizedPath);
         const filename = path.basename(normalizedPath);
-        //checking for duplicates simply as well
+        const pathVariations = getPathVariations(normalizedPath);
+        const pathFilters = pathVariations.flatMap((value) => ([
+            { originalPath: { equals: value, mode: 'insensitive' as const } },
+            { decodedPath: { equals: value, mode: 'insensitive' as const } }
+        ]));
         const existing = await prisma.mediaFile.findFirst({
             where: {
-                OR: [
-                    {
-                    originalPath:{in:variations}
-                    },
-                    {
-                        decodedPath:{in:variations}
-                    }
-                ]
+                OR: pathFilters
             }
         });
         if (existing) return existing;
 
 
 
-        const decodedMatch = filename.match(/^(.*)_decoded\.(wav|mp3|aac|ogg)$/i);
-        if (decodedMatch?.[1]) {
-            const sourceStem = decodedMatch[1];
+        const sourceStem = parseDecodedFilename(filename);
+        if (sourceStem) {
             const sourceFile = await prisma.mediaFile.findFirst({
                 where: {
-                    OR: [
-                        { filename: `${sourceStem}.g711` },
-                        { filename: `${sourceStem}.g711a` },
-                        { filename: `${sourceStem}.g711u` },
-                        { filename: `${sourceStem}.g726` },
-                        { filename: `${sourceStem}.g728` },
-                        { filename: `${sourceStem}.pcm` },
-                        { filename: `${sourceStem}.wav` },
-                        { filename: `${sourceStem}.mp3` }
-                    ]
+                    OR: AUDIO_EXTENSIONS.map((ext) => ({
+                        filename: { equals: `${sourceStem}${ext}`, mode: 'insensitive' as const }
+                    }))
                 },
                 orderBy: { updatedAt: 'desc' }
             });
@@ -143,20 +128,31 @@ export class FileService implements IFileService {
 
         try {
             const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(normalizedPath);
-
-            const file = await prisma.mediaFile.create({
-                data: {
-                    filename,
-                    originalPath: normalizedPath,
-                    duration: metadataResult.duration,
-                    fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
-                    format: metadataResult.format,
-                    codec: metadataResult.codec,
-                    bitrate: metadataResult.bitrate,
-                    status: 'ready'
+            try {
+                const file = await prisma.mediaFile.create({
+                    data: {
+                        filename,
+                        originalPath: normalizedPath,
+                        duration: metadataResult.duration,
+                        fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
+                        format: metadataResult.format,
+                        codec: metadataResult.codec,
+                        bitrate: metadataResult.bitrate,
+                        status: 'ready'
+                    }
+                });
+                return { ...file, fileSize: file.fileSize?.toString() };
+            } catch (error: any) {
+                if (error?.code === 'P2002') {
+                    const existingRecord = await prisma.mediaFile.findFirst({
+                        where: { OR: pathFilters }
+                    });
+                    if (existingRecord) {
+                        return { ...existingRecord, fileSize: existingRecord.fileSize?.toString() };
+                    }
                 }
-            });
-            return { ...file, fileSize: file.fileSize?.toString() };
+                throw error;
+            }
         } catch (error) {
             console.error(`Failed to process file ${normalizedPath}:`, error);
             const file = await prisma.mediaFile.create({

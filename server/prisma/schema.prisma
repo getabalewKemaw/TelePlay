@@ -22,6 +22,8 @@ model MediaFile {
   updatedAt      DateTime        @updatedAt
   streamSessions StreamSession[]
 
+  @@unique([originalPath])
+  @@unique([decodedPath])
   @@map("media_files")
 }
 

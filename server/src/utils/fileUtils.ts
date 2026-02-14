@@ -1,5 +1,4 @@
-import { error } from 'console';
-import {promises as fs } from  'fs'
+import { promises as fs } from 'fs'
 import path from 'path'
 export async function isdirectoryExists(dirPath:string):Promise<boolean> {
     try{
@@ -16,11 +15,12 @@ export async function isdirectoryExists(dirPath:string):Promise<boolean> {
 export const AUDIO_EXTENSIONS = ['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav', '.mp3', '.aac', '.ogg'];
 export const getPathVariations = (filePath: string) => {
     const normalized = path.resolve(filePath);
-    return [
-        normalized,
-        filePath,
-        path.relative(process.cwd(), normalized)
-    ];
+    const relative = path.relative(process.cwd(), normalized);
+    const variations = new Set([normalized, filePath, relative]);
+    for (const value of Array.from(variations)) {
+        variations.add(value.replace(/\\/g, '/'));
+    }
+    return Array.from(variations);
 };
 
 // check if the file is decoded or not 

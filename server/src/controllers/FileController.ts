@@ -15,6 +15,10 @@ export class FileController {
             const { query, sort, order, page, limit, decodedOnly } = req.query;
             const parsedPage = page ? parseInt(page as string, 10) : undefined;
             const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
+            const hasPageParam = Number.isFinite(parsedPage as number);
+            const hasLimitParam = Number.isFinite(parsedLimit as number);
+            const safePage = hasPageParam ? Math.max(1, parsedPage as number) : undefined;
+            const safeLimit = hasLimitParam ? Math.max(1, parsedLimit as number) : undefined;
             const parsedDecodedOnly =
                 decodedOnly === 'true' || decodedOnly === '1';
 
@@ -22,8 +26,8 @@ export class FileController {
                 query: query as string,
                 sort: (sort as string) || 'createdAt',
                 order: (order as 'asc' | 'desc') || 'desc',
-                page: Number.isFinite(parsedPage as number) ? parsedPage : undefined,
-                limit: Number.isFinite(parsedLimit as number) ? parsedLimit : undefined,
+                page: safePage,
+                limit: safeLimit,
                 decodedOnly: parsedDecodedOnly || undefined,
             });
 
@@ -32,8 +36,8 @@ export class FileController {
                 data: result.files,
                 meta: {
                     total: result.total,
-                    page: Number.isFinite(parsedPage as number) ? parsedPage : null,
-                    limit: Number.isFinite(parsedLimit as number) ? parsedLimit : null,
+                    page: safePage ?? null,
+                    limit: safeLimit ?? null,
                     timestamp: new Date().toISOString(),
                     version: '1.0.0'
                 }
