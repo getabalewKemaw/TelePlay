@@ -128,40 +128,42 @@ export class FileService implements IFileService {
 
         try {
             const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(normalizedPath);
-            try {
-                const file = await prisma.mediaFile.create({
-                    data: {
-                        filename,
-                        originalPath: normalizedPath,
-                        duration: metadataResult.duration,
-                        fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
-                        format: metadataResult.format,
-                        codec: metadataResult.codec,
-                        bitrate: metadataResult.bitrate,
-                        status: 'ready'
-                    }
-                });
-                return { ...file, fileSize: file.fileSize?.toString() };
-            } catch (error: any) {
-                if (error?.code === 'P2002') {
-                    const existingRecord = await prisma.mediaFile.findFirst({
-                        where: { OR: pathFilters }
-                    });
-                    if (existingRecord) {
-                        return { ...existingRecord, fileSize: existingRecord.fileSize?.toString() };
-                    }
+            const file = await prisma.mediaFile.upsert({
+                where: { originalPath: normalizedPath },
+                create: {
+                    filename,
+                    originalPath: normalizedPath,
+                    duration: metadataResult.duration,
+                    fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
+                    format: metadataResult.format,
+                    codec: metadataResult.codec,
+                    bitrate: metadataResult.bitrate,
+                    status: 'ready'
+                },
+                update: {
+                    filename,
+                    duration: metadataResult.duration,
+                    fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
+                    format: metadataResult.format,
+                    codec: metadataResult.codec,
+                    bitrate: metadataResult.bitrate,
+                    status: 'ready'
                 }
-                throw error;
-            }
+            });
+            return { ...file, fileSize: file.fileSize?.toString() };
         } catch (error) {
             console.error(`Failed to process file ${normalizedPath}:`, error);
-            const file = await prisma.mediaFile.create({
-                data: {
+            const file = await prisma.mediaFile.upsert({
+                where: { originalPath: normalizedPath },
+                create: {
                     filename,
                     originalPath: normalizedPath,
                     duration: 0,
                     status: 'error',
                     metadata: { error: (error as Error).message } as any
+                },
+                update: {
+                    filename
                 }
             });
             return { ...file, fileSize: file.fileSize?.toString() };
