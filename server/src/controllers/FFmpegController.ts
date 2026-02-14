@@ -1,3 +1,5 @@
+import { promises as fs } from 'fs';
+
 import type { Request, Response, NextFunction } from 'express';
 import { FFmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { DecodeRequestDto, EncodeRequestDto, TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
@@ -6,6 +8,8 @@ import type { ApiResponse } from '../dto/base.dto.js';
 import prisma from '../lib/prisma.js';
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
+import { isdirectoryExists } from '../utils/fileUtils.js';
+
 export class FFmpegController {
     private ffmpegService: IFfmpegService;
     constructor(ffmpegService?: IFfmpegService) {
@@ -19,7 +23,7 @@ export class FFmpegController {
             if (fileId) {
                 const existing = await prisma.mediaFile.findUnique({ where: { id: fileId } });
                 const existingDecoded = existing?.decodedPath ? path.resolve(existing.decodedPath) : undefined;
-                if (existingDecoded && existsSync(existingDecoded)) {
+                if (existingDecoded && await isdirectoryExists(existingDecoded)) {
                     if (!requestedOutputPath || requestedOutputPath === existingDecoded) {
                         return res.status(409).json({
                             success: false,
@@ -30,17 +34,16 @@ export class FFmpegController {
                     }
                 }
             }
-
             const outputPath = requestedOutputPath;
             if (outputPath) {
                 if (decodeParams.output) {
                     decodeParams.output.path = outputPath;
                 }
                 const outputDir = path.dirname(outputPath);
-                if (!existsSync(outputDir)) {
-                    mkdirSync(outputDir, { recursive: true });
+                if (!await isdirectoryExists(outputDir)) {
+                    fs.mkdir(outputDir, { recursive: true });
                 }
-                if (existsSync(outputPath)) {
+                if (await isdirectoryExists(outputPath)) {
                     if (fileId) {
                         await prisma.mediaFile.update({
                             where: { id: fileId },
@@ -105,9 +108,6 @@ export class FFmpegController {
             next(error);
         }
     };
-
-
-
     transcode = async (req: Request<{}, {}, TranscodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const result = await this.ffmpegService.transcode(req.body);
