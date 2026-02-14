@@ -5,7 +5,7 @@ import type { ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { isdirectoryExists } from '../../utils/fileutils.js';
-
+import { AUDIO_EXTENSIONS,getPathVariations,parseDecodedFilename } from '../../utils/fileutils.js';
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
     async discoverFiles(directoryPath: string): Promise<void> {
@@ -82,26 +82,33 @@ export class FileService implements IFileService {
     async getFileMetadata(id: string): Promise<any> {
         const file = await prisma.mediaFile.findUnique({ where: { id } });
         if (!file) throw new Error('File not found');
-        return { ...file, fileSize: file.fileSize?.toString() };
+        return { ...file, fileSize: file.fileSize?.toString() };// becuase the json.stringify does not know abt how to serialize the big int?
+
     }
 
+    // taking a file path and either linking to the existing database or creating a record in a database 
     async processFile(filePath: string): Promise<any> {
+        const variations=getPathVariations(filePath);
         const normalizedPath = path.resolve(filePath);
-        const relativePath = path.relative(process.cwd(), normalizedPath);
+        // const filename=path.basename(filePath);
+        // const relativePath = path.relative(process.cwd(), normalizedPath);
         const filename = path.basename(normalizedPath);
+        //checking for duplicates simply as well
         const existing = await prisma.mediaFile.findFirst({
             where: {
                 OR: [
-                    { originalPath: normalizedPath },
-                    { originalPath: filePath },
-                    { originalPath: relativePath },
-                    { decodedPath: normalizedPath },
-                    { decodedPath: filePath },
-                    { decodedPath: relativePath }
+                    {
+                    originalPath:{in:variations}
+                    },
+                    {
+                        decodedPath:{in:variations}
+                    }
                 ]
             }
         });
         if (existing) return existing;
+
+
 
         const decodedMatch = filename.match(/^(.*)_decoded\.(wav|mp3|aac|ogg)$/i);
         if (decodedMatch?.[1]) {
