@@ -2,7 +2,6 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
   ? `${import.meta.env.VITE_API_BASE_URL}/api` 
   : 'http://localhost:3000/api';
-
 const api = axios.create({
     baseURL: API_BASE_URL,
 });
@@ -19,14 +18,30 @@ export interface MediaFile {
     fileSize?:number
 }
 
-export const fetchFiles = async () => {
-    const response = await api.get('/files', {
-        params: {
-            page: 1,
-            limit: 5000,
-        }
-    });
-    return response.data.data;
+export interface FetchFilesParams {
+    page?: number;
+    limit?: number;
+    query?: string;
+    sort?: string;
+    order?: 'asc' | 'desc';
+    decodedOnly?: boolean;
+}
+
+export interface FetchFilesResult {
+    files: MediaFile[];
+    meta?: {
+        total?: number;
+        page?: number | null;
+        limit?: number | null;
+    };
+}
+
+export const fetchFiles = async (params: FetchFilesParams = {}): Promise<FetchFilesResult> => {
+    const response = await api.get('/files', { params });
+    return {
+        files: Array.isArray(response.data?.data) ? response.data.data : [],
+        meta: response.data?.meta
+    };
 };
 
 export const decodeFile = async (data: {

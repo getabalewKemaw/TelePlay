@@ -5,16 +5,19 @@ import type { MediaFile } from '../api/api'
 import type { SortKey } from '../components/FileTable/FileTable'
 import { useFileStore } from '../stores/useFileStore'
 import { useShallow } from 'zustand/shallow'
-
 let isLoading = false
-
 export function useFileActions() {
   const {
     filteredFiles,
     selectedFile,
     sortKey,
     sortDir,
+    page,
+    limit,
+    debouncedSearchTerm,
+    filterDecoded,
     setFiles,
+    setTotal,
     setSelectedFile,
     setSortKey,
     setSortDir
@@ -23,7 +26,12 @@ export function useFileActions() {
     selectedFile: state.selectedFile,
     sortKey: state.sortKey,
     sortDir: state.sortDir,
+    page: state.page,
+    limit: state.limit,
+    debouncedSearchTerm: state.debouncedSearchTerm,
+    filterDecoded: state.filterDecoded,
     setFiles: state.setFiles,
+    setTotal: state.setTotal,
     setSelectedFile: state.setSelectedFile,
     setSortKey: state.setSortKey,
     setSortDir: state.setSortDir
@@ -33,17 +41,26 @@ export function useFileActions() {
     if (isLoading) return
     isLoading = true
     try {
-      const data = await fetchFiles()
-      const filesArray = Array.isArray(data) ? data : (data?.files || [])
+      const result = await fetchFiles({
+        page,
+        limit,
+        query: debouncedSearchTerm || undefined,
+        sort: sortKey,
+        order: sortDir,
+        decodedOnly: filterDecoded || undefined
+      })
+      const filesArray = Array.isArray(result.files) ? result.files : []
       setFiles(filesArray)
-      if (!quiet) toast.success(`Inventory synchronized: ${filesArray.length} files detected.`)
+      const total = result.meta?.total ?? filesArray.length
+      setTotal(total)
+      if (!quiet) toast.success(`Inventory synchronized: ${total} files detected.`)
     } catch (error) {
       console.error('Failed to fetch files:', error)
       toast.error('Inventory synchronization failed.')
     } finally {
       isLoading = false
     }
-  }, [setFiles])
+  }, [debouncedSearchTerm, filterDecoded, limit, page, setFiles, setTotal, sortDir, sortKey])
 
   const handleFileSelect = useCallback((file: MediaFile) => {
     setSelectedFile(file)

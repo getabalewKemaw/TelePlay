@@ -12,7 +12,6 @@ interface TransportDeps {
   isChunkedStreaming: boolean
   chunkSeekHandler: ((time: number) => void) | null
 }
-
 export function useTransportControls({
   wavesurferRef,
   audioRef,
@@ -43,14 +42,13 @@ export function useTransportControls({
       chunkSeekHandler(targetTime)
       return
     }
-
     if (forceNativeAudio) {
       if (audioRef.current) {
         audioRef.current.currentTime = targetTime
       }
       return
     }
-    
+
     wavesurferRef.current?.setTime(targetTime)
   }, [audioRef, chunkSeekHandler, duration, forceNativeAudio, isChunkedStreaming, wavesurferRef])
 

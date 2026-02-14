@@ -1,6 +1,5 @@
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-
 interface NativeAudioOptions {
   forceRaf?: boolean
   audioRef?: React.RefObject<HTMLAudioElement | null>
@@ -30,7 +29,6 @@ export function useNativeAudioState(options: NativeAudioOptions = {}) {
         rafId = requestAnimationFrame(syncState)
       }
     }
-
     const handlePlay = () => {
       setNativePlaying(true)
       if (options.forceRaf) rafId = requestAnimationFrame(syncState)

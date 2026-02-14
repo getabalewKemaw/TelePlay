@@ -130,6 +130,7 @@ export function useDecodeAndPlay({
       }
 
       const { liveOptions, fileOptions, chunkedOutputFormat } = buildStreamOptions(targetFile, outputFormat, useChunkedStreaming)
+   
 
       let session: any
       try {

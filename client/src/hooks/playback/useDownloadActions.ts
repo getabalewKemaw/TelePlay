@@ -3,7 +3,6 @@ import { toast } from 'react-hot-toast'
 import { transcodeFileDownload } from '../../api/api'
 import type { MediaFile } from '../../api/api'
 import { getDecodedFormat, inferBaseChannels, inferBaseSampleRate } from '../../utils/appControllerUtils'
-
 interface DownloadDeps {
   selectedFile: MediaFile | null
   convertFormat: 'aac' | 'ogg' | 'mp3' | 'wav'

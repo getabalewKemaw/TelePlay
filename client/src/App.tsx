@@ -21,8 +21,13 @@ export default function App() {
     filterDecoded,
     sortKey,
     sortDir,
+    debouncedSearchTerm,
+    page,
+    limit,
+    total,
     setSearchTerm,
-    setFilterDecoded
+    setFilterDecoded,
+    setPage
   } = useFileStore(useShallow((state) => ({
     filteredFiles: state.filteredFiles,
     selectedFile: state.selectedFile,
@@ -30,8 +35,13 @@ export default function App() {
     filterDecoded: state.filterDecoded,
     sortKey: state.sortKey,
     sortDir: state.sortDir,
+    debouncedSearchTerm: state.debouncedSearchTerm,
+    page: state.page,
+    limit: state.limit,
+    total: state.total,
     setSearchTerm: state.setSearchTerm,
-    setFilterDecoded: state.setFilterDecoded
+    setFilterDecoded: state.setFilterDecoded,
+    setPage: state.setPage
   })));
 
   const {
@@ -64,6 +74,16 @@ export default function App() {
     }, 5000)
     return () => clearInterval(interval)
   }, [loadFiles]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      setPage(1)
+    }
+  }, [debouncedSearchTerm, filterDecoded, sortDir, sortKey, setPage, page])
+
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const startIndex = total === 0 ? 0 : (page - 1) * limit + 1
+  const endIndex = total === 0 ? 0 : Math.min(page * limit, total)
 
   return (
     <div
@@ -101,7 +121,7 @@ export default function App() {
         <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-coffee-accent/5 blur-[100px] -z-10 rounded-full -translate-x-1/2 translate-y-1/2" />
 
         <AppHeader
-          fileCount={filteredFiles.length}
+          fileCount={total}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
           isDarkMode={isDarkMode}
@@ -111,10 +131,36 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 md:p-12 thin-scrollbar">
           <div className="max-w-6xl mx-auto space-y-10">
             <FileTableCard
-              fileCount={filteredFiles.length}
+              fileCount={total}
               isOpen={isTableOpen}
               onToggle={toggleTable}
             >
+              <div className="flex flex-col gap-3 px-6 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-coffee-500">
+                  <div className="uppercase tracking-widest">
+                    Showing {startIndex}-{endIndex} of {total} signals
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page <=1}
+                    >
+                      Prev
+                    </button>
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-coffee-400">
+                      Page {page} of {totalPages}
+                    </div>
+                    <button
+                      className="px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                      onClick={() => setPage(Math.min(totalPages, page + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
               <FileTable
                 files={filteredFiles}
                 selectedId={selectedFile?.id}
