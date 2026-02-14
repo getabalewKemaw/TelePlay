@@ -1,0 +1,141 @@
+import type {
+  DecodeParams,
+  EncodeParams,
+  TranscodeParams,
+  FFmpegCommandOptions
+} from '../../types/ffmpeg/FFmpegTypes.js';
+import { mapCodecToFFmpeg } from '../../utils/ffmpeg/codecMap.js';
+
+export function normalizeDecodeCodec(codec?: string): string | undefined {
+  if (!codec) return undefined;
+  if (codec === 'pcm_mulaw' || codec === 'pcm_alaw') return 'g711';
+  if (codec === 'adpcm_g726') return 'g726';
+  return codec;
+}
+
+export function isRawCodec(codec?: string): codec is 'g711' | 'g726' | 'g728' {
+  return codec === 'g711' || codec === 'g726' || codec === 'g728';
+}
+
+export function buildDecodeAdditionalArgs(params: {
+  codec?: string;
+  sampleRate?: number;
+  channels?: number;
+  bitrate?: number;
+  inputFormat?: string;
+}): string[] {
+  const { codec, sampleRate, channels, bitrate, inputFormat } = params;
+  const additionalArgs: string[] = [];
+
+  if (codec && isRawCodec(codec)) {
+    const inputFormatMap: Record<string, string> = {
+      g711: 'mulaw',
+      g726: 'g726',
+      g728: 'g728'
+    };
+
+    const format = inputFormatMap[codec];
+    if (format) {
+      additionalArgs.push('-f', format);
+    }
+
+    if (codec === 'g726' && bitrate) {
+      const codeSize = Math.floor(bitrate / 8);
+      additionalArgs.push('-code_size', codeSize.toString());
+      additionalArgs.push('-acodec', 'g726');
+      if (sampleRate) {
+        additionalArgs.push('-sample_rate', sampleRate.toString());
+      }
+    } else if (codec === 'g711') {
+      additionalArgs.push('-acodec', 'pcm_mulaw');
+    } else if (codec === 'g728') {
+      additionalArgs.push('-acodec', 'g728');
+    }
+
+    if (sampleRate && codec !== 'g726') {
+      additionalArgs.push('-ar', sampleRate.toString());
+    }
+    if (channels) {
+      additionalArgs.push('-ac', channels.toString());
+    }
+    return additionalArgs;
+  }
+
+  if (inputFormat) {
+    additionalArgs.push('-f', inputFormat);
+  }
+  return additionalArgs;
+}
+
+export function buildDecodeCommandOptions(
+  params: DecodeParams,
+  normalizedCodec: string | undefined,
+  additionalArgs: string[]
+): FFmpegCommandOptions {
+  const outputFormat = params.output.format || 'wav';
+  const outputCodec = outputFormat === 'mp3' ? 'mp3' : undefined;
+
+  return {
+    input: params.input.path,
+    output: params.output.path,
+    codec: outputCodec,
+    sampleRate: normalizedCodec && isRawCodec(normalizedCodec)
+      ? undefined
+      : params.sampleRate,
+    channels: normalizedCodec && isRawCodec(normalizedCodec)
+      ? undefined
+      : params.channels,
+    bitrate: undefined,
+    format: outputFormat,
+    startTime: params.startTime,
+    duration: params.duration,
+    additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined,
+    validateOutput: true,
+    minOutputBytes: 1
+  };
+}
+
+export function buildEncodeCommandOptions(params: EncodeParams): FFmpegCommandOptions {
+  return {
+    input: params.input.path,
+    output: params.output.path,
+    codec: params.encoding.codec,
+    sampleRate: params.encoding.sampleRate,
+    channels: params.encoding.channels,
+    bitrate: params.encoding.bitrate,
+    format: params.output.format,
+    startTime: params.startTime,
+    duration: params.duration,
+    additionalArgs: params.input.format ? ['-f', params.input.format] : undefined,
+    validateOutput: true,
+    minOutputBytes: 1
+  };
+}
+
+export function buildTranscodeCommandOptions(
+  params: TranscodeParams,
+  isContainerInput: boolean,
+  needsInputCodec: boolean
+): FFmpegCommandOptions {
+  return {
+    input: params.input.path,
+    output: params.output.path,
+    codec: params.targetEncoding.codec,
+    sampleRate: params.targetEncoding.sampleRate,
+    channels: params.targetEncoding.channels,
+    bitrate: params.targetEncoding.bitrate,
+    format: params.output.format,
+    startTime: params.startTime,
+    duration: params.duration,
+    additionalArgs: [
+      ...(params.input.format && !isContainerInput ? ['-f', params.input.format] : []),
+      ...(needsInputCodec ? [
+        '-acodec', mapCodecToFFmpeg(params.sourceEncoding.codec),
+        '-ar', params.sourceEncoding.sampleRate.toString(),
+        '-ac', params.sourceEncoding.channels.toString()
+      ] : [])
+    ],
+    validateOutput: true,
+    minOutputBytes: 1
+  };
+}
