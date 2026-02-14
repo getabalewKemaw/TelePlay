@@ -89,7 +89,9 @@ export class FFmpegService implements IFfmpegService {
       format: outputFormat, // Default to WAV for output
       startTime: params.startTime,
       duration: params.duration,
-      additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined
+      additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined,
+      validateOutput: true,
+      minOutputBytes: 1
     };
 
     try {
@@ -119,7 +121,9 @@ export class FFmpegService implements IFfmpegService {
       format: params.output.format,
       startTime: params.startTime,
       duration: params.duration,
-      additionalArgs: params.input.format ? ['-f', params.input.format] : undefined
+      additionalArgs: params.input.format ? ['-f', params.input.format] : undefined,
+      validateOutput: true,
+      minOutputBytes: 1
     };
 
     try {
@@ -159,7 +163,9 @@ export class FFmpegService implements IFfmpegService {
           '-ar', params.sourceEncoding.sampleRate.toString(),
           '-ac', params.sourceEncoding.channels.toString()
         ] : [])
-      ]
+      ],
+      validateOutput: true,
+      minOutputBytes: 1
     };
 
     try {

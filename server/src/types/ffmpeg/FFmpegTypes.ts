@@ -57,6 +57,27 @@ export interface FFmpegExecutionResult {
   stdout?: string;
   outputPath?: string;
 }
+
+export interface FFmpegProgressUpdate {
+  frame?: number;
+  fps?: number;
+  bitrate?: string;
+  total_size?: number;
+  out_time_ms?: number;
+  out_time?: string;
+  speed?: string;
+  progress?: string;
+  [key: string]: string | number | undefined;
+}
+
+export interface FFmpegLogger {
+  debug?: (message: string) => void;
+  info?: (message: string) => void;
+  warn?: (message: string) => void;
+  error?: (message: string) => void;
+}
+
+export type FFmpegStdioMode = 'pipe' | 'ignore' | 'inherit';
 export interface FFmpegCommandOptions {
   input: string;
   output: string;
@@ -68,4 +89,16 @@ export interface FFmpegCommandOptions {
   startTime?: number;
   duration?: number;
   additionalArgs?: string[]; // For extensibility
+  preInputArgs?: string[];
+  postInputArgs?: string[];
+  outputArgs?: string[];
+  stdin?: FFmpegStdioMode | NodeJS.ReadableStream;
+  stdout?: FFmpegStdioMode;
+  stderr?: FFmpegStdioMode;
+  onProgress?: (update: FFmpegProgressUpdate) => void;
+  logger?: FFmpegLogger;
+  validateOutput?: boolean;
+  minOutputBytes?: number;
+  timeoutGraceMs?: number;
+  maxBufferBytes?: number;
 }
