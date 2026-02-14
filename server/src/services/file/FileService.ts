@@ -6,8 +6,6 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { isdirectoryExists } from '../../utils/fileutils.js';
 
-
-
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
 
@@ -15,17 +13,29 @@ export class FileService implements IFileService {
         const dirExists= await isdirectoryExists(directoryPath);
         if(!dirExists)return;
         const scan = async (dir: string) => {
+            try {
             const entries = await fs.readdir(dir, { withFileTypes: true });
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                    await scan(fullPath);
-                } else if (entry.isFile()) {
-                    const ext = path.extname(entry.name).toLowerCase();
-                    if (['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav', '.mp3', '.aac', '.ogg'].includes(ext)) {
-                        await this.processFile(fullPath);
-                    }
+            //map each entry to a promise so they can run in parellel
+            await Promise.all(entries.map(async (entry)=>{
+            const fullPath = path.join(dir, entry.name);
+             if(entry.isDirectory()){
+                // it scan all the folders insided recursivelly
+                return scan(fullPath);
+             }
+             if (entry.isFile()){
+                const ext=path.extname(entry.name).toLowerCase();
+                const audioExtensions = [
+                    '.g711', '.g711u', '.g711a', '.g726', '.g728', 
+                    '.pcm', '.wav', '.mp3', '.aac', '.ogg'
+                ];
+                if(audioExtensions.includes(ext)){
+                    return await  this.processFile(fullPath);
                 }
+             }
+            }));
+            } catch (error) {
+                // log the error like the permission issues but keep scannign other folders
+              console.error(`skipping${dir}: `,error)
             }
         };
 
