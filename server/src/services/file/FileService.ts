@@ -8,7 +8,6 @@ import { isdirectoryExists } from '../../utils/fileutils.js';
 
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
-
     async discoverFiles(directoryPath: string): Promise<void> {
         const dirExists= await isdirectoryExists(directoryPath);
         if(!dirExists)return;
@@ -38,12 +37,15 @@ export class FileService implements IFileService {
               console.error(`skipping${dir}: `,error)
             }
         };
-
         await scan(directoryPath);
     }
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
         const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
+        //serve side validation for the  page sizes
+        const maxP=Math.min(1,page || 1);
+        const samLimit=Math.max(1,Math.min(limit|| 10,100));// prevent the user from requating  a limit like 99999 and crashing the serve memory
+
         const where: any = query ? {
             OR: [
                 { filename: { contains: query, mode: 'insensitive' as any } },
