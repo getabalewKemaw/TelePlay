@@ -4,13 +4,16 @@ import prisma from '../../lib/prisma.js';
 import type { ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { existsSync } from 'fs';
+import { isdirectoryExists } from '../../utils/fileutils.js';
+
+
 
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
 
     async discoverFiles(directoryPath: string): Promise<void> {
-        if (!existsSync(directoryPath)) return;
+        const dirExists= await isdirectoryExists(directoryPath);
+        if(!dirExists)return;
         const scan = async (dir: string) => {
             const entries = await fs.readdir(dir, { withFileTypes: true });
             for (const entry of entries) {
@@ -38,7 +41,6 @@ export class FileService implements IFileService {
                 { codec: { contains: query, mode: 'insensitive' as any } },
             ]
         } : {};
-
         if (decodedOnly) {
             where.decodedPath = { not: null };
         }
