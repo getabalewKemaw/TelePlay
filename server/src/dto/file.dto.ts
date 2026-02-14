@@ -20,6 +20,7 @@ export interface ListFilesRequestDto {
     order?: 'asc' | 'desc';
     page?: number;
     limit?: number;
+    decodedOnly?: boolean;
 }
 
 

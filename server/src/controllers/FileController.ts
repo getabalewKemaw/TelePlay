@@ -12,9 +12,11 @@ export class FileController {
 // pagination and sorting.
     listFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { query, sort, order, page, limit } = req.query;
+            const { query, sort, order, page, limit, decodedOnly } = req.query;
             const parsedPage = page ? parseInt(page as string, 10) : undefined;
             const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
+            const parsedDecodedOnly =
+                decodedOnly === 'true' || decodedOnly === '1';
 
             const result = await this.fileService.listFiles({
                 query: query as string,
@@ -22,6 +24,7 @@ export class FileController {
                 order: (order as 'asc' | 'desc') || 'desc',
                 page: Number.isFinite(parsedPage as number) ? parsedPage : undefined,
                 limit: Number.isFinite(parsedLimit as number) ? parsedLimit : undefined,
+                decodedOnly: parsedDecodedOnly || undefined,
             });
 
             res.json({

@@ -30,14 +30,18 @@ export class FileService implements IFileService {
     }
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
-        const { query, sort = 'createdAt', order = 'desc', page, limit } = criteria;
-        const where = query ? {
+        const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
+        const where: any = query ? {
             OR: [
                 { filename: { contains: query, mode: 'insensitive' as any } },
                 { format: { contains: query, mode: 'insensitive' as any } },
                 { codec: { contains: query, mode: 'insensitive' as any } },
             ]
         } : {};
+
+        if (decodedOnly) {
+            where.decodedPath = { not: null };
+        }
 
         const hasPagination = typeof page === 'number' && typeof limit === 'number' && page > 0 && limit > 0;
         const queryOptions: any = {
