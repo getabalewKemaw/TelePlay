@@ -14,7 +14,6 @@ import {
   spawnFfmpeg,
   type StreamingOutputFormat
 } from '../../utils/streaming/streamingFfmpegUtils.js';
-
 export class StreamingChunkService {
   constructor(private readonly chunkingService: ChunkingService) {}
 
@@ -161,7 +160,6 @@ export class StreamingChunkService {
     const stat = await fs.promises.stat(filePath);
     const ext = path.extname(filePath).toLowerCase();
     const mimeType = ext === '.mp3' ? 'audio/mpeg' : ext === '.wav' ? 'audio/wav' : 'application/octet-stream';
-
     if (!range) {
       res.writeHead(200, {
         'Content-Length': stat.size,

@@ -26,6 +26,41 @@ const TARGET_CODECS = new Set<TargetCodec>([
   'pcm_s16le'
 ]);
 
+
+export const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compatible: TargetCodec[] }> = {
+  g711: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  g726: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  g728: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  pcm_s16le: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus', 'pcm_s16le']
+  },
+  pcm_s24le: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus', 'pcm_s16le']
+  },
+  mp3: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  aac: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  },
+  opus: {
+    recommended: 'aac',
+    compatible: ['aac', 'mp3', 'opus']
+  }
+};
 function toSourceEncoding(input: AudioEncodingParamsDto): SourceEncoding {
   if (!SOURCE_CODECS.has(input.codec as SourceCodec)) {
     throw new TranscodingValidationError(`Unsupported source codec: ${input.codec}`, 'sourceEncoding.codec');

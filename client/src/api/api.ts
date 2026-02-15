@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const api = axios.create({
     baseURL: API_BASE_URL,
 });
+
 export interface MediaFile {
     id: string;
     filename: string;
@@ -117,6 +118,7 @@ export const fetchStreamingChunkPeaks = async (sessionId: string, index: number,
 export const discoverFiles = async (path?: string) => {
     const response = await api.post('/files/discover', { path });
     return response.data;
+
 };
 
 export const uploadFile = async (file: File) => {
@@ -129,3 +131,4 @@ export const uploadFile = async (file: File) => {
 };
 
 export default api;
+

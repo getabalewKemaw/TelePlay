@@ -10,48 +10,13 @@ import type {
 } from '../../types/transcoding/TranscodingTypes.js';
 import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { promises as fs } from 'fs';
-import { existsSync } from 'fs';
 import path from 'path';
 import { FFmpegExecutor } from '../ffmpeg/implementations/FFmpegExecutor.js';
 import { buildTranscodeCommandOptions } from '../../utils/ffmpeg/ffmpegServiceUtils.js';
+import { isdirectoryExists } from '../../utils/fileUtils.js';
 const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 
-
-const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compatible: TargetCodec[] }> = {
-  g711: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  },
-  g726: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  },
-  g728: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  },
-  pcm_s16le: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus', 'pcm_s16le']
-  },
-  pcm_s24le: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus', 'pcm_s16le']
-  },
-  mp3: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  },
-  aac: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  },
-  opus: {
-    recommended: 'aac',
-    compatible: ['aac', 'mp3', 'opus']
-  }
-};
-
+import { CODEC_COMPATIBILITY } from '../../utils/transcoding/transcodingRequestUtils.js';
 export class TranscodingService implements ITranscodingService {
   private readonly ffmpegExecutor: IFfmpegExecutor;
 
@@ -60,7 +25,7 @@ export class TranscodingService implements ITranscodingService {
   }
 
   async transcodeChunk(params: ChunkTranscodingParams): Promise<TranscodingResult> {
-    if (!existsSync(params.inputPath)) {
+    if (! await isdirectoryExists(params.inputPath)) {
       throw new TranscodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
     }
 
