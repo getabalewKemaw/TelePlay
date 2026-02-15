@@ -83,14 +83,6 @@
                         "preTranscode": true
                     }
                 }
-            },
-            "playback": {
-                "method": "POST",
-                "url": "/api/streaming/sessions/{{sessionId}}/playback",
-                "payload": {
-                    "action": "seek",
-                    "targetTime": 45.5
-                }
             }
         },
         "error_example": {

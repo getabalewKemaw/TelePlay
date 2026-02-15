@@ -1,92 +1,56 @@
 import type { Response } from 'express';
 import type { ChunkingService } from '../chunking/ChunkingService.js';
+import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
+import type { StreamingSession } from '../../types/streaming/StreamingTypes.js';
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
 import prisma from '../../lib/prisma.js';
+import {
+  appendOutputCodecArgs,
+  attachResponseCleanup,
+  getStreamingMimeType,
+  resolveInputCodecArgs,
+  resolveLiveOutputArgs,
+  spawnFfmpeg,
+  type StreamingOutputFormat
+} from '../../utils/streaming/streamingFfmpegUtils.js';
+
 export class StreamingChunkService {
   constructor(private readonly chunkingService: ChunkingService) {}
-  getSessionChunkDuration(session: any): number {
+
+  getSessionChunkDuration(session: StreamingSession): number {
     return session.chunkDuration ?? 10;
   }
 
-  async resolveSessionChunk(session: any, indexRaw: string): Promise<any | null> {
+  async resolveSessionChunk(session: StreamingSession, indexRaw: string): Promise<ChunkMetadata | null> {
     const chunkDuration = this.getSessionChunkDuration(session);
     const chunks = await this.chunkingService.getAllChunks(session.filePath, { chunkDuration });
     const idx = parseInt(indexRaw, 10);
     return Number.isFinite(idx) ? (chunks[idx] ?? null) : null;
   }
 
-  resolveInputCodecArgs(session: any): string[] {
-    const args: string[] = [];
-    if (!session.inputCodec) return args;
-
-    const codec = session.inputCodec;
-    const inputFormatMap: Record<string, string> = {
-      g711: 'mulaw',
-      g711a: 'alaw',
-      g726: 'g726',
-      g728: 'g728',
-      pcm_s16le: 's16le',
-      pcm_s24le: 's24le'
-    };
-    if (codec in inputFormatMap) {
-      args.push('-f', inputFormatMap[codec]!);
-    }
-
-    if (codec === 'g726' && session.bitrate) {
-      const codeSize = Math.floor(session.bitrate / 8);
-      args.push('-code_size', codeSize.toString());
-      args.push('-acodec', 'g726');
-      if (session.sampleRate) {
-        args.push('-sample_rate', session.sampleRate.toString());
-      }
-    } else if (codec === 'g711') {
-      args.push('-acodec', 'pcm_mulaw');
-    } else if (codec === 'g711a') {
-      args.push('-acodec', 'pcm_alaw');
-    } else if (codec === 'g728') {
-      args.push('-acodec', 'g728');
-    }
-
-    if (session.sampleRate && codec !== 'g726') {
-      args.push('-ar', session.sampleRate.toString());
-    }
-    if (session.channels) {
-      args.push('-ac', session.channels.toString());
-    }
-    return args;
-  }
-
-  buildChunkStreamArgs(session: any, filePath: string, chunk: any, outputFormat: 'mp3' | 'wav'): string[] {
+  buildChunkStreamArgs(
+    session: StreamingSession,
+    filePath: string,
+    chunk: ChunkMetadata,
+    outputFormat: StreamingOutputFormat
+  ): string[] {
     const args: string[] = [
-      ...this.resolveInputCodecArgs(session),
+      ...resolveInputCodecArgs(session),
       '-i', filePath,
       '-ss', chunk.startTime.toString(),
       '-t', chunk.duration.toString(),
       '-map', '0:a:0',
       '-vn'
     ];
-
-    if (outputFormat === 'mp3') {
-      args.push('-acodec', 'libmp3lame');
-    } else {
-      args.push('-acodec', 'pcm_s16le');
-      if (session.sampleRate) {
-        args.push('-ar', session.sampleRate.toString());
-      }
-      if (session.channels) {
-        args.push('-ac', session.channels.toString());
-      }
-    }
-    args.push('-f', outputFormat);
-    args.push('pipe:1');
+    appendOutputCodecArgs(args, outputFormat, session);
+    args.push('-f', outputFormat, 'pipe:1');
     return args;
   }
 
-  buildChunkPeaksArgs(session: any, filePath: string, chunk: any): string[] {
+  buildChunkPeaksArgs(session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] {
     return [
-      ...this.resolveInputCodecArgs(session),
+      ...resolveInputCodecArgs(session),
       '-i', filePath,
       '-ss', chunk.startTime.toString(),
       '-t', chunk.duration.toString(),
@@ -124,106 +88,75 @@ export class StreamingChunkService {
     return peaks;
   }
 
-
-  async getChunkPeaks(session: any, chunk: any, bins: number): Promise<number[]> {
+  async getChunkPeaks(session: StreamingSession, chunk: ChunkMetadata, bins: number): Promise<number[]> {
     const filePath = path.resolve(session.filePath);
     const args = this.buildChunkPeaksArgs(session, filePath, chunk);
 
     return await new Promise<number[]>((resolve, reject) => {
-      const ff = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      const ffmpeg = spawnFfmpeg(args);
       const chunksBuf: Buffer[] = [];
       let stderr = '';
 
-      ff.stdout.on('data', (data: Buffer) => chunksBuf.push(data));
-      ff.stderr.on('data', (data: Buffer) => {
-        stderr += data.toString();
-      });
+      if (ffmpeg.stdout) {
+        ffmpeg.stdout.on('data', (data: Buffer) => chunksBuf.push(data));
+      }
+      if (ffmpeg.stderr) {
+        ffmpeg.stderr.on('data', (data: Buffer) => {
+          stderr += data.toString();
+        });
+      }
 
-      ff.on('close', (code) => {
+      ffmpeg.on('close', (code) => {
         if (code !== 0) {
           reject(new Error(`FFmpeg failed: ${stderr}`));
           return;
         }
-        const buffer = Buffer.concat(chunksBuf);
-        resolve(this.calculatePeaks(buffer, bins));
+        resolve(this.calculatePeaks(Buffer.concat(chunksBuf), bins));
       });
-
-      ff.on('error', (err) => {
-        reject(err);
-      });
+      ffmpeg.on('error', reject);
     });
   }
 
-  streamLive(session: any, res: Response): void {
+  streamLive(session: StreamingSession, res: Response): void {
     const filePath = path.resolve(session.filePath);
-    const outputFormat = session.outputFormat || 'mp3';
-    const mimeType = outputFormat === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+    const outputFormat: StreamingOutputFormat = session.outputFormat || 'mp3';
+    this.applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
 
-    this.applyChunkStreamHeaders(res, mimeType);
+    const args: string[] = [...resolveInputCodecArgs(session), '-i', filePath, '-map', '0:a:0', '-vn'];
+    appendOutputCodecArgs(args, outputFormat, session);
+    const liveOutput = resolveLiveOutputArgs(session, outputFormat);
+    args.push(...liveOutput.args);
 
-    const args: string[] = [...this.resolveInputCodecArgs(session)];
-    args.push('-i', filePath);
-    args.push('-map', '0:a:0');
-    args.push('-vn');
+    const ffmpeg = spawnFfmpeg(args);
+    attachResponseCleanup(ffmpeg, res);
 
-    if (outputFormat === 'mp3') {
-      args.push('-acodec', 'libmp3lame');
-    } else if (outputFormat === 'wav') {
-      args.push('-acodec', 'pcm_s16le');
-      if (session.sampleRate) {
-        args.push('-ar', session.sampleRate.toString());
-      }
-      if (session.channels) {
-        args.push('-ac', session.channels.toString());
-      }
+    if (ffmpeg.stdout) {
+      ffmpeg.stdout.pipe(res);
+    }
+    if (ffmpeg.stderr) {
+      ffmpeg.stderr.on('data', (data: Buffer) => {
+        console.warn('FFmpeg stream:', data.toString());
+      });
     }
 
-    if (session.saveOutputPath) {
-      const savePath = path.resolve(session.saveOutputPath).replace(/\\/g, '/');
-      const saveDir = path.dirname(savePath);
-      if (!fs.existsSync(saveDir)) {
-        fs.mkdirSync(saveDir, { recursive: true });
-      }
-      const teeTarget = `[f=${outputFormat}]pipe:1|[f=${outputFormat}]${savePath}`;
-      args.push('-f', 'tee', teeTarget);
-    } else {
-      args.push('-f', outputFormat);
-      args.push('pipe:1');
-    }
-
-    const ff = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    const cleanup = () => {
-      if (!ff.killed) {
-        ff.kill('SIGTERM');
-      }
-    };
-    res.on('close', cleanup);
-    res.on('error', cleanup);
-
-    ff.stdout.pipe(res);
-    ff.stderr.on('data', (data: Buffer) => {
-      console.warn('FFmpeg stream:', data.toString());
-    });
-
-    ff.on('close', async (code) => {
-      if (code === 0 && session.saveOutputPath && session.fileId) {
+    ffmpeg.on('close', async (code) => {
+      if (code === 0 && liveOutput.savePath && session.fileId) {
         try {
           await prisma.mediaFile.update({
             where: { id: session.fileId },
-            data: { decodedPath: path.resolve(session.saveOutputPath), status: 'ready' }
+            data: { decodedPath: path.resolve(liveOutput.savePath), status: 'ready' }
           });
-        } catch (e) {
-          console.warn('Failed to update decodedPath after live stream:', e);
+        } catch (error) {
+          console.warn('Failed to update decodedPath after live stream:', error);
         }
       }
     });
-
-    ff.on('error', (err) => {
-      console.error('FFmpeg stream error:', err);
+    ffmpeg.on('error', (error) => {
+      console.error('FFmpeg stream error:', error);
     });
   }
 
-  async streamFileBased(session: any, range: string | undefined, res: Response): Promise<void> {
+  async streamFileBased(session: StreamingSession, range: string | undefined, res: Response): Promise<void> {
     const filePath = path.resolve(session.filePath);
     const stat = await fs.promises.stat(filePath);
     const ext = path.extname(filePath).toLowerCase();
@@ -264,35 +197,36 @@ export class StreamingChunkService {
       'Content-Length': end - start + 1,
       'Content-Type': mimeType
     });
-
     fs.createReadStream(filePath, { start, end }).pipe(res);
   }
 
-  streamChunk(session: any, chunk: any, requestedFormat: string | undefined, res: Response): void {
+  streamChunk(
+    session: StreamingSession,
+    chunk: ChunkMetadata,
+    requestedFormat: string | undefined,
+    res: Response
+  ): void {
     const filePath = path.resolve(session.filePath);
-    const outputFormat = (requestedFormat === 'mp3' || requestedFormat === 'wav')
-      ? requestedFormat
-      : (session.outputFormat || 'mp3');
-    const mimeType = outputFormat === 'mp3' ? 'audio/mpeg' : 'audio/wav';
+    const outputFormat: StreamingOutputFormat =
+      requestedFormat === 'mp3' || requestedFormat === 'wav'
+        ? requestedFormat
+        : (session.outputFormat || 'mp3');
 
-    this.applyChunkStreamHeaders(res, mimeType);
+    this.applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
     const args = this.buildChunkStreamArgs(session, filePath, chunk, outputFormat);
+    const ffmpeg = spawnFfmpeg(args);
+    attachResponseCleanup(ffmpeg, res);
 
-    const ff = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    const cleanup = () => {
-      if (!ff.killed) {
-        ff.kill('SIGTERM');
-      }
-    };
-    res.on('close', cleanup);
-    res.on('error', cleanup);
-
-    ff.stdout.pipe(res);
-    ff.stderr.on('data', (data: Buffer) => {
-      console.warn('FFmpeg chunk stream:', data.toString());
-    });
-    ff.on('error', (err) => {
-      console.error('FFmpeg chunk stream error:', err);
+    if (ffmpeg.stdout) {
+      ffmpeg.stdout.pipe(res);
+    }
+    if (ffmpeg.stderr) {
+      ffmpeg.stderr.on('data', (data: Buffer) => {
+        console.warn('FFmpeg chunk stream:', data.toString());
+      });
+    }
+    ffmpeg.on('error', (error) => {
+      console.error('FFmpeg chunk stream error:', error);
     });
   }
 }

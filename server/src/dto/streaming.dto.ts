@@ -2,10 +2,7 @@
 import type {
     TransportProtocol,
     StreamingMode,
-    PlaybackAction,
-    StreamingSession,
-    PreparedChunk,
-    StreamMetadata
+    StreamingSession
 } from '../types/streaming/StreamingTypes.js';
 
 
@@ -30,31 +27,7 @@ export interface CreateSessionRequestDto {
     };
 }
 
-export interface PlaybackControlRequestDto {
-    action: PlaybackAction;
-    targetTime?: number;
-    amount?: number;
-}
-
-export interface PrepareItemsRequestDto {
-    indices?: number[];
-}
-
-/**
- * RESPONSES
- */
-
 export interface SessionResponse {
     sessionId: string;
     session: StreamingSession;
-}
-
-export interface PlaybackResponse {
-    currentTime: number;
-    state: string;
-    preparedChunks: PreparedChunk[];
-}
-
-export interface StreamMetadataResponse {
-    metadata: StreamMetadata;
 }

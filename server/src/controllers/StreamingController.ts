@@ -4,9 +4,10 @@ import { StreamingPreparationService } from '../services/streaming/StreamingPrep
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
 import { SegmentationService } from '../services/segmentation/SegmentationService.js';
 import { StreamingChunkService } from '../services/streaming/StreamingChunkService.js';
-import type { CreateSessionRequestDto, PlaybackControlRequestDto, PrepareItemsRequestDto } from '../dto/streaming.dto.js';
+import type { CreateSessionRequestDto } from '../dto/streaming.dto.js';
 import type { IStreamingPreparationService } from '../interfaces/streaming/IStreamingPreparationService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
+import type { StreamingSession } from '../types/streaming/StreamingTypes.js';
 import path from 'path';
 export class StreamingController {
     private streamingService: IStreamingPreparationService;
@@ -20,64 +21,29 @@ export class StreamingController {
         this.segmentationService = new (SegmentationService as any)(this.chunkingService);
         this.chunkService = new (StreamingChunkService as any)(this.chunkingService);
     }
+    private sendSuccess(res: Response, data: any, status = 200): void {
+        const response: ApiResponse<any> = {
+            success: true,
+            data,
+            meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
+        };
+        res.status(status).json(response);
+    }
+    private async getSessionOr404(sessionId: string, res: Response): Promise<StreamingSession | null> {
+        const session = await this.streamingService.getSession(sessionId);
+        if (!session) {
+            res.status(404).json({ success: false, message: 'Session not found' });
+            return null;
+        }
+        return session;
+    }
 
     createSession = async (req: Request<{}, {}, CreateSessionRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { filePath, options } = req.body;
             const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
             const session = await this.streamingService.createSession(resolvedPath, options);
-            const response: ApiResponse<any> = {
-                success: true,
-                data: session,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(201).json(response);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    prepareChunks = async (req: Request<{ sessionId: string }, {}, PrepareItemsRequestDto>, res: Response, next: NextFunction) => {
-        try {
-            const { sessionId } = req.params;
-            const { indices } = req.body;
-            const chunks = await this.streamingService.prepareChunks(sessionId, indices);
-            const response: ApiResponse<any> = {
-                success: true,
-                data: chunks,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    handlePlaybackControl = async (req: Request<{ sessionId: string }, {}, PlaybackControlRequestDto>, res: Response, next: NextFunction) => {
-        try {
-            const { sessionId } = req.params;
-            const result = await this.streamingService.handlePlaybackControl(sessionId, req.body);
-            const response: ApiResponse<any> = {
-                success: true,
-                data: result,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    getStreamMetadata = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
-        try {
-            const { sessionId } = req.params;
-            const metadata = await this.streamingService.getStreamMetadata(sessionId);
-            const response: ApiResponse<any> = {
-                success: true,
-                data: metadata,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
+            this.sendSuccess(res, session, 201);
         } catch (error) {
             next(error);
         }
@@ -86,18 +52,11 @@ export class StreamingController {
     getChunks = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
         try {
             const { sessionId } = req.params;
-            const session = await this.streamingService.getSession(sessionId);
-            if (!session) {
-                return res.status(404).json({ success: false, message: 'Session not found' });
-            }
+            const session = await this.getSessionOr404(sessionId, res);
+            if (!session) return;
             const chunkDuration = this.chunkService.getSessionChunkDuration(session);
             const chunks = await this.chunkingService.getAllChunks(session.filePath, { chunkDuration });
-            const response: ApiResponse<any> = {
-                success: true,
-                data: chunks,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
+            this.sendSuccess(res, chunks);
         } catch (error) {
             next(error);
         }
@@ -106,10 +65,8 @@ export class StreamingController {
     getSegments = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
         try {
             const { sessionId } = req.params;
-            const session = await this.streamingService.getSession(sessionId);
-            if (!session) {
-                return res.status(404).json({ success: false, message: 'Session not found' });
-            }
+            const session = await this.getSessionOr404(sessionId, res);
+            if (!session) return;
 
             const chunksPerSegmentRaw = typeof req.query.chunksPerSegment === 'string'
                 ? parseInt(req.query.chunksPerSegment, 10)
@@ -125,12 +82,7 @@ export class StreamingController {
                 optimizeForLowLatency: true,
                 baseChunkDuration
             });
-            const response: ApiResponse<any> = {
-                success: true,
-                data: segments,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
+            this.sendSuccess(res, segments);
         } catch (error) {
             next(error);
         }
@@ -138,10 +90,8 @@ export class StreamingController {
     getChunkPeaks = async (req: Request<{ sessionId: string; index: string }>, res: Response, next: NextFunction) => {
         try {
             const { sessionId, index } = req.params;
-            const session = await this.streamingService.getSession(sessionId);
-            if (!session) {
-                return res.status(404).json({ success: false, message: 'Session not found' });
-            }
+            const session = await this.getSessionOr404(sessionId, res);
+            if (!session) return;
 
             const chunk = await this.chunkService.resolveSessionChunk(session, index);
             if (!chunk) {
@@ -151,22 +101,7 @@ export class StreamingController {
             const binsRaw = typeof req.query.bins === 'string' ? parseInt(req.query.bins, 10) : 100;
             const bins = Number.isFinite(binsRaw) ? Math.min(Math.max(binsRaw, 10), 1000) : 100;
             const peaks = await this.chunkService.getChunkPeaks(session, chunk, bins);
-            const response: ApiResponse<any> = {
-                success: true,
-                data: peaks,
-                meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-            };
-            res.status(200).json(response);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    cleanupSession = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
-        try {
-            const { sessionId } = req.params;
-            await this.streamingService.cleanupSession(sessionId);
-            res.status(204).send();
+            this.sendSuccess(res, peaks);
         } catch (error) {
             next(error);
         }
@@ -175,11 +110,8 @@ export class StreamingController {
     stream = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
         try {
             const { sessionId } = req.params;
-            const session = await this.streamingService.getSession(sessionId);
-
-            if (!session) {
-                return res.status(404).json({ success: false, message: 'Session not found' });
-            }
+            const session = await this.getSessionOr404(sessionId, res);
+            if (!session) return;
 
             if (session.mode === 'live') {
                 this.chunkService.streamLive(session, res);
@@ -194,11 +126,8 @@ export class StreamingController {
     streamChunk = async (req: Request<{ sessionId: string; index: string }>, res: Response, next: NextFunction) => {
         try {
             const { sessionId, index } = req.params;
-            const session = await this.streamingService.getSession(sessionId);
-
-            if (!session) {
-                return res.status(404).json({ success: false, message: 'Session not found' });
-            }
+            const session = await this.getSessionOr404(sessionId, res);
+            if (!session) return;
 
             const chunk = await this.chunkService.resolveSessionChunk(session, index);
             if (!chunk) {

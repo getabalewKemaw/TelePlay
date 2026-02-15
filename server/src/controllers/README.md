@@ -39,10 +39,6 @@ The controller layer follows the **Clean Architecture** principles, ensuring tha
 
 ### Streaming Sessions
 *   `POST /api/streaming/sessions`: Initialize a streaming session.
-*   `POST /api/streaming/sessions/:sessionId/prepare-chunks`: Trigger chunk preparation.
-*   `POST /api/streaming/sessions/:sessionId/playback`: Control playback (Play/Pause/Seek).
-*   `GET /api/streaming/sessions/:sessionId/metadata`: Retrieve stream metadata.
-*   `DELETE /api/streaming/sessions/:sessionId`: Cleanup session resources.
 
 
 
