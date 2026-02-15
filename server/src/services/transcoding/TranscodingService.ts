@@ -54,20 +54,19 @@ const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compa
 
 export class TranscodingService implements ITranscodingService {
   private readonly ffmpegExecutor: IFfmpegExecutor;
+
   constructor(ffmpegExecutor?: IFfmpegExecutor) {
     this.ffmpegExecutor = ffmpegExecutor ?? new FFmpegExecutor();
   }
 
   async transcodeChunk(params: ChunkTranscodingParams): Promise<TranscodingResult> {
-  
     if (!existsSync(params.inputPath)) {
       throw new TranscodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
     }
 
     this.validateSourceEncoding(params.sourceEncoding);
-    this.validateTargetEncoding(params.targetEncoding);
+    this.validateTargetEncoding(params.sourceEncoding.codec, params.targetEncoding);
 
-  
     const originalStats = await fs.stat(params.inputPath);
     const originalSize = originalStats.size;
     const startTime = Date.now();
@@ -107,8 +106,10 @@ export class TranscodingService implements ITranscodingService {
     if (!compatibility) {
       return DEFAULT_TARGET_CODEC;
     }
+
     return compatibility.recommended;
   }
+
   private async performTranscoding(
     inputPath: string,
     outputPath: string,
@@ -153,9 +154,21 @@ export class TranscodingService implements ITranscodingService {
       );
     }
   }
-  private validateTargetEncoding(encoding: { codec: TargetCodec }): void {
-    // 
-  }
 
+  private validateTargetEncoding(sourceCodec: SourceCodec, encoding: { codec: TargetCodec; bitrate?: number }): void {
+    const compatibility = CODEC_COMPATIBILITY[sourceCodec];
+    if (!compatibility.compatible.includes(encoding.codec)) {
+      throw new TranscodingValidationError(
+        `Target codec ${encoding.codec} is not compatible with source codec ${sourceCodec}`,
+        'targetEncoding.codec'
+      );
+    }
+    if (encoding.bitrate !== undefined && encoding.bitrate <= 0) {
+      throw new TranscodingValidationError(
+        'Target bitrate must be greater than 0',
+        'targetEncoding.bitrate'
+      );
+    }
+  }
 }
 

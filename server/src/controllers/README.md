@@ -31,7 +31,6 @@ The controller layer follows the **Clean Architecture** principles, ensuring tha
 *   `POST /api/ffmpeg/decode`: Decode audio files.
 
 ### Media Processing
-*   `POST /api/compress`: Compress media using presets.
 *   `GET /api/chunks`: Get all metadata for file chunks.
 *   `GET /api/chunks/at-time`: Seek a specific chunk by timestamp.
 *   `GET /api/segments`: Get all adaptive segments.

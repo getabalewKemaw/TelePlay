@@ -58,19 +58,6 @@
                 }
             }
         },
-        "compression": {
-            "compress": {
-                "method": "POST",
-                "url": "/api/compress",
-                "payload": {
-                    "inputPath": "processed/audio.wav",
-                    "options": {
-                        "level": "medium",
-                        "preset": "balanced"
-                    }
-                }
-            }
-        },
         "streaming": {
             "createSession": {
                 "method": "POST",

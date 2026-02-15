@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { TranscodingService } from '../services/transcoding/TranscodingService.js';
 import type { TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { ApiResponse } from '../dto/base.dto.js';
+import { buildChunkTranscodingParams } from '../utils/transcoding/transcodingRequestUtils.js';
 import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import os from 'os';
@@ -28,12 +29,8 @@ export class TranscodingController {
         mkdirSync(outputDir, { recursive: true });
       }
 
-      const result = await this.transcodingService.transcodeChunk({
-        inputPath,
-        outputPath,
-        sourceEncoding: sourceEncoding as any,
-        targetEncoding: targetEncoding as any
-      });
+      const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
+      const result = await this.transcodingService.transcodeChunk(params);
 
       const response: ApiResponse<any> = {
         success: true,
@@ -59,17 +56,13 @@ export class TranscodingController {
       const downloadName = path.basename(output.path);
       const outputPath = path.join(tempBase, downloadName);
 
-      await this.transcodingService.transcodeChunk({
-        inputPath,
-        outputPath,
-        sourceEncoding: sourceEncoding as any,
-        targetEncoding: targetEncoding as any
-      });
+      const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
+      await this.transcodingService.transcodeChunk(params);
 
       res.download(outputPath, downloadName, async () => {
         try {
           await fs.unlink(outputPath);
-          await fs.rmdir(tempBase);
+          await fs.rm(tempBase, { recursive: true, force: true });
         } catch {
           // best-effort cleanup
         }
