@@ -27,40 +27,50 @@ export class ChunkingService implements IChunkingService {
     this.ffmpegService = ffmpegService ?? new FFmpegService();
     this.defaultChunkDuration = defaultChunkDuration;
   }
+
+  private buildConfig(filePath: string, totalDuration: number, options?: ChunkingOptions): ChunkingConfig {
+    return {
+      chunkDuration: options?.chunkDuration ?? this.defaultChunkDuration,
+      totalDuration,
+      generateFiles: options?.generateFiles ?? false,
+      outputDirectory: options?.outputDirectory,
+      baseFilename: options?.baseFilename ?? path.basename(filePath, path.extname(filePath))
+    };
+  }
+
+  private ensureOutputDirectory(outputDirectory: string): void {
+    if (!existsSync(outputDirectory)) {
+      mkdirSync(outputDirectory, { recursive: true });
+    }
+  }
+
+  private async writeChunkFiles(filePath: string, chunks: ChunkMetadata[]): Promise<void> {
+    for (const chunk of chunks) {
+      if (!chunk.filePath) continue;
+      await this.ffmpegService.decode({
+        input: { path: filePath },
+        output: { path: chunk.filePath },
+        startTime: chunk.startTime,
+        duration: chunk.duration
+      });
+    }
+  }
+
   private async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
     if (!existsSync(filePath)) {
       throw new ChunkingFileError(`Media file does not exist: ${filePath}`, filePath);
     }
 
-    
     const metadata = await this.metadataProvider.getMetadata(filePath);
-    const config: ChunkingConfig = {
-      chunkDuration: options?.chunkDuration ?? this.defaultChunkDuration,
-      totalDuration: metadata.duration,
-      generateFiles: options?.generateFiles ?? false,
-      outputDirectory: options?.outputDirectory,
-      baseFilename: options?.baseFilename ?? path.basename(filePath, path.extname(filePath))
-    };
+    const config = this.buildConfig(filePath, metadata.duration, options);
     this.validateConfig(config);
     const chunks = this.calculateChunks(config);
 
-    // Physically split data 
     if (config.generateFiles && config.outputDirectory) {
-      if (!existsSync(config.outputDirectory)) {
-        mkdirSync(config.outputDirectory, { recursive: true });
-      }
-
-      for (const chunk of chunks) {
-        if (chunk.filePath) {
-          await this.ffmpegService.decode({
-            input: { path: filePath },
-            output: { path: chunk.filePath },
-            startTime: chunk.startTime,
-            duration: chunk.duration
-          });
-        }
-      }
+      this.ensureOutputDirectory(config.outputDirectory);
+      await this.writeChunkFiles(filePath, chunks);
     }
+
     return {
       chunks,
       totalChunks: chunks.length,
@@ -110,7 +120,7 @@ export class ChunkingService implements IChunkingService {
         endTime,
         duration
       };
-      //add file paths 
+
       if (config.generateFiles && config.outputDirectory) {
         const extension = path.extname(config.baseFilename || 'chunk');
         const baseName = path.basename(config.baseFilename || 'chunk', extension);
@@ -123,7 +133,7 @@ export class ChunkingService implements IChunkingService {
     }
     return chunks;
   }
- 
+
   private validateConfig(config: ChunkingConfig): void {
     if (config.chunkDuration <= 0) {
       throw new ChunkingValidationError(
