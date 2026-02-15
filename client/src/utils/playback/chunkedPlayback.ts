@@ -37,15 +37,19 @@ export async function startChunkedPlayback({
 // find which chunk containg the given timestamp(segmentation)
   const getChunkIndexForTime = (time: number) => {
     const safeTime = clamp(time, totalDuration)
+    const indexFromChunks = chunks.findIndex((c: any) => c.startTime <= safeTime && c.endTime > safeTime)
+    if (indexFromChunks >= 0) return indexFromChunks
+
     if (Array.isArray(segments) && segments.length > 0) {
       const segment = segments.find((s: any) => s.startTime <= safeTime && s.endTime > safeTime)
-      const segChunkIndex = segment?.chunks?.[0]?.index
-      if (typeof segChunkIndex === 'number') return segChunkIndex
+      if (segment?.chunks?.length) {
+        const segmentChunk = segment.chunks.find((c: any) => c.startTime <= safeTime && c.endTime > safeTime)
+        const segChunkIndex = segmentChunk?.index ?? segment.chunks[0]?.index
+        if (typeof segChunkIndex === 'number') return segChunkIndex
+      }
     }
-    const indexFromChunks = chunks.findIndex((c: any) => c.startTime <= safeTime && c.endTime > safeTime)
-    return indexFromChunks >= 0
-      ? indexFromChunks
-      : Math.max(0, Math.min(chunks.length - 1, Math.floor(safeTime / chunkDuration)))
+
+    return Math.max(0, Math.min(chunks.length - 1, Math.floor(safeTime / chunkDuration)))
   }
   // intialize  media sources  and start fetching chunks sequntially 
   const startChunkPipeline = (startIndex: number, seekTime: number) => {
@@ -80,6 +84,8 @@ export async function startChunkedPlayback({
       }
 
       const sourceBuffer = mediaSource.addSourceBuffer(mime)
+      sourceBuffer.mode = 'segments'
+      sourceBuffer.timestampOffset = baseChunkStart
       if (totalDuration > 0) {
         try {
           mediaSource.duration = totalDuration
@@ -138,9 +144,8 @@ export async function startChunkedPlayback({
           if (!firstChunkAppended && audioRef.current) {
             firstChunkAppended = true
             const boundedSeek = clamp(streamState.seekTime, totalDuration || streamState.seekTime)
-            const localSeek = Math.max(0.01, boundedSeek - baseChunkStart)
             try {
-              audioRef.current.currentTime = localSeek
+              audioRef.current.currentTime = Math.max(0.01, boundedSeek)
               audioRef.current.play().catch(() => undefined)
             } catch {
               // ignore seek errors during init
@@ -168,4 +173,3 @@ export async function startChunkedPlayback({
   startChunkPipeline(0, 0)
   return true
 }
-

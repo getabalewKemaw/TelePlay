@@ -1,19 +1,5 @@
-import { Target } from 'lucide-react';
 import type { MediaFile } from '../../api/api'
 import { getG726BitrateKbps } from '../appControllerUtils'
-
-
-
-// dynamic chunk sizing based on file duration
-// Change the parameter from a number to the MediaFile object
-const getOptimalChunkSize = (targetfile: MediaFile) => {
-  const duration = targetfile.duration;
-
-  if (duration > 3600) return 30; 
-  if (duration > 1800) return 20; 
-  return 10;
-};
-
 
 export const getBaseName = (filename: string) => filename.replace(/\.[^/.]+$/, '')
 

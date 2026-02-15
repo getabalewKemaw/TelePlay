@@ -78,7 +78,8 @@ export function getStreamingMimeType(format: StreamingOutputFormat): string {
 }
 
 export function spawnFfmpeg(args: string[]): ChildProcess {
-  return spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  const runtimeArgs = ['-hide_banner', '-loglevel', 'warning', ...args];
+  return spawn('ffmpeg', runtimeArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
 export function attachResponseCleanup(
