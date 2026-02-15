@@ -72,36 +72,8 @@ export function useDecodeAndPlay({
             if (!decodeResult?.outputPath) return
             const updatedFile = { ...targetFile, decodedPath: decodeResult.outputPath }
             setSelectedFile(updatedFile)
-            loadFiles(true)
-
-            if (chunkSessionRef.current.isActive && audioRef.current) {
-              try {
-                const currentPlaybackTime = audioRef.current.currentTime || 0
-                const fileSession = await createStreamingSession(decodeResult.outputPath, {
-                  transport: 'http',
-                  mode: 'file-based'
-                })
-                const fileAudioUrl = `${API_BASE_URL}/api/streaming/sessions/${fileSession.sessionId}/stream`
-
-                chunkSessionRef.current.abort?.abort()
-                if (chunkSessionRef.current.mediaUrl) URL.revokeObjectURL(chunkSessionRef.current.mediaUrl)
-                chunkSessionRef.current.isActive = false
-
-                audioRef.current.src = fileAudioUrl
-                audioRef.current.onloadedmetadata = () => {
-                  if (!audioRef.current) return
-                  audioRef.current.currentTime = Math.min(currentPlaybackTime, audioRef.current.duration || currentPlaybackTime)
-                  audioRef.current.play().catch(() => undefined)
-                }
-                setIsChunkedStreaming(false)
-                setUseExternalAudio(false)
-                setStreamingPeaks(null)
-                setStreamingDuration(null)
-                setChunkSeekHandler(null)
-              } catch {
-                // ignore switch errors
-              }
-            }
+            await loadFiles(true)
+            toast.success('Background decode completed. Next play will use file-based stream.')
           })
           .catch((err) => {
             console.error('Background decode failed:', err)
@@ -203,4 +175,3 @@ export function useDecodeAndPlay({
     wavesurferRef
   ])
 }
-

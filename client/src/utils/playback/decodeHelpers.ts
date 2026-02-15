@@ -14,6 +14,14 @@ export const inferCodec = (targetFile: MediaFile) => {
   const codec = (targetFile.codec || '').toLowerCase()
   if (codec.includes('alaw') || name.includes('alaw') || name.includes('g711a')) return 'g711a'
   if (codec.includes('mulaw') || name.includes('mulaw') || name.includes('g711u')) return 'g711'
+  if (codec === 'g726' || name.includes('g726')) return 'g726'
+  if (codec === 'g728' || name.includes('g728')) return 'g728'
+  if (codec === 'pcm_mulaw' || codec === 'pcm_alaw' || codec === 'adpcm_g726') return codec
+  if (codec === 'gsm') {
+    // Some raw .g711 files may be probed as gsm; default to g711 for decode path.
+    return 'g711'
+  }
+  if (name.endsWith('.g711') || name.endsWith('.g711u') || name.endsWith('.g711a')) return 'g711'
   return targetFile.codec || 'g711'
 }
 
@@ -21,7 +29,7 @@ export const buildDecodePayload = (targetFile: MediaFile, outputPath: string, ou
   fileId: targetFile.id,
   input: { path: inputPath || targetFile.originalPath },
   output: { path: outputPath, format: outputFormat },
-  codec: targetFile.codec || 'g711',
+  codec: inferCodec(targetFile),
   sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
   channels: 1,
   bitrate: targetFile.codec === 'g726' ? (getG726BitrateKbps(targetFile) || 32) : undefined
@@ -51,4 +59,3 @@ export const buildStreamOptions = (targetFile: MediaFile, outputFormat: 'wav' | 
     chunkedOutputFormat: useChunkedStreaming ? 'mp3' : outputFormat
   }
 }
-
