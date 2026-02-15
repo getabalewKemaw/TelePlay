@@ -5,37 +5,8 @@ import type { MediaFile } from '../api/api'
 import type { SortKey } from '../components/FileTable/FileTable'
 import { useFileStore } from '../stores/useFileStore'
 import { useShallow } from 'zustand/shallow'
+import { isSupportedAudioFile,pickFileWithInput } from '../utils/fileUtils'
 let isLoading = false
-
-const SUPPORTED_AUDIO_EXTENSIONS = new Set([
-  'g711',
-  'g711u',
-  'g711a',
-  'g726',
-  'g728',
-  'pcm',
-  'wav',
-  'mp3',
-  'aac',
-  'ogg'
-])
-
-function isSupportedAudioFile(fileName: string): boolean {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  return !!ext && SUPPORTED_AUDIO_EXTENSIONS.has(ext)
-}
-
-function pickFileWithInput(): Promise<File | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.g711,.g711u,.g711a,.g726,.g728,.pcm,.wav,.mp3,.aac,.ogg'
-    input.onchange = () => resolve(input.files?.[0] ?? null)
-    input.oncancel = () => resolve(null)
-    input.click()
-  })
-}
-
 export function useFileActions() {
   const {
     filteredFiles,

@@ -76,10 +76,10 @@ export function Sidebar({
                     <button
                         onClick={onPickFile}
                         className={cn(
-                            "w-full py-2.5 px-6 bg-white/70 hover:bg-white text-coffee-Dark flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm border-2 border-coffee-200 ",
+                            "w-full py-2.5 px-6 bg-white/70 hover:bg-white text-coffee-Dark flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm border-2 border-coffee-600 cursor-pointer",
                             collapsed && "px-0"
                         )}
-                        aria-label="Upload file"
+                        aria-label="Upload 1 file"
                     >
                         <AudioLines size={16} />
                         {!collapsed && "Upload File"}
