@@ -10,22 +10,21 @@ import type {
 import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
 import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import { FFprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
+import { FFmpegService } from '../ffmpeg/FFmpegService.js';
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
-
 const DEFAULT_CHUNK_DURATION = 120;
 export class ChunkingService implements IChunkingService {
   private readonly metadataProvider: IMediaMetadataProvider;
   private readonly ffmpegService: IFfmpegService;
   private readonly defaultChunkDuration: number;
-
   constructor(
     metadataProvider?: IMediaMetadataProvider,
     ffmpegService?: IFfmpegService,
     defaultChunkDuration: number = DEFAULT_CHUNK_DURATION
   ) {
     this.metadataProvider = metadataProvider ?? new FFprobeMetadataProvider();
-    this.ffmpegService = ffmpegService as any; // This will be injected via DI or passed in
+    this.ffmpegService = ffmpegService ?? new FFmpegService();
     this.defaultChunkDuration = defaultChunkDuration;
   }
   private async generateChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> {
@@ -148,12 +147,6 @@ export class ChunkingService implements IChunkingService {
         );
       }
 
-      if (!existsSync(config.outputDirectory)) {
-        throw new ChunkingFileError(
-          `Output directory does not exist: ${config.outputDirectory}`,
-          config.outputDirectory
-        );
-      }
     }
   }
 }

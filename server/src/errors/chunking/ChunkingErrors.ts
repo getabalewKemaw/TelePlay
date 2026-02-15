@@ -45,7 +45,7 @@ export class ChunkingMetadataError extends ChunkingError {
  * Seek error - thrown when seek operation fails
  */
 export class ChunkingSeekError extends ChunkingError {
-  constructor(message: string, public readonly time: number) {
+  constructor(message: string, public readonly time: number, public readonly filePath?: string) {
     super(message, 'SEEK_ERROR');
     this.name = 'ChunkingSeekError';
   }
