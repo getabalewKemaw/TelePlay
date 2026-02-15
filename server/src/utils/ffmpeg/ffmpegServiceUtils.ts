@@ -7,10 +7,11 @@ import { mapCodecToFFmpeg } from './codecMap.js';
 
 export function normalizeDecodeCodec(codec?: string): string | undefined {
   if (!codec) return undefined;
-  if (codec === 'g711a') return 'pcm_alaw';
-  if (codec === 'g711u' || codec === 'g711') return 'pcm_mulaw';
-  if (codec === 'adpcm_g726') return 'g726';
-  return codec;
+  const normalized = codec.trim().toLowerCase();
+  if (normalized === 'g711a' || normalized === 'alaw') return 'pcm_alaw';
+  if (normalized === 'g711u' || normalized === 'g711' || normalized === 'mulaw') return 'pcm_mulaw';
+  if (normalized === 'adpcm_g726') return 'g726';
+  return normalized;
 }
 
 export function isRawCodec(codec?: string): codec is 'pcm_mulaw' | 'pcm_alaw' | 'g726' | 'g728' {
