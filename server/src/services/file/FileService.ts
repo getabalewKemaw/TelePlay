@@ -18,31 +18,55 @@ export class FileService implements IFileService {
     }
 
     async discoverFiles(directoryPath: string): Promise<void> {
-        const dirExists= await isdirectoryExists(directoryPath);
-        if(!dirExists)return;
-        const scan = async (dir: string) => {
+        const dirExists = await isdirectoryExists(directoryPath);
+        if (!dirExists) return;
+
+        const directoriesToScan: string[] = [directoryPath];
+        const filesToProcess: string[] = [];
+
+        while (directoriesToScan.length > 0) {
+            const dir = directoriesToScan.shift();
+            if (!dir) break;
+
             try {
-            const entries = await fs.readdir(dir, { withFileTypes: true });
-            //map each entry to a promise so they can run in parellel
-            await Promise.all(entries.map(async (entry)=>{
-            const fullPath = path.join(dir, entry.name);
-             if(entry.isDirectory()){
-                // it scan all the folders insided recursivelly
-                return scan(fullPath);
-             }
-             if (entry.isFile()){
-                const ext=path.extname(entry.name).toLowerCase();
-                if(AUDIO_EXTENSIONS.includes(ext)){
-                    return await  this.processFile(fullPath);
+                const entries = await fs.readdir(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.isDirectory()) {
+                        directoriesToScan.push(fullPath);
+                        continue;
+                    }
+                    if (entry.isFile()) {
+                        const ext = path.extname(entry.name).toLowerCase();
+                        if (AUDIO_EXTENSIONS.includes(ext)) {
+                            filesToProcess.push(fullPath);
+                        }
+                    }
                 }
-             }
-            }));
             } catch (error) {
-                // log the error like the permission issues but keep scannign other folders
-              console.error(`skipping${dir}: `,error)
+                // keep scanning other folders if one directory fails (e.g. permissions)
+                console.error(`Skipping ${dir}:`, error);
             }
-        };
-        await scan(directoryPath);
+        }
+
+        const maxConcurrencyRaw = Number(process.env.DISCOVERY_FILE_CONCURRENCY || 8);
+        const maxConcurrency = Math.max(1, Math.min(32, Number.isFinite(maxConcurrencyRaw) ? maxConcurrencyRaw : 8));
+        let currentIndex = 0;
+
+        const workers = Array.from({ length: maxConcurrency }, async () => {
+            while (currentIndex < filesToProcess.length) {
+                const index = currentIndex++;
+                const filePath = filesToProcess[index];
+                if (!filePath) continue;
+                try {
+                    await this.processFile(filePath);
+                } catch (error) {
+                    console.error(`Failed to discover file ${filePath}:`, error);
+                }
+            }
+        });
+
+        await Promise.all(workers);
     }
 
     async listFiles(criteria: ListFilesRequestDto): Promise<{ files: FileMetadataDto[]; total: number }> {
@@ -172,6 +196,7 @@ export class FileService implements IFileService {
                 },
                 update: {
                     filename
+
                 }
             });
             return this.toFileMetadataDto(file);
