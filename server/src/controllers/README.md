@@ -33,8 +33,6 @@ The controller layer follows the **Clean Architecture** principles, ensuring tha
 ### Media Processing
 *   `GET /api/chunks`: Get all metadata for file chunks.
 *   `GET /api/chunks/at-time`: Seek a specific chunk by timestamp.
-*   `GET /api/segments`: Get all adaptive segments.
-*   `GET /api/segments/range`: Get segments for a specific time range.
 
 ### Streaming Sessions
 *   `POST /api/streaming/sessions`: Initialize a streaming session.
