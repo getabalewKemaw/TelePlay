@@ -12,7 +12,7 @@ export interface ApiResponse<T> {
 export interface ApiErrorResponse {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
     traceId?: string;
 }
 

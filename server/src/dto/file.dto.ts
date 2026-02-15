@@ -1,17 +1,17 @@
-import type { ApiResponse } from './base.dto.js';
-
 export interface FileMetadataDto {
     id: string;
     filename: string;
     originalPath: string;
+    decodedPath?: string | null;
     duration: number;
-    fileSize: string; // BigInt as string for JSON
+    fileSize?: string; // BigInt as string for JSON
     format?: string;
     codec?: string;
     bitrate?: number;
     status: string;
-    createdAt: string;
-    updatedAt: string;
+    metadata?: unknown;
+    createdAt: string | Date;
+    updatedAt: string | Date;
 }
 
 export interface ListFilesRequestDto {
@@ -22,7 +22,3 @@ export interface ListFilesRequestDto {
     limit?: number;
     decodedOnly?: boolean;
 }
-
-
-
-export interface UploadFileResponseDto extends ApiResponse<FileMetadataDto> { }

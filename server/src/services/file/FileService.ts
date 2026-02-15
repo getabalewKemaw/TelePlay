@@ -1,7 +1,7 @@
 import type { IFileService } from '../../interfaces/file/IFileService.js';
 import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import prisma from '../../lib/prisma.js';
-import type { ListFilesRequestDto } from '../../dto/file.dto.js';
+import type { FileMetadataDto, ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { isdirectoryExists } from '../../utils/fileUtils.js';
@@ -9,6 +9,14 @@ import { isdirectoryExists } from '../../utils/fileUtils.js';
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
+
+    private toFileMetadataDto(file: any): FileMetadataDto {
+        return {
+            ...file,
+            fileSize: file.fileSize?.toString()
+        };
+    }
+
     async discoverFiles(directoryPath: string): Promise<void> {
         const dirExists= await isdirectoryExists(directoryPath);
         if(!dirExists)return;
@@ -37,7 +45,7 @@ export class FileService implements IFileService {
         await scan(directoryPath);
     }
 
-    async listFiles(criteria: ListFilesRequestDto): Promise<{ files: any[]; total: number }> {
+    async listFiles(criteria: ListFilesRequestDto): Promise<{ files: FileMetadataDto[]; total: number }> {
         const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
         //serve side validation for the  page sizes
         const hasPageParam = typeof page === 'number' && Number.isFinite(page);
@@ -73,20 +81,20 @@ export class FileService implements IFileService {
         ]);
 
         return {
-            files: files.map((f: any) => ({ ...f, fileSize: f.fileSize?.toString() })), // Convert BigInt to string
+            files: files.map((f: any) => this.toFileMetadataDto(f)),
             total
         };
     }
 
-    async getFileMetadata(id: string): Promise<any> {
+    async getFileMetadata(id: string): Promise<FileMetadataDto> {
         const file = await prisma.mediaFile.findUnique({ where: { id } });
         if (!file) throw new Error('File not found');
-        return { ...file, fileSize: file.fileSize?.toString() };// becuase the json.stringify does not know abt how to serialize the big int?
+        return this.toFileMetadataDto(file);
 
     }
 
     // taking a file path and either linking to the existing database or creating a record in a database 
-    async processFile(filePath: string): Promise<any> {
+    async processFile(filePath: string): Promise<FileMetadataDto> {
         const normalizedPath = path.resolve(filePath);
         const filename = path.basename(normalizedPath);
         const pathVariations = getPathVariations(normalizedPath);
@@ -99,7 +107,7 @@ export class FileService implements IFileService {
                 OR: pathFilters
             }
         });
-        if (existing) return existing;
+        if (existing) return this.toFileMetadataDto(existing);
 
 
 
@@ -122,7 +130,7 @@ export class FileService implements IFileService {
                         status: 'ready'
                     }
                 });
-                return { ...updated, fileSize: updated.fileSize?.toString() };
+                return this.toFileMetadataDto(updated);
             }
         }
 
@@ -150,7 +158,7 @@ export class FileService implements IFileService {
                     status: 'ready'
                 }
             });
-            return { ...file, fileSize: file.fileSize?.toString() };
+            return this.toFileMetadataDto(file);
         } catch (error) {
             console.error(`Failed to process file ${normalizedPath}:`, error);
             const file = await prisma.mediaFile.upsert({
@@ -166,11 +174,11 @@ export class FileService implements IFileService {
                     filename
                 }
             });
-            return { ...file, fileSize: file.fileSize?.toString() };
+            return this.toFileMetadataDto(file);
         }
     }
 
-    async registerFile(filename: string, filePath: string): Promise<any> {
+    async registerFile(filename: string, filePath: string): Promise<FileMetadataDto> {
         return this.processFile(filePath);
     }
 }
