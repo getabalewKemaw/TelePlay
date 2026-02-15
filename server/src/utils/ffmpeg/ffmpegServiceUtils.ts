@@ -7,13 +7,14 @@ import { mapCodecToFFmpeg } from './codecMap.js';
 
 export function normalizeDecodeCodec(codec?: string): string | undefined {
   if (!codec) return undefined;
-  if (codec === 'pcm_mulaw' || codec === 'pcm_alaw') return 'g711';
+  if (codec === 'g711a') return 'pcm_alaw';
+  if (codec === 'g711u' || codec === 'g711') return 'pcm_mulaw';
   if (codec === 'adpcm_g726') return 'g726';
   return codec;
 }
 
-export function isRawCodec(codec?: string): codec is 'g711' | 'g726' | 'g728' {
-  return codec === 'g711' || codec === 'g726' || codec === 'g728';
+export function isRawCodec(codec?: string): codec is 'pcm_mulaw' | 'pcm_alaw' | 'g726' | 'g728' {
+  return codec === 'pcm_mulaw' || codec === 'pcm_alaw' || codec === 'g726' || codec === 'g728';
 }
 
 export function buildDecodeAdditionalArgs(params: {
@@ -28,7 +29,8 @@ export function buildDecodeAdditionalArgs(params: {
 
   if (codec && isRawCodec(codec)) {
     const inputFormatMap: Record<string, string> = {
-      g711: 'mulaw',
+      pcm_mulaw: 'mulaw',
+      pcm_alaw: 'alaw',
       g726: 'g726',
       g728: 'g728'
     };
@@ -45,8 +47,10 @@ export function buildDecodeAdditionalArgs(params: {
       if (sampleRate) {
         additionalArgs.push('-sample_rate', sampleRate.toString());
       }
-    } else if (codec === 'g711') {
+    } else if (codec === 'pcm_mulaw') {
       additionalArgs.push('-acodec', 'pcm_mulaw');
+    } else if (codec === 'pcm_alaw') {
+      additionalArgs.push('-acodec', 'pcm_alaw');
     } else if (codec === 'g728') {
       additionalArgs.push('-acodec', 'g728');
     }
