@@ -7,6 +7,18 @@ import path from 'path';
 import { isdirectoryExists } from '../../utils/fileUtils.js';
 
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
+
+const ALLOWED_SORT_FIELDS = new Set([
+    'createdAt',
+    'updatedAt',
+    'filename',
+    'duration',
+    'format',
+    'codec',
+    'bitrate',
+    'status'
+]);
+
 export class FileService implements IFileService {
     constructor(private readonly chunkingService: IChunkingService) { }
 
@@ -89,9 +101,11 @@ export class FileService implements IFileService {
         }
 
         const hasPagination = typeof safePage === 'number' && typeof safeLimit === 'number' && safePage > 0 && safeLimit > 0;
+        const safeSort = ALLOWED_SORT_FIELDS.has(sort) ? sort : 'createdAt';
+        const safeOrder: 'asc' | 'desc' = order === 'asc' ? 'asc' : 'desc';
         const queryOptions: any = {
             where,
-            orderBy: { [sort]: order },
+            orderBy: { [safeSort]: safeOrder },
         };
 
         if (hasPagination) {
