@@ -135,7 +135,7 @@ export class FileService implements IFileService {
         }
 
         try {
-            const metadataResult = await (this.chunkingService as any).metadataProvider.getMetadata(normalizedPath);
+            const metadataResult = await this.chunkingService.getMetadata(normalizedPath);
             const file = await prisma.mediaFile.upsert({
                 where: { originalPath: normalizedPath },
                 create: {

@@ -16,10 +16,10 @@ export class StreamingController {
     private chunkService: StreamingChunkService;
 
     constructor(streamingService?: IStreamingPreparationService) {
-        this.streamingService = streamingService || new (StreamingPreparationService as any)();
-        this.chunkingService = new (ChunkingService as any)();
-        this.segmentationService = new (SegmentationService as any)(this.chunkingService);
-        this.chunkService = new (StreamingChunkService as any)(this.chunkingService);
+        this.streamingService = streamingService ?? new StreamingPreparationService();
+        this.chunkingService = new ChunkingService();
+        this.segmentationService = new SegmentationService(this.chunkingService);
+        this.chunkService = new StreamingChunkService(this.chunkingService);
     }
     private sendSuccess(res: Response, data: any, status = 200): void {
         const response: ApiResponse<any> = {

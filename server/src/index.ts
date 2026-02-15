@@ -15,7 +15,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 const PORT = process.env.PORT || 3000;
-const fileService = new FileService(new ChunkingService() as any);
+const fileService = new FileService(new ChunkingService());
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR || './uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });// it createsnna dir and also with recursive true we can make does is add a parent folders
@@ -64,14 +64,11 @@ setInterval(() => {
 }, 30 * 1000);
 
 app.use(express.json());
-
 app.get("/", (req: Request, res: Response) => {
     res.send("I-Player Backend API is active");
 });
 app.use('/api', apiRoutes);
-
 app.use(errorHandler);
-
 app.listen(PORT, () => {
     console.log(`I-Player server is running on port http://localhost:${PORT}`);
 });

@@ -5,7 +5,8 @@ import type {
   ChunkingResult,
   ChunkMetadata,
   ChunkingOptions,
-  ChunkingConfig
+  ChunkingConfig,
+  MediaMetadata
 } from '../../types/chunking/ChunkingTypes.js';
 import { ChunkingValidationError, ChunkingSeekError, ChunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
 import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
@@ -82,6 +83,10 @@ export class ChunkingService implements IChunkingService {
   async getAllChunks(filePath: string, options?: ChunkingOptions): Promise<ChunkMetadata[]> {
     const result = await this.generateChunks(filePath, options);
     return result.chunks;
+  }
+
+  async getMetadata(filePath: string): Promise<MediaMetadata> {
+    return this.metadataProvider.getMetadata(filePath);
   }
 
   async getChunkAtTime(filePath: string, time: number, options?: ChunkingOptions): Promise<ChunkMetadata> {

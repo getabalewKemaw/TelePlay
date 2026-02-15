@@ -7,7 +7,7 @@ import path from 'path';
 export class FileController {
     private fileService: IFileService;
     constructor(fileService?: IFileService) {
-        this.fileService = fileService || new FileService(new ChunkingService() as any);
+        this.fileService = fileService ?? new FileService(new ChunkingService());
     }
 // pagination and sorting.
     listFiles = async (req: Request, res: Response, next: NextFunction) => {
