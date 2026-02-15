@@ -7,6 +7,7 @@ interface SidebarProps {
     selectedFile: MediaFile | null
     onFileSelect: (file: MediaFile) => void
     onPickDirectory: () => void
+    onPickFile: () => void
     searchTerm: string
     onSearchChange: (value: string) => void
     filterDecoded: boolean
@@ -20,6 +21,7 @@ export function Sidebar({
     selectedFile,
     onFileSelect,
     onPickDirectory,
+    onPickFile,
     searchTerm,
     onSearchChange,
     filterDecoded,
@@ -70,6 +72,17 @@ export function Sidebar({
                     >
                         <FolderOpen size={16} />
                         {!collapsed && "Open Directory"}
+                    </button>
+                    <button
+                        onClick={onPickFile}
+                        className={cn(
+                            "w-full py-2.5 px-6 bg-white/70 hover:bg-white text-coffee-Dark flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm border-2 border-coffee-200 ",
+                            collapsed && "px-0"
+                        )}
+                        aria-label="Upload file"
+                    >
+                        <AudioLines size={16} />
+                        {!collapsed && "Upload File"}
                     </button>
 
                     {!collapsed && (

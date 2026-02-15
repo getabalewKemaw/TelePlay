@@ -48,6 +48,7 @@ export default function App() {
     handleSortChange,
     handleFileSelect,
     pickDirectory,
+    pickSingleFile,
     loadFiles
   } = useFileActions();
 
@@ -108,6 +109,7 @@ export default function App() {
         selectedFile={selectedFile}
         onFileSelect={handleFileSelect}
         onPickDirectory={pickDirectory}
+        onPickFile={pickSingleFile}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         filterDecoded={filterDecoded}

@@ -6,6 +6,36 @@ import type { SortKey } from '../components/FileTable/FileTable'
 import { useFileStore } from '../stores/useFileStore'
 import { useShallow } from 'zustand/shallow'
 let isLoading = false
+
+const SUPPORTED_AUDIO_EXTENSIONS = new Set([
+  'g711',
+  'g711u',
+  'g711a',
+  'g726',
+  'g728',
+  'pcm',
+  'wav',
+  'mp3',
+  'aac',
+  'ogg'
+])
+
+function isSupportedAudioFile(fileName: string): boolean {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  return !!ext && SUPPORTED_AUDIO_EXTENSIONS.has(ext)
+}
+
+function pickFileWithInput(): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.g711,.g711u,.g711a,.g726,.g728,.pcm,.wav,.mp3,.aac,.ogg'
+    input.onchange = () => resolve(input.files?.[0] ?? null)
+    input.oncancel = () => resolve(null)
+    input.click()
+  })
+}
+
 export function useFileActions() {
   const {
     filteredFiles,
@@ -106,8 +136,7 @@ export function useFileActions() {
       const processHandle = async (handle: any) => {
         if (handle.kind === 'file') {
           const file = await handle.getFile()
-          const ext = file.name.split('.').pop()?.toLowerCase()
-          if (['g711', 'g726', 'g728', 'wav', 'pcm'].includes(ext || '')) {
+          if (isSupportedAudioFile(file.name)) {
             await uploadFile(file)
             fileCount++
             toast.loading(`Syncing: ${file.name}`, { id: toastId })
@@ -130,6 +159,41 @@ export function useFileActions() {
     }
   }, [loadFiles])
 
+  const pickSingleFile = useCallback(async () => {
+    try {
+      let file: File | null = null
+
+      if ('showOpenFilePicker' in window) {
+        const [handle] = await (window as any).showOpenFilePicker({
+          multiple: false,
+          types: [{
+            description: 'Audio Files',
+            accept: { 'audio/*': ['.g711', '.g711u', '.g711a', '.g726', '.g728', '.pcm', '.wav', '.mp3', '.aac', '.ogg'] }
+          }]
+        })
+        file = handle ? await handle.getFile() : null
+      } else {
+        file = await pickFileWithInput()
+      }
+
+      if (!file) return
+      if (!isSupportedAudioFile(file.name)) {
+        toast.error('Unsupported file type for upload.')
+        return
+      }
+
+      const toastId = toast.loading(`Uploading: ${file.name}`)
+      await uploadFile(file)
+      toast.success(`Uploaded: ${file.name}`, { id: toastId })
+      await loadFiles(true)
+    } catch (error) {
+      console.error('Single file upload failed:', error)
+      if ((error as any).name !== 'AbortError') {
+        toast.error('Single file upload failed.')
+      }
+    }
+  }, [loadFiles])
+
   return {
     selectedFile,
     loadFiles,
@@ -137,6 +201,7 @@ export function useFileActions() {
     handleSortChange,
     handleNext,
     handlePrev,
-    pickDirectory
+    pickDirectory,
+    pickSingleFile
   }
 }
