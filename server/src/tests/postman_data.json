@@ -56,25 +56,6 @@
                     "sampleRate": 16000,
                     "channels": 1
                 }
-            },
-            "encode": {
-                "method": "POST",
-                "url": "/api/ffmpeg/encode",
-                "payload": {
-                    "input": {
-                        "path": "processed/audio.wav"
-                    },
-                    "output": {
-                        "path": "processed/audio.mp3",
-                        "format": "mp3"
-                    },
-                    "encoding": {
-                        "codec": "mp3",
-                        "sampleRate": 44100,
-                        "channels": 2,
-                        "bitrate": 192
-                    }
-                }
             }
         },
         "compression": {

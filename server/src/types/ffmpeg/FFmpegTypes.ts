@@ -1,6 +1,5 @@
 
 export type AudioCodec = 'g711' | 'g726' | 'g728' | 'pcm_mulaw' | 'pcm_alaw' | 'adpcm_g726' | 'pcm_s16le' | 'pcm_s24le' | 'aac' | 'mp3' | 'opus';
-
 export type SampleRate = 8000 | 16000 | 22050 | 44100 | 48000;
 export type ChannelConfig = 1 | 2; // Mono or Stereo
 export type FFmpegOperation = 'decode' | 'encode' | 'transcode' | 'convert';

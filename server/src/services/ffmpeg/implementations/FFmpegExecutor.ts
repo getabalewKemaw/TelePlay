@@ -42,7 +42,6 @@ export class FFmpegExecutor implements IFfmpegExecutor {
       let settled = false;
       let progressBuffer = '';
       let progressState: FFmpegProgressUpdate = {};
-
       const appendBuffer = (current: string, chunk: Buffer): string => {
         if (maxBufferBytes <= 0) return current;
         const next = current + chunk.toString();
@@ -77,17 +76,17 @@ export class FFmpegExecutor implements IFfmpegExecutor {
           });
         }, timeout);
       }
-
       if (shouldPipeStdin(normalizedOptions) && process.stdin) {
-        normalizedOptions.stdin.pipe(process.stdin);
+        const inputStream = normalizedOptions.stdin;
+        if (inputStream && typeof inputStream !== 'string') {
+          inputStream.pipe(process.stdin);
+        }
       }
-
       if (process.stdout && stdio[1] === 'pipe') {
         process.stdout.on('data', (data: Buffer) => {
           stdout = appendBuffer(stdout, data);
         });
       }
-
       if (process.stderr && stdio[2] === 'pipe') {
         process.stderr.on('data', (data: Buffer) => {
           stderr = appendBuffer(stderr, data);
@@ -103,7 +102,6 @@ export class FFmpegExecutor implements IFfmpegExecutor {
           }
         });
       }
-
       process.on('close', (exitCode) => {
         finalize(() => {
           const executionTime = Date.now() - startTime;

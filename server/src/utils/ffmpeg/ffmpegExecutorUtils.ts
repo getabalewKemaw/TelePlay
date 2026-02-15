@@ -1,9 +1,8 @@
-import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate, FFmpegStdioMode } from '../../../types/ffmpeg/FFmpegTypes.js';
+import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate, FFmpegStdioMode } from '../../types/ffmpeg/FFmpegTypes.js';
 import { mapCodecToFFmpeg } from './codecMap.js';
 export type NormalizedFFmpegOptions = FFmpegCommandOptions & {
   preInputArgs: string[];
 };
-
 export function normalizeOptions(options: FFmpegCommandOptions): NormalizedFFmpegOptions {
   const preInputArgs = [
     ...(options.preInputArgs ?? []),

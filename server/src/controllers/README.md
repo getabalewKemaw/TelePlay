@@ -29,8 +29,6 @@ The controller layer follows the **Clean Architecture** principles, ensuring tha
 
 ### FFmpeg Operations
 *   `POST /api/ffmpeg/decode`: Decode audio files.
-*   `POST /api/ffmpeg/encode`: Encode audio files.
-*   `POST /api/ffmpeg/transcode`: Transcode between formats.
 
 ### Media Processing
 *   `POST /api/compress`: Compress media using presets.

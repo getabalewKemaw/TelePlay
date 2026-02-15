@@ -1,6 +1,6 @@
 
 import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
-import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
+import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type {
   TranscodingResult,
   ChunkTranscodingParams,
@@ -11,7 +11,9 @@ import type {
 import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
-import type { AudioCodec } from '../../types/ffmpeg/FFmpegTypes.js';
+import path from 'path';
+import { FFmpegExecutor } from '../ffmpeg/implementations/FFmpegExecutor.js';
+import { buildTranscodeCommandOptions } from '../../utils/ffmpeg/ffmpegServiceUtils.js';
 const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 
 
@@ -51,9 +53,9 @@ const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec; compa
 };
 
 export class TranscodingService implements ITranscodingService {
-  private readonly ffmpegService: IFfmpegService;
-  constructor(ffmpegService: IFfmpegService) {
-    this.ffmpegService = ffmpegService;
+  private readonly ffmpegExecutor: IFfmpegExecutor;
+  constructor(ffmpegExecutor?: IFfmpegExecutor) {
+    this.ffmpegExecutor = ffmpegExecutor ?? new FFmpegExecutor();
   }
 
   async transcodeChunk(params: ChunkTranscodingParams): Promise<TranscodingResult> {
@@ -112,42 +114,35 @@ export class TranscodingService implements ITranscodingService {
     outputPath: string,
     config: TranscodingConfig
   ): Promise<void> {
-  
-    const sourceCodec = this.mapCodecToFFmpeg(config.source.codec);
-    const targetCodec = this.mapCodecToFFmpeg(config.target.codec);
-
-    const transcodeParams: any = {
+    const transcodeParams = {
       input: { path: inputPath },
       output: { path: outputPath },
       sourceEncoding: {
-        codec: config.source.codec as AudioCodec,
+        codec: config.source.codec,
         sampleRate: config.source.sampleRate,
         channels: config.source.channels,
         bitrate: config.source.bitrate
       },
       targetEncoding: {
-        codec: config.target.codec as AudioCodec,
+        codec: config.target.codec,
         sampleRate: config.target.sampleRate,
         channels: config.target.channels,
         bitrate: config.target.bitrate
       }
     };
 
-    await this.ffmpegService.transcode(transcodeParams);
-  }
-  private mapCodecToFFmpeg(codec: string): string {
-    const codecMap: Record<string, string> = {
-      g711: 'pcm_mulaw',
-      g726: 'g726',
-      g728: 'g728',
-      pcm_s16le: 'pcm_s16le',
-      pcm_s24le: 'pcm_s24le',
-      aac: 'aac',
-      mp3: 'libmp3lame',
-      opus: 'libopus'
-    };
+    const containerExts = new Set(['.wav', '.mp3', '.aac', '.ogg', '.opus', '.m4a']);
+    const inputExt = path.extname(inputPath).toLowerCase();
+    const isContainerInput = containerExts.has(inputExt);
+    const needsInputCodec = !isContainerInput
+      && ['g711', 'g726', 'g728', 'pcm_s16le', 'pcm_s24le'].includes(config.source.codec);
+    const commandOptions = buildTranscodeCommandOptions(
+      transcodeParams,
+      isContainerInput,
+      needsInputCodec
+    );
 
-    return codecMap[codec] || codec;
+    await this.ffmpegExecutor.execute(commandOptions);
   }
 
   private validateSourceEncoding(encoding: { codec: SourceCodec; bitrate?: number }): void {

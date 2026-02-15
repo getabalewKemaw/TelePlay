@@ -4,7 +4,7 @@ import type {
   TranscodeParams,
   FFmpegCommandOptions
 } from '../../types/ffmpeg/FFmpegTypes.js';
-import { mapCodecToFFmpeg } from '../../utils/ffmpeg/codecMap.js';
+import { mapCodecToFFmpeg } from './codecMap.js';
 
 export function normalizeDecodeCodec(codec?: string): string | undefined {
   if (!codec) return undefined;

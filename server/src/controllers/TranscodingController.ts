@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import { TranscodingService } from '../services/transcoding/TranscodingService.js';
-import { FFmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { ApiResponse } from '../dto/base.dto.js';
 import { existsSync, mkdirSync } from 'fs';
@@ -14,7 +13,7 @@ export class TranscodingController {
   private transcodingService: TranscodingService;
 
   constructor(transcodingService?: TranscodingService) {
-    this.transcodingService = transcodingService ?? new TranscodingService(new FFmpegService() as any);
+    this.transcodingService = transcodingService ?? new TranscodingService();
   }
 
   convert = async (req: Request<{}, {}, TranscodeConvertRequest>, res: Response, next: NextFunction) => {
@@ -32,9 +31,8 @@ export class TranscodingController {
       const result = await this.transcodingService.transcodeChunk({
         inputPath,
         outputPath,
-        source,
-        Encoding,
-        targetEncoding
+        sourceEncoding: sourceEncoding as any,
+        targetEncoding: targetEncoding as any
       });
 
       const response: ApiResponse<any> = {
@@ -64,8 +62,8 @@ export class TranscodingController {
       await this.transcodingService.transcodeChunk({
         inputPath,
         outputPath,
-        sourceEncoding,
-        targetEncoding
+        sourceEncoding: sourceEncoding as any,
+        targetEncoding: targetEncoding as any
       });
 
       res.download(outputPath, downloadName, async () => {
