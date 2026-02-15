@@ -1,6 +1,5 @@
 import type {
   DecodeParams,
-  EncodeParams,
   TranscodeParams,
   FFmpegCommandOptions
 } from '../../types/ffmpeg/FFmpegTypes.js';
@@ -90,23 +89,6 @@ export function buildDecodeCommandOptions(
     startTime: params.startTime,
     duration: params.duration,
     additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined,
-    validateOutput: true,
-    minOutputBytes: 1
-  };
-}
-
-export function buildEncodeCommandOptions(params: EncodeParams): FFmpegCommandOptions {
-  return {
-    input: params.input.path,
-    output: params.output.path,
-    codec: params.encoding.codec,
-    sampleRate: params.encoding.sampleRate,
-    channels: params.encoding.channels,
-    bitrate: params.encoding.bitrate,
-    format: params.output.format,
-    startTime: params.startTime,
-    duration: params.duration,
-    additionalArgs: params.input.format ? ['-f', params.input.format] : undefined,
     validateOutput: true,
     minOutputBytes: 1
   };

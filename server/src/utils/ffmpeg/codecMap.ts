@@ -1,4 +1,4 @@
-export const FFMPEG_CODEC_MAP: Record<string, string> = {
+const FFMPEG_CODEC_MAP: Record<string, string> = {
   g711: 'pcm_mulaw',
   g726: 'g726',
   g728: 'g728',

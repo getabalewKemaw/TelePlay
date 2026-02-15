@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs';
-
 import type { Request, Response, NextFunction } from 'express';
 import { FFmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { DecodeRequestDto } from '../dto/ffmpeg.dto.js';
@@ -46,7 +45,7 @@ export class FFmpegController {
                         await prisma.mediaFile.update({
                             where: { id: fileId },
                             data: {
-                                decodedPath: outputPath,
+                             decodedPath: outputPath,
                                 status: 'ready'
                             }
                         });
