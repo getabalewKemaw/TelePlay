@@ -25,7 +25,10 @@ export class FFmpegService implements IFfmpegService {
     this.validateCommonParams(params.input.path, params.output.path);
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
-    const normalizedCodec = normalizeDecodeCodec(params.codec);
+    let normalizedCodec = normalizeDecodeCodec(params.codec);
+    // Defensive alias handling in service layer to avoid client-driven codec alias regressions.
+    if (normalizedCodec === 'g711a' || normalizedCodec === 'alaw') normalizedCodec = 'pcm_alaw';
+    if (normalizedCodec === 'g711u' || normalizedCodec === 'g711' || normalizedCodec === 'mulaw') normalizedCodec = 'pcm_mulaw';
     if (normalizedCodec) {
       FFmpegValidator.validateCodec(normalizedCodec);
       this.validateDecodeCodecRequirements(normalizedCodec, params);

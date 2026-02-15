@@ -15,7 +15,6 @@ interface SidebarProps {
     collapsed: boolean
     onToggleCollapsed: () => void
 }
-
 export function Sidebar({
     files,
     selectedFile,
@@ -30,7 +29,6 @@ export function Sidebar({
     onToggleCollapsed
 }: SidebarProps) {
     const filteredFiles = files || []
-
     const handleFileClick = (file: MediaFile) => {
         onFileSelect(file)
         if (window.innerWidth < 768) {
@@ -53,7 +51,7 @@ export function Sidebar({
                 </div>
                 <button
                     onClick={onToggleCollapsed}
-                    className="w-9 h-9 rounded-xl bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-500 shadow-sm"
+                    className="w-9 h-9 rounded-xl bg-white/70 hover:bg-white transition-colors flex items-center justify-center text-coffee-500 shadow-sm cursor-pointer"
                     aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                     {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
@@ -65,7 +63,7 @@ export function Sidebar({
                     <button
                         onClick={onPickDirectory}
                         className={cn(
-                            "w-full py-2.5 px-6 bg-coffee-600 hover:bg-coffee-200 hover:border-2 text-coffee-50  flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm",
+                            "w-full py-2.5 px-6 bg-coffee-600 hover:bg-coffee-200 hover:border-3 text-coffee-50  flex items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest shadow-sm cursor-pointer",
                             collapsed && "px-0"
                         )}
                         aria-label="Open directory"
