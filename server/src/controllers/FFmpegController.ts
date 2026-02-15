@@ -7,6 +7,7 @@ import type { ApiResponse } from '../dto/base.dto.js';
 import prisma from '../lib/prisma.js';
 import path from 'path';
 import { isdirectoryExists } from '../utils/fileUtils.js';
+import { enforcePathPolicy } from '../utils/pathPolicy.js';
 export class FFmpegController {
     private ffmpegService: IFfmpegService;
     constructor(ffmpegService?: IFfmpegService) {
@@ -16,7 +17,10 @@ export class FFmpegController {
     decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { fileId, ...decodeParams } = req.body;
-            const requestedOutputPath = decodeParams.output?.path ? path.resolve(decodeParams.output.path) : undefined;
+            decodeParams.input.path = enforcePathPolicy(decodeParams.input.path, 'Input path');
+            const requestedOutputPath = decodeParams.output?.path
+                ? enforcePathPolicy(decodeParams.output.path, 'Output path', { allowNonExisting: true, allowTemp: true })
+                : undefined;
             if (fileId) {
                 const existing = await prisma.mediaFile.findUnique({ where: { id: fileId } });
                 const existingDecoded = existing?.decodedPath ? path.resolve(existing.decodedPath) : undefined;

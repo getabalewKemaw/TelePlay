@@ -9,6 +9,7 @@ import type { IStreamingPreparationService } from '../interfaces/streaming/IStre
 import type { ApiResponse } from '../dto/base.dto.js';
 import type { StreamingSession } from '../types/streaming/StreamingTypes.js';
 import path from 'path';
+import { enforcePathPolicy } from '../utils/pathPolicy.js';
 export class StreamingController {
     private streamingService: IStreamingPreparationService;
     private chunkingService: ChunkingService;
@@ -41,7 +42,10 @@ export class StreamingController {
     createSession = async (req: Request<{}, {}, CreateSessionRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { filePath, options } = req.body;
-            const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
+            const resolvedPath = enforcePathPolicy(
+                path.isAbsolute(filePath) ? filePath : path.resolve(filePath),
+                'Session file path'
+            );
             const session = await this.streamingService.createSession(resolvedPath, options);
             this.sendSuccess(res, session, 201);
         } catch (error) {

@@ -3,6 +3,7 @@ import type { IFileService } from '../interfaces/file/IFileService.js';
 import { FileService } from '../services/file/FileService.js';
 import { ChunkingService } from '../services/chunking/ChunkingService.js';
 import path from 'path';
+import { enforcePathPolicy } from '../utils/pathPolicy.js';
 
 export class FileController {
     private fileService: IFileService;
@@ -65,7 +66,7 @@ export class FileController {
         try {
             // Allow user to specify path, default to ./uploads
             const { path: customPath } = req.body;
-            const targetDir = customPath || './uploads';
+            const targetDir = enforcePathPolicy(customPath || './uploads', 'Discovery path');
 
             await this.fileService.discoverFiles(targetDir);
 
@@ -86,7 +87,7 @@ export class FileController {
 
             // Prefer decoded path if it exists
             const filePath = file.decodedPath || file.originalPath;
-            const absolutePath = path.resolve(filePath);
+            const absolutePath = enforcePathPolicy(filePath, 'Download path');
 
             // Format filename for download (use decoded extension if available)
             let downloadName = file.filename;

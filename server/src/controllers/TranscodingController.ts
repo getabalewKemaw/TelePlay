@@ -7,6 +7,7 @@ import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
+import { enforcePathPolicy } from '../utils/pathPolicy.js';
 
 type TranscodeConvertRequest = TranscodeRequestDto & { fileId?: string };
 
@@ -21,8 +22,8 @@ export class TranscodingController {
     try {
       const { input, output, sourceEncoding, targetEncoding } = req.body;
 
-      const inputPath = path.resolve(input.path);
-      const outputPath = path.resolve(output.path);
+      const inputPath = enforcePathPolicy(input.path, 'Input path');
+      const outputPath = enforcePathPolicy(output.path, 'Output path', { allowNonExisting: true, allowTemp: true });
       const outputDir = path.dirname(outputPath);
 
       if (!existsSync(outputDir)) {
@@ -51,7 +52,7 @@ export class TranscodingController {
     try {
       const { input, output, sourceEncoding, targetEncoding } = req.body;
 
-      const inputPath = path.resolve(input.path);
+      const inputPath = enforcePathPolicy(input.path, 'Input path');
       const tempBase = await fs.mkdtemp(path.join(os.tmpdir(), 'iplayer-convert-'));
       const downloadName = path.basename(output.path);
       const outputPath = path.join(tempBase, downloadName);
