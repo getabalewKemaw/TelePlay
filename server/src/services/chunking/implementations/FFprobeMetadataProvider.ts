@@ -8,36 +8,9 @@ import path from 'path';
 import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { ChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
-
-const FFPROBE_EXECUTABLE = 'ffprobe';
-
-type RawFileProfile = {
-  format: string;
-  codec: string;
-  sampleRate: number;
-  channels: number;
-  bitrate: number;
-};
-
-const BASE_ARGS = [
-  '-v', 'error',
-  '-show_entries', 'format=duration,size,bit_rate,format_name',
-  '-show_entries', 'stream=codec_name',
-  '-of', 'json'
-];
-
-const RAW_PROFILES: Record<string, RawFileProfile> = {
-  '.g711': { format: 'mulaw', codec: 'pcm_mulaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
-  '.g711u': { format: 'mulaw', codec: 'pcm_mulaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
-  '.g711a': { format: 'alaw', codec: 'pcm_alaw', sampleRate: 8000, channels: 1, bitrate: 64000 },
-  '.g726': { format: 'g726', codec: 'g726', sampleRate: 8000, channels: 1, bitrate: 32000 },
-  '.g728': { format: 'g728', codec: 'g728', sampleRate: 8000, channels: 1, bitrate: 16000 },
-  '.pcm': { format: 's16le', codec: 'pcm_s16le', sampleRate: 8000, channels: 1, bitrate: 128000 }
-};
-
+import { FFPROBE_EXECUTABLE,type RawFileProfile, BASE_ARGS,RAW_PROFILES} from '../../../utils/chunking/chunlingUtils.js';
 export class FFprobeMetadataProvider implements IMediaMetadataProvider {
   private readonly executable: string;
-
   constructor(executable: string = FFPROBE_EXECUTABLE) {
     this.executable = executable;
   }
