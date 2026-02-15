@@ -1,5 +1,5 @@
 
-import type { AudioCodec, SampleRate, ChannelConfig, FFmpegExecutionResult } from '../types/ffmpeg/FFmpegTypes.js';
+import type { AudioCodec, SampleRate, ChannelConfig } from '../types/ffmpeg/FFmpegTypes.js';
 
 export interface FileConfigDto {
     path: string;

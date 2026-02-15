@@ -22,14 +22,6 @@ export interface SegmentationConfig {
   optimizeForLowLatency?: boolean;
   bufferSize?: number;
 }
-export interface SegmentationResult {
-  segments: SegmentMetadata[];
-  totalSegments: number;
-  totalDuration: number;
-  averageSegmentDuration: number;
-  firstSegmentDuration: number;
-  config: SegmentationConfig;
-}
 export enum SegmentPriority {
   CRITICAL = 100,    // must load first (initial segments)
   HIGH = 75,         // load soon (next segments)

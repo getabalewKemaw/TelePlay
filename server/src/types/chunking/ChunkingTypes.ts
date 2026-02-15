@@ -23,16 +23,6 @@ export interface ChunkingResult {
   chunkDuration: number;
   lastChunkDuration: number;
 }
-export interface SeekParams {
-  time: number;
-  exact?: boolean;
-}
-
-export interface SeekResult {
-  chunk: ChunkMetadata;
-  offsetInChunk: number;
-  exact: boolean;
-}
 export interface MediaMetadata {
   duration: number;
   fileSize?: number |undefined;
