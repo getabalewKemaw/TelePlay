@@ -18,7 +18,6 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
     const targetDuration = config.targetSegmentDuration ?? 5;
     const minDuration = config.minSegmentDuration ?? 1; 
     const maxDuration = config.maxSegmentDuration ?? 10;
-    const optimizeForLowLatency = true; 
     const segments: SegmentMetadata[] = [];
     let currentChunks: ChunkMetadata[] = [];
     let currentStartTime = chunks[0]!.startTime;
@@ -38,28 +37,26 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
         segments.push(this.createSegment(
           segmentIndex++,
           currentChunks,
-          currentStartTime,
-          optimizeForLowLatency
+          currentStartTime
         ));
 
         // Start new segment
         currentChunks = [chunk];
         currentStartTime = chunk.startTime;
         currentDuration = chunkDuration;
-      } else if (newDuration >= effectiveTarget || newDuration >= minDuration) {
-        currentChunks.push(chunk);
-        currentDuration = newDuration;
-        segments.push(this.createSegment(
-          segmentIndex++,
-          currentChunks,
-          currentStartTime,
-          optimizeForLowLatency
-        ));
-        currentChunks = [];
-        currentDuration = 0;
       } else {
         currentChunks.push(chunk);
         currentDuration = newDuration;
+
+        if (currentDuration >= effectiveTarget && currentDuration >= minDuration) {
+          segments.push(this.createSegment(
+            segmentIndex++,
+            currentChunks,
+            currentStartTime
+          ));
+          currentChunks = [];
+          currentDuration = 0;
+        }
       }
     }
 
@@ -68,8 +65,7 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
       segments.push(this.createSegment(
         segmentIndex,
         currentChunks,
-        currentStartTime,
-        optimizeForLowLatency
+        currentStartTime
       ));
     }
 
@@ -79,8 +75,7 @@ export class LowLatencySegmentationStrategy implements ISegmentationStrategy {
   private createSegment(
     index: number,
     chunks: ChunkMetadata[],
-    startTime: number,
-    optimizeForLowLatency: boolean
+    startTime: number
   ): SegmentMetadata {
     const endTime = chunks[chunks.length - 1]!.endTime;
     const duration = endTime - startTime;

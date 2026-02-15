@@ -45,22 +45,22 @@ export class AdaptiveSegmentationStrategy implements ISegmentationStrategy {
         currentChunks = [chunk];
         currentStartTime = chunk.startTime;
         currentDuration = chunkDuration;
-      } else if (newDuration >= targetDuration || newDuration >= minDuration) {
-        // Add chunk and create segment if we've reached target or minimum
-        currentChunks.push(chunk);
-        currentDuration = newDuration;
-        segments.push(this.createSegment(
-          segmentIndex++,
-          currentChunks,
-          currentStartTime,
-          optimizeForLowLatency
-        ));
-        currentChunks = [];
-        currentDuration = 0;
       } else {
-        // add  chunk to current segment
+        // Add chunk to current segment.
         currentChunks.push(chunk);
         currentDuration = newDuration;
+
+        // Close a segment when we hit the desired target (while respecting min duration).
+        if (currentDuration >= targetDuration && currentDuration >= minDuration) {
+          segments.push(this.createSegment(
+            segmentIndex++,
+            currentChunks,
+            currentStartTime,
+            optimizeForLowLatency
+          ));
+          currentChunks = [];
+          currentDuration = 0;
+        }
       }
     }
 

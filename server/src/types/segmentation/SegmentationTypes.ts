@@ -42,7 +42,11 @@ export interface SegmentationOptions {
   strategy?: SegmentationStrategy;
   chunksPerSegment?: number;
   targetSegmentDuration?: number;
+  minSegmentDuration?: number;
+  maxSegmentDuration?: number;
+  initialSegmentMultiplier?: number;
   optimizeForLowLatency?: boolean;
+  bufferSize?: number;
   baseChunkDuration?: number;
 
 }

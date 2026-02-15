@@ -13,6 +13,7 @@ import type {
 import { SegmentationStrategyFactory } from './strategies/SegmentationStrategyFactory.js';
 import { SegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
 import { ChunkingService } from '../chunking/ChunkingService.js';
+import { isSegmentInRange, validateTimeRange } from '../../utils/segmentation/segmentationRangeUtils.js';
 
 const DEFAULT_CONFIG: SegmentationConfig = {
   strategy: 'adaptive',
@@ -40,6 +41,10 @@ export class SegmentationService implements ISegmentationService {
   }
 
   async getAllSegments(filePath: string, options?: SegmentationOptions): Promise<SegmentMetadata[]> {
+    if (!filePath) {
+      throw new SegmentationValidationError('filePath is required', 'filePath');
+    }
+
     const config = this.buildConfig(options);
     this.validateConfig(config);
 
@@ -56,19 +61,9 @@ export class SegmentationService implements ISegmentationService {
     endTime: number,
     options?: SegmentationOptions
   ): Promise<SegmentMetadata[]> {
-    if (Number.isNaN(startTime) || Number.isNaN(endTime) || startTime < 0 || endTime < startTime) {
-      throw new SegmentationValidationError(
-        `Invalid segment range: start=${startTime}, end=${endTime}`,
-        'timeRange'
-      );
-    }
-
+    validateTimeRange(startTime, endTime);
     const segments = await this.getAllSegments(filePath, options);
-    return segments.filter((segment) => (
-      (segment.startTime >= startTime && segment.startTime < endTime) ||
-      (segment.endTime > startTime && segment.endTime <= endTime) ||
-      (segment.startTime <= startTime && segment.endTime >= endTime)
-    ));
+    return segments.filter((segment) => isSegmentInRange(segment, startTime, endTime));
   }
 
   private buildConfig(options?: SegmentationOptions): SegmentationConfig {
@@ -76,30 +71,30 @@ export class SegmentationService implements ISegmentationService {
       strategy: options?.strategy ?? this.defaultConfig.strategy,
       chunksPerSegment: options?.chunksPerSegment ?? this.defaultConfig.chunksPerSegment,
       targetSegmentDuration: options?.targetSegmentDuration ?? this.defaultConfig.targetSegmentDuration,
-      minSegmentDuration: this.defaultConfig.minSegmentDuration,
-      maxSegmentDuration: this.defaultConfig.maxSegmentDuration,
-      initialSegmentMultiplier: this.defaultConfig.initialSegmentMultiplier,
+      minSegmentDuration: options?.minSegmentDuration ?? this.defaultConfig.minSegmentDuration,
+      maxSegmentDuration: options?.maxSegmentDuration ?? this.defaultConfig.maxSegmentDuration,
+      initialSegmentMultiplier: options?.initialSegmentMultiplier ?? this.defaultConfig.initialSegmentMultiplier,
       optimizeForLowLatency: options?.optimizeForLowLatency ?? this.defaultConfig.optimizeForLowLatency,
-      bufferSize: this.defaultConfig.bufferSize
+      bufferSize: options?.bufferSize ?? this.defaultConfig.bufferSize
     };
   }
 
   private validateConfig(config: SegmentationConfig): void {
-    if (config.chunksPerSegment && config.chunksPerSegment <= 0) {
+    if (config.chunksPerSegment !== undefined && (!Number.isFinite(config.chunksPerSegment) || config.chunksPerSegment <= 0)) {
       throw new SegmentationValidationError(
         `Chunks per segment must be greater than 0, got ${config.chunksPerSegment}`,
         'chunksPerSegment'
       );
     }
 
-    if (config.targetSegmentDuration && config.targetSegmentDuration <= 0) {
+    if (config.targetSegmentDuration !== undefined && (!Number.isFinite(config.targetSegmentDuration) || config.targetSegmentDuration <= 0)) {
       throw new SegmentationValidationError(
         `Target segment duration must be greater than 0, got ${config.targetSegmentDuration}`,
         'targetSegmentDuration'
       );
     }
 
-    if (config.minSegmentDuration && config.minSegmentDuration <= 0) {
+    if (config.minSegmentDuration !== undefined && (!Number.isFinite(config.minSegmentDuration) || config.minSegmentDuration <= 0)) {
       throw new SegmentationValidationError(
         `Minimum segment duration must be greater than 0, got ${config.minSegmentDuration}`,
         'minSegmentDuration'
@@ -116,6 +111,19 @@ export class SegmentationService implements ISegmentationService {
         'segmentDuration'
       );
     }
+
+    if (config.initialSegmentMultiplier !== undefined && (!Number.isFinite(config.initialSegmentMultiplier) || config.initialSegmentMultiplier <= 0)) {
+      throw new SegmentationValidationError(
+        `Initial segment multiplier must be greater than 0, got ${config.initialSegmentMultiplier}`,
+        'initialSegmentMultiplier'
+      );
+    }
+
+    if (config.bufferSize !== undefined && (!Number.isFinite(config.bufferSize) || config.bufferSize <= 0)) {
+      throw new SegmentationValidationError(
+        `Buffer size must be greater than 0, got ${config.bufferSize}`,
+        'bufferSize'
+      );
+    }
   }
 }
-
