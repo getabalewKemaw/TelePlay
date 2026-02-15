@@ -42,8 +42,9 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
         status = err.status;
     }
     else{
-        status=400;
-        message="some thing  bad things happen on the server please try again"
+        status = 500;
+        code = ApiErrorCode.INTERNAL_ERROR;
+        message = 'An internal server error occurred';
     }
     console.error(`[${new Date().toISOString()}] ${req.method} ${req.url} - Error: ${err.message}`);
     if (err.stack && process.env.NODE_ENV === 'development') {
