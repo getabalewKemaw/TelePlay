@@ -14,7 +14,10 @@ function isInsideRoot(candidate: string, root: string): boolean {
 }
 
 function getAllowedRoots(allowTemp: boolean): string[] {
-  const roots = [path.resolve(process.env.UPLOADS_DIR || './uploads')];
+  const roots = [
+    path.resolve(process.env.UPLOADS_DIR || './uploads'),
+    path.resolve(process.env.PROCESSED_DIR || './processed')
+  ];
   if (process.env.MEDIA_ROOT) {
     roots.push(path.resolve(process.env.MEDIA_ROOT));
   }
