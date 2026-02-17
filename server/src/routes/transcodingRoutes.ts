@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import { createTranscodingController } from '../controllers/TranscodingController.js';
+import { convert, convertDownload } from '../controllers/TranscodingController.js';
 
 const router = Router();
-const controller = createTranscodingController();
 
-router.post('/convert', controller.convert);
-router.post('/convert-download', controller.convertDownload);
+router.post('/convert', convert);
+router.post('/convert-download', convertDownload);
 export default router;

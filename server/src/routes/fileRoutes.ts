@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createFileController } from '../controllers/FileController.js';
+import { listFiles, getFileMetadata, discoverFiles, downloadFile, uploadFile } from '../controllers/FileController.js';
 import multer from 'multer';
 
 // Configure Multer for file uploads
@@ -15,10 +15,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 const router = Router();
-const controller = createFileController();
-router.get('/', controller.listFiles);
-router.get('/:id', controller.getFileMetadata);
-router.post('/discover', controller.discoverFiles);
-router.get('/:id/download', controller.downloadFile);
-router.post('/upload', upload.single('file'), controller.uploadFile);
+router.get('/', listFiles);
+router.get('/:id', getFileMetadata);
+router.post('/discover', discoverFiles);
+router.get('/:id/download', downloadFile);
+router.post('/upload', upload.single('file'), uploadFile);
 export default router;

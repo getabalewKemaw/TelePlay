@@ -9,6 +9,7 @@ import type {
 import { createStreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
+
 const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   transport: 'http',
   mode: 'file-based',
@@ -26,53 +27,52 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   saveOutputPath: '',
   fileId: ''
 };
-export const createStreamingPreparationService = (): IStreamingPreparationService => {
-  const sessions = new Map<string, StreamingSession>();
 
-  const createSession = async (
-    filePath: string,
-    options?: StreamingPreparationOptions
-  ): Promise<StreamingSession> => {
-    if (!existsSync(filePath)) {
-      throw createStreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
-    }
-    const sessionId = randomUUID();
-    const opts = { ...DEFAULT_OPTIONS, ...options };
-    const session: StreamingSession = {
-      sessionId,
-      filePath,
-      state: 'idle',
-      currentTime: 0,
-      transport: opts.transport,
-      mode: opts.mode,
-      chunkDuration: opts.chunkDuration,
-      targetCodec: opts.targetCodec,
-      compressionLevel: opts.compressionLevel,
-      preTranscode: opts.preTranscode,
-      preCompress: opts.preCompress,
-      bufferSize: opts.bufferSize,
-      inputCodec: options?.inputCodec,
-      sampleRate: options?.sampleRate,
-      channels: options?.channels,
-      bitrate: options?.bitrate,
-      outputFormat: options?.outputFormat,
-      saveOutputPath: options?.saveOutputPath,
-      fileId: options?.fileId,
-      startedAt: Date.now(),
-      lastActivity: Date.now()
-    };
-    sessions.set(sessionId, session);
-    return session;
+const sessions = new Map<string, StreamingSession>();
+
+export const createSession = async (
+  filePath: string,
+  options?: StreamingPreparationOptions
+): Promise<StreamingSession> => {
+  if (!existsSync(filePath)) {
+    throw createStreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
+  }
+  const sessionId = randomUUID();
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const session: StreamingSession = {
+    sessionId,
+    filePath,
+    state: 'idle',
+    currentTime: 0,
+    transport: opts.transport,
+    mode: opts.mode,
+    chunkDuration: opts.chunkDuration,
+    targetCodec: opts.targetCodec,
+    compressionLevel: opts.compressionLevel,
+    preTranscode: opts.preTranscode,
+    preCompress: opts.preCompress,
+    bufferSize: opts.bufferSize,
+    inputCodec: options?.inputCodec,
+    sampleRate: options?.sampleRate,
+    channels: options?.channels,
+    bitrate: options?.bitrate,
+    outputFormat: options?.outputFormat,
+    saveOutputPath: options?.saveOutputPath,
+    fileId: options?.fileId,
+    startedAt: Date.now(),
+    lastActivity: Date.now()
   };
-
-  const getSession = async (sessionId: string): Promise<StreamingSession | undefined> => (
-    sessions.get(sessionId)
-  );
-
-  return {
-    createSession,
-    getSession
-  };
+  sessions.set(sessionId, session);
+  return session;
 };
 
-export type StreamingPreparationService = ReturnType<typeof createStreamingPreparationService>;
+export const getSession = async (sessionId: string): Promise<StreamingSession | undefined> => (
+  sessions.get(sessionId)
+);
+
+export const streamingPreparationService: IStreamingPreparationService = {
+  createSession,
+  getSession
+};
+
+export type StreamingPreparationService = typeof streamingPreparationService;

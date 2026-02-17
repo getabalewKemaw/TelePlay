@@ -8,121 +8,120 @@ import path from 'path';
 import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { createChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
-import { FFPROBE_EXECUTABLE,type RawFileProfile, BASE_ARGS,RAW_PROFILES} from '../../../utils/chunking/chunlingUtils.js';
-export const createFFprobeMetadataProvider = (
-  executable: string = FFPROBE_EXECUTABLE
-): IMediaMetadataProvider => {
-  const runProbe = (filePath: string, args: string[]): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-      const process = spawn(executable, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-      let stdout = '';
-      let stderr = '';
+import { FFPROBE_EXECUTABLE, type RawFileProfile, BASE_ARGS, RAW_PROFILES } from '../../../utils/chunking/chunlingUtils.js';
 
-      process.stdout?.on('data', (data: Buffer) => {
-        stdout += data.toString();
-      });
+const executable = FFPROBE_EXECUTABLE;
 
-      process.stderr?.on('data', (data: Buffer) => {
-        stderr += data.toString();
-      });
+const runProbe = (filePath: string, args: string[]): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    const process = spawn(executable, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
 
-      process.on('close', (exitCode) => {
-        if (exitCode !== 0) {
-          reject(createChunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
-          return;
-        }
-        resolve(stdout);
-      });
-
-      process.on('error', (error: Error) => {
-        reject(createChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
-      });
+    process.stdout?.on('data', (data: Buffer) => {
+      stdout += data.toString();
     });
-  };
 
-  const buildRawArgs = (filePath: string, profile: RawFileProfile): string[] => {
-    return [
-      ...BASE_ARGS,
-      '-f', profile.format,
-      '-ar', profile.sampleRate.toString(),
-      '-ac', profile.channels.toString(),
-      filePath
-    ];
-  };
+    process.stderr?.on('data', (data: Buffer) => {
+      stderr += data.toString();
+    });
 
-  const getMetadata = async (filePath: string): Promise<MediaMetadata> => {
-    try {
-      const stdout = await runProbe(filePath, [...BASE_ARGS, filePath]);
-      return parseFFprobeOutput(stdout, filePath);
-    } catch (error) {
-      const ext = path.extname(filePath).toLowerCase();
-      const profile = RAW_PROFILES[ext];
-      if (profile) {
-        try {
-          const stdout = await runProbe(filePath, buildRawArgs(filePath, profile));
-          return parseFFprobeOutput(stdout, filePath, profile);
-        } catch {
-          return fallbackRawMetadata(filePath, profile);
-        }
+    process.on('close', (exitCode) => {
+      if (exitCode !== 0) {
+        reject(createChunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
+        return;
       }
-      throw error;
-    }
-  };
-  // parse the ffprobe json output.
-  const parseFFprobeOutput = (
-    output: string,
-    filePath: string,
-    fallback?: { codec: string; bitrate: number }
-  ): MediaMetadata => {
-    let data: any;
-    try {
-      data = JSON.parse(output);
-    } catch {
-      throw createChunkingMetadataError('FFprobe returned invalid JSON output', filePath);
-    }
+      resolve(stdout);
+    });
 
-    const format = data.format ?? {};
-    const stream = data.streams?.[0] ?? {};
-    let duration = parseFloat(format.duration ?? '0');
-    const bitrate = format.bit_rate ? parseInt(format.bit_rate, 10) : undefined;
-    const size = format.size ? parseInt(format.size, 10) : undefined;
+    process.on('error', (error: Error) => {
+      reject(createChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
+    });
+  });
+};
 
-    if ((!Number.isFinite(duration) || duration <= 0) && size && (bitrate || fallback?.bitrate)) {
-      const rate = bitrate ?? fallback!.bitrate;
-      duration = (size * 8) / rate;
-    }
+const buildRawArgs = (filePath: string, profile: RawFileProfile): string[] => {
+  return [
+    ...BASE_ARGS,
+    '-f', profile.format,
+    '-ar', profile.sampleRate.toString(),
+    '-ac', profile.channels.toString(),
+    filePath
+  ];
+};
 
-    if (!Number.isFinite(duration) || duration <= 0) {
-      throw createChunkingMetadataError('Invalid or missing duration in media file', filePath);
-    }
+const parseFFprobeOutput = (
+  output: string,
+  filePath: string,
+  fallback?: { codec: string; bitrate: number }
+): MediaMetadata => {
+  let data: any;
+  try {
+    data = JSON.parse(output);
+  } catch {
+    throw createChunkingMetadataError('FFprobe returned invalid JSON output', filePath);
+  }
 
-    return {
-      duration,
-      fileSize: size,
-      format: format.format_name,
-      codec: stream.codec_name || fallback?.codec,
-      bitrate
-    };
-  };
+  const format = data.format ?? {};
+  const stream = data.streams?.[0] ?? {};
+  let duration = parseFloat(format.duration ?? '0');
+  const bitrate = format.bit_rate ? parseInt(format.bit_rate, 10) : undefined;
+  const size = format.size ? parseInt(format.size, 10) : undefined;
 
-  const fallbackRawMetadata = async (
-    filePath: string,
-    profile: RawFileProfile
-  ): Promise<MediaMetadata> => {
-    const stats = await stat(filePath);
-    const duration = (stats.size * 8) / profile.bitrate;
-    return {
-      duration,
-      fileSize: stats.size,
-      format: profile.format,
-      codec: profile.codec,
-      bitrate: profile.bitrate
-    };
-  };
+  if ((!Number.isFinite(duration) || duration <= 0) && size && (bitrate || fallback?.bitrate)) {
+    const rate = bitrate ?? fallback!.bitrate;
+    duration = (size * 8) / rate;
+  }
+
+  if (!Number.isFinite(duration) || duration <= 0) {
+    throw createChunkingMetadataError('Invalid or missing duration in media file', filePath);
+  }
 
   return {
-    getMetadata
+    duration,
+    fileSize: size,
+    format: format.format_name,
+    codec: stream.codec_name || fallback?.codec,
+    bitrate
   };
 };
 
-export type FFprobeMetadataProvider = ReturnType<typeof createFFprobeMetadataProvider>;
+const fallbackRawMetadata = async (
+  filePath: string,
+  profile: RawFileProfile
+): Promise<MediaMetadata> => {
+  const stats = await stat(filePath);
+  const duration = (stats.size * 8) / profile.bitrate;
+  return {
+    duration,
+    fileSize: stats.size,
+    format: profile.format,
+    codec: profile.codec,
+    bitrate: profile.bitrate
+  };
+};
+
+export const getMetadata = async (filePath: string): Promise<MediaMetadata> => {
+  try {
+    const stdout = await runProbe(filePath, [...BASE_ARGS, filePath]);
+    return parseFFprobeOutput(stdout, filePath);
+  } catch (error) {
+    const ext = path.extname(filePath).toLowerCase();
+    const profile = RAW_PROFILES[ext];
+    if (profile) {
+      try {
+        const stdout = await runProbe(filePath, buildRawArgs(filePath, profile));
+        return parseFFprobeOutput(stdout, filePath, profile);
+      } catch {
+        return fallbackRawMetadata(filePath, profile);
+      }
+    }
+    throw error;
+  }
+};
+
+export const ffprobeMetadataProvider: IMediaMetadataProvider = {
+  getMetadata
+};
+
+export type FFprobeMetadataProvider = typeof ffprobeMetadataProvider;
