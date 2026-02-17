@@ -1,6 +1,14 @@
 import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import type { FFmpegExecutionResult, DecodeParams } from '../../types/ffmpeg/FFmpegTypes.js';
-import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
+import {
+  validateBitrate,
+  validateChannels,
+  validateCodec,
+  validateFilePath,
+  validateInputFile,
+  validateOutputPath,
+  validateSampleRate
+} from '../../validator/ffmpeg/FFmpegValidator.js';
 import { createFFmpegFileError, createFFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { ffmpegExecutor } from './implementations/FFmpegExecutor.js';
 import {
@@ -11,8 +19,8 @@ import {
 } from '../../utils/ffmpeg/ffmpegServiceUtils.js';
 
 const validateCommonParams = (inputPath: string, outputPath: string): void => {
-  FFmpegValidator.validateFilePath(inputPath, 'input');
-  FFmpegValidator.validateFilePath(outputPath, 'output');
+  validateFilePath(inputPath, 'input');
+  validateFilePath(outputPath, 'output');
 };
 
 const validateDecodeCodecRequirements = (codec: string, params: DecodeParams): void => {
@@ -50,24 +58,24 @@ const handleExecutionError = (error: unknown, inputPath: string): void => {
 
 export const decode = async (params: DecodeParams): Promise<FFmpegExecutionResult> => {
   validateCommonParams(params.input.path, params.output.path);
-  await FFmpegValidator.validateInputFile(params.input.path);
-  await FFmpegValidator.validateOutputPath(params.output.path);
+  await validateInputFile(params.input.path);
+  await validateOutputPath(params.output.path);
   let normalizedCodec = normalizeDecodeCodec(params.codec);
   // Defensive alias handling in service layer to avoid client-driven codec alias regressions.
   if (normalizedCodec === 'g711a' || normalizedCodec === 'alaw') normalizedCodec = 'pcm_alaw';
   if (normalizedCodec === 'g711u' || normalizedCodec === 'g711' || normalizedCodec === 'mulaw') normalizedCodec = 'pcm_mulaw';
   if (normalizedCodec) {
-    FFmpegValidator.validateCodec(normalizedCodec);
+    validateCodec(normalizedCodec);
     validateDecodeCodecRequirements(normalizedCodec, params);
   }
   if (params.sampleRate) {
-    FFmpegValidator.validateSampleRate(params.sampleRate);
+    validateSampleRate(params.sampleRate);
   }
   if (params.channels) {
-    FFmpegValidator.validateChannels(params.channels);
+    validateChannels(params.channels);
   }
   if (params.bitrate) {
-    FFmpegValidator.validateBitrate(params.bitrate);
+    validateBitrate(params.bitrate);
   }
   const additionalArgs = buildDecodeAdditionalArgs({
     codec: normalizedCodec,
