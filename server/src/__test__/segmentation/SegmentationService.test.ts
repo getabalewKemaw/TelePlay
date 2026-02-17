@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SegmentationService } from '../../services/segmentation/SegmentationService.js';
+import { createSegmentationService, type SegmentationService } from '../../services/segmentation/SegmentationService.js';
 import type { IChunkingService } from '../../interfaces/segmentation/IChunkingService.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
-import { SegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
+
 
 describe('SegmentationService', () => {
   let mockChunkingService: IChunkingService;
@@ -33,7 +33,7 @@ describe('SegmentationService', () => {
       generateChunks: vi.fn()
     };
 
-    segmentationService = new SegmentationService(mockChunkingService);
+    segmentationService = createSegmentationService(mockChunkingService);
   });
 
   describe('createSegments', () => {
@@ -96,7 +96,7 @@ describe('SegmentationService', () => {
 
       await expect(
         segmentationService.createSegments('/path/to/file.mp3')
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
     });
 
     it('should mark first segment as critical when optimizing for low latency', async () => {
@@ -129,11 +129,11 @@ describe('SegmentationService', () => {
 
       await expect(
         segmentationService.getSegment('/path/to/file.mp3', 100)
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
 
       await expect(
         segmentationService.getSegment('/path/to/file.mp3', -1)
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
     });
   });
 
@@ -164,11 +164,11 @@ describe('SegmentationService', () => {
 
       await expect(
         segmentationService.getSegmentsInRange('/path/to/file.mp3', 60, 20)
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
 
       await expect(
         segmentationService.getSegmentsInRange('/path/to/file.mp3', 20, 20)
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
     });
   });
 
@@ -285,7 +285,7 @@ describe('SegmentationService', () => {
           strategy: 'fixed',
           chunksPerSegment: -1
         })
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
     });
 
     it('should validate target segment duration', async () => {
@@ -297,7 +297,7 @@ describe('SegmentationService', () => {
           strategy: 'adaptive',
           targetSegmentDuration: -1
         })
-      ).rejects.toThrow(SegmentationValidationError);
+      ).rejects.toMatchObject({ name: 'SegmentationValidationError' });
     });
   });
 });

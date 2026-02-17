@@ -5,12 +5,10 @@ import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
-export class FixedSegmentationStrategy implements ISegmentationStrategy {
-  getName(): string {
-    return 'fixed';
-  }
+export const createFixedSegmentationStrategy = (): ISegmentationStrategy => {
+  const getName = (): string => 'fixed';
 
-  createSegments(chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] {
+  const createSegments = (chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] => {
     if (chunks.length === 0) {
       return [];
     }
@@ -56,5 +54,12 @@ export class FixedSegmentationStrategy implements ISegmentationStrategy {
     }
 
     return segments;
-  }
-}
+  };
+
+  return {
+    getName,
+    createSegments
+  };
+};
+
+export type FixedSegmentationStrategy = ReturnType<typeof createFixedSegmentationStrategy>;

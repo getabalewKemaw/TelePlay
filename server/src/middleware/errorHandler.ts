@@ -2,7 +2,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ApiErrorCode } from '../dto/base.dto.js';
 import type { ApiResponse } from '../dto/base.dto.js';
-import { FFmpegValidationError, FFmpegExecutionError, FFmpegTimeoutError, FFmpegFileError } from '../errors/ffmpeg/FFmpegErrors.js';
+import { isFFmpegValidationError, isFFmpegExecutionError, isFFmpegTimeoutError, isFFmpegFileError } from '../errors/ffmpeg/FFmpegErrors.js';
 
 //Global Error Handler Middleware
 
@@ -15,12 +15,12 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     let message = 'An internal server error occurred';
     let details = undefined;
 //map domain errors with there respective Api errors.
-    if (err instanceof FFmpegValidationError) {
+    if (isFFmpegValidationError(err)) {
         status = 400;
         code = ApiErrorCode.VALIDATION_ERROR;
         message = err.message;
         details = { field: err.field };
-    } else if (err instanceof FFmpegExecutionError) {
+    } else if (isFFmpegExecutionError(err)) {
         status = 500;
         code = ApiErrorCode.FFMPEG_ERROR;
         message = 'Media processing execution failed';
@@ -28,12 +28,12 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
             exitCode: err.exitCode,
             stderr: process.env.NODE_ENV === 'development' ? err.stderr : undefined
         };
-    } else if (err instanceof FFmpegTimeoutError) {
+    } else if (isFFmpegTimeoutError(err)) {
         status = 408;
         code = ApiErrorCode.TIMEOUT;
         message = 'The media processing operation timed out';
         details = { timeout: err.timeout };
-    } else if (err instanceof FFmpegFileError) {
+    } else if (isFFmpegFileError(err)) {
         status = 404;
         code = ApiErrorCode.NOT_FOUND;
         message = err.message;

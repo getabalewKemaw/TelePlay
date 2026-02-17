@@ -5,8 +5,8 @@ import type {
   FFmpegExecutionResult
 } from '../../types/ffmpeg/FFmpegTypes.js';
 import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
-import { FFmpegFileError, FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
-import { FFmpegExecutor } from './implementations/FFmpegExecutor.js';
+import { createFFmpegFileError, createFFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { createFFmpegExecutor } from './implementations/FFmpegExecutor.js';
 import {
   buildDecodeAdditionalArgs,
   buildDecodeCommandOptions,
@@ -14,15 +14,49 @@ import {
   normalizeDecodeCodec
 } from '../../utils/ffmpeg/ffmpegServiceUtils.js';
 
-export class FFmpegService implements IFfmpegService {
-  private readonly executor: IFfmpegExecutor;
+export const createFFmpegService = (
+  executor: IFfmpegExecutor = createFFmpegExecutor()
+): IFfmpegService => {
+  const validateCommonParams = (inputPath: string, outputPath: string): void => {
+    FFmpegValidator.validateFilePath(inputPath, 'input');
+    FFmpegValidator.validateFilePath(outputPath, 'output');
+  };
 
-  constructor(executor?: IFfmpegExecutor) {
-    this.executor = executor ?? new FFmpegExecutor();
-  }
+  const validateDecodeCodecRequirements = (codec: string, params: DecodeParams): void => {
+    if (!isRawCodec(codec)) return;
 
-  async decode(params: DecodeParams): Promise<FFmpegExecutionResult> {
-    this.validateCommonParams(params.input.path, params.output.path);
+    if (!params.sampleRate) {
+      throw createFFmpegValidationError(
+        `Sample rate is required for ${codec} decoding`,
+        'sampleRate'
+      );
+    }
+    if (!params.channels) {
+      throw createFFmpegValidationError(
+        `Channels are required for ${codec} decoding`,
+        'channels'
+      );
+    }
+
+    if (codec === 'g726' && !params.bitrate) {
+      throw createFFmpegValidationError(
+        'Bitrate is required for G.726 decoding (8, 16, 24, or 32 kbps)',
+        'bitrate'
+      );
+    }
+  };
+
+  const handleExecutionError = (error: unknown, inputPath: string): void => {
+    if (error instanceof Error && error.message.includes('ENOENT')) {
+      throw createFFmpegFileError(
+        `File not found: ${inputPath}`,
+        inputPath
+      );
+    }
+  };
+
+  const decode = async (params: DecodeParams): Promise<FFmpegExecutionResult> => {
+    validateCommonParams(params.input.path, params.output.path);
     await FFmpegValidator.validateInputFile(params.input.path);
     await FFmpegValidator.validateOutputPath(params.output.path);
     let normalizedCodec = normalizeDecodeCodec(params.codec);
@@ -31,7 +65,7 @@ export class FFmpegService implements IFfmpegService {
     if (normalizedCodec === 'g711u' || normalizedCodec === 'g711' || normalizedCodec === 'mulaw') normalizedCodec = 'pcm_mulaw';
     if (normalizedCodec) {
       FFmpegValidator.validateCodec(normalizedCodec);
-      this.validateDecodeCodecRequirements(normalizedCodec, params);
+      validateDecodeCodecRequirements(normalizedCodec, params);
     }
     if (params.sampleRate) {
       FFmpegValidator.validateSampleRate(params.sampleRate);
@@ -57,51 +91,16 @@ export class FFmpegService implements IFfmpegService {
     );
 
     try {
-      return await this.executor.execute(commandOptions);
+      return await executor.execute(commandOptions);
     } catch (error) {
-      this.handleExecutionError(error, params.input.path);
+      handleExecutionError(error, params.input.path);
       throw error;
     }
-  }
+  };
 
-  private validateCommonParams(inputPath: string, outputPath: string): void {
-    FFmpegValidator.validateFilePath(inputPath, 'input');
-    FFmpegValidator.validateFilePath(outputPath, 'output');
-  }
+  return {
+    decode
+  };
+};
 
-  private validateDecodeCodecRequirements(codec: string, params: DecodeParams): void {
-    if (!isRawCodec(codec)) return;
-
-    if (!params.sampleRate) {
-      throw new FFmpegValidationError(
-        `Sample rate is required for ${codec} decoding`,
-        'sampleRate'
-      );
-    }
-    if (!params.channels) {
-      throw new FFmpegValidationError(
-        `Channels are required for ${codec} decoding`,
-        'channels'
-      );
-    }
-
-    if (codec === 'g726' && !params.bitrate) {
-      throw new FFmpegValidationError(
-        'Bitrate is required for G.726 decoding (8, 16, 24, or 32 kbps)',
-        'bitrate'
-      );
-    }
-  }
-
-  private handleExecutionError(
-    error: unknown,
-    inputPath: string
-  ): void {
-    if (error instanceof Error && error.message.includes('ENOENT')) {
-      throw new FFmpegFileError(
-        `File not found: ${inputPath}`,
-        inputPath
-      );
-    }
-  }
-}
+export type FFmpegService = ReturnType<typeof createFFmpegService>;

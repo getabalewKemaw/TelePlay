@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
-import { FFmpegController } from '../controllers/FFmpegController.js';
+import { createFFmpegController } from '../controllers/FFmpegController.js';
 const router = Router();
-const controller = new FFmpegController();
+const controller = createFFmpegController();
 router.post('/decode', controller.decode);
 export default router;

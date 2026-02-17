@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { FixedSegmentationStrategy } from '../../services/segmentation/strategies/FixedSegmentationStrategy.js';
-import { AdaptiveSegmentationStrategy } from '../../services/segmentation/strategies/AdaptiveSegmentationStrategy.js';
-import { ProgressiveSegmentationStrategy } from '../../services/segmentation/strategies/ProgressiveSegmentationStrategy.js';
-import { LowLatencySegmentationStrategy } from '../../services/segmentation/strategies/LowLatencySegmentationStrategy.js';
+import { createFixedSegmentationStrategy, type FixedSegmentationStrategy } from '../../services/segmentation/strategies/FixedSegmentationStrategy.js';
+import { createAdaptiveSegmentationStrategy, type AdaptiveSegmentationStrategy } from '../../services/segmentation/strategies/AdaptiveSegmentationStrategy.js';
+import { createProgressiveSegmentationStrategy, type ProgressiveSegmentationStrategy } from '../../services/segmentation/strategies/ProgressiveSegmentationStrategy.js';
+import { createLowLatencySegmentationStrategy, type LowLatencySegmentationStrategy } from '../../services/segmentation/strategies/LowLatencySegmentationStrategy.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
 import { SegmentPriority } from '../../types/segmentation/SegmentationTypes.js';
 
@@ -27,7 +27,7 @@ const createChunks = (count: number, chunkDuration: number = 10): ChunkMetadata[
 
 describe('FixedSegmentationStrategy', () => {
   it('should create segments with fixed chunks per segment', () => {
-    const strategy = new FixedSegmentationStrategy();
+    const strategy = createFixedSegmentationStrategy();
     const chunks = createChunks(20, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -43,7 +43,7 @@ describe('FixedSegmentationStrategy', () => {
   });
 
   it('should mark first segment as critical when optimizing for low latency', () => {
-    const strategy = new FixedSegmentationStrategy();
+    const strategy = createFixedSegmentationStrategy();
     const chunks = createChunks(20, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -57,7 +57,7 @@ describe('FixedSegmentationStrategy', () => {
   });
 
   it('should handle chunks that do not divide evenly', () => {
-    const strategy = new FixedSegmentationStrategy();
+    const strategy = createFixedSegmentationStrategy();
     const chunks = createChunks(22, 10); // 22 chunks, 5 per segment
 
     const segments = strategy.createSegments(chunks, {
@@ -72,7 +72,7 @@ describe('FixedSegmentationStrategy', () => {
 
 describe('AdaptiveSegmentationStrategy', () => {
   it('should create segments targeting specific duration', () => {
-    const strategy = new AdaptiveSegmentationStrategy();
+    const strategy = createAdaptiveSegmentationStrategy();
     const chunks = createChunks(20, 2); // 20 chunks of 2s each = 40s total (smaller chunks)
 
     const segments = strategy.createSegments(chunks, {
@@ -93,7 +93,7 @@ describe('AdaptiveSegmentationStrategy', () => {
   });
 
   it('should respect min and max duration constraints', () => {
-    const strategy = new AdaptiveSegmentationStrategy();
+    const strategy = createAdaptiveSegmentationStrategy();
     const chunks = createChunks(20, 1); // Small chunks
 
     const segments = strategy.createSegments(chunks, {
@@ -113,7 +113,7 @@ describe('AdaptiveSegmentationStrategy', () => {
 
 describe('ProgressiveSegmentationStrategy', () => {
   it('should create segments with increasing sizes', () => {
-    const strategy = new ProgressiveSegmentationStrategy();
+    const strategy = createProgressiveSegmentationStrategy();
     const chunks = createChunks(30, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -128,7 +128,7 @@ describe('ProgressiveSegmentationStrategy', () => {
   });
 
   it('should use initial segment multiplier for first segment', () => {
-    const strategy = new ProgressiveSegmentationStrategy();
+    const strategy = createProgressiveSegmentationStrategy();
     const chunks = createChunks(30, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -144,7 +144,7 @@ describe('ProgressiveSegmentationStrategy', () => {
 
 describe('LowLatencySegmentationStrategy', () => {
   it('should create small initial segments', () => {
-    const strategy = new LowLatencySegmentationStrategy();
+    const strategy = createLowLatencySegmentationStrategy();
     const chunks = createChunks(20, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -161,7 +161,7 @@ describe('LowLatencySegmentationStrategy', () => {
   });
 
   it('should mark first 3 segments as critical', () => {
-    const strategy = new LowLatencySegmentationStrategy();
+    const strategy = createLowLatencySegmentationStrategy();
     const chunks = createChunks(20, 10);
 
     const segments = strategy.createSegments(chunks, {
@@ -179,19 +179,21 @@ describe('LowLatencySegmentationStrategy', () => {
 
 describe('SegmentationStrategyFactory', () => {
   it('should create correct strategy for each type', async () => {
-    const { SegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
+    const { createSegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
+    const factory = createSegmentationStrategyFactory();
 
-    expect(SegmentationStrategyFactory.create('fixed').getName()).toBe('fixed');
-    expect(SegmentationStrategyFactory.create('adaptive').getName()).toBe('adaptive');
-    expect(SegmentationStrategyFactory.create('progressive').getName()).toBe('progressive');
-    expect(SegmentationStrategyFactory.create('low-latency').getName()).toBe('low-latency');
+    expect(factory.create('fixed').getName()).toBe('fixed');
+    expect(factory.create('adaptive').getName()).toBe('adaptive');
+    expect(factory.create('progressive').getName()).toBe('progressive');
+    expect(factory.create('low-latency').getName()).toBe('low-latency');
   });
 
   it('should throw error for unknown strategy', async () => {
-    const { SegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
+    const { createSegmentationStrategyFactory } = await import('../../services/segmentation/strategies/SegmentationStrategyFactory.js');
+    const factory = createSegmentationStrategyFactory();
 
     expect(() => {
-      SegmentationStrategyFactory.create('unknown' as any);
+      factory.create('unknown' as any);
     }).toThrow();
   });
 });

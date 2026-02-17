@@ -6,7 +6,7 @@ import type {
   StreamingSession,
   StreamingPreparationOptions
 } from '../../types/streaming/StreamingTypes.js';
-import { StreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
+import { createStreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
@@ -26,17 +26,15 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   saveOutputPath: '',
   fileId: ''
 };
-export class StreamingPreparationService implements IStreamingPreparationService {
-  private readonly sessions: Map<string, StreamingSession>;
-  constructor() {
-    this.sessions = new Map();
-  }
-  async createSession(
+export const createStreamingPreparationService = (): IStreamingPreparationService => {
+  const sessions = new Map<string, StreamingSession>();
+
+  const createSession = async (
     filePath: string,
     options?: StreamingPreparationOptions
-  ): Promise<StreamingSession> {
+  ): Promise<StreamingSession> => {
     if (!existsSync(filePath)) {
-      throw new StreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
+      throw createStreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
     }
     const sessionId = randomUUID();
     const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -63,10 +61,18 @@ export class StreamingPreparationService implements IStreamingPreparationService
       startedAt: Date.now(),
       lastActivity: Date.now()
     };
-    this.sessions.set(sessionId, session);
+    sessions.set(sessionId, session);
     return session;
-  }
-  async getSession(sessionId: string): Promise<StreamingSession | undefined> {
-    return this.sessions.get(sessionId);
-  }
-}
+  };
+
+  const getSession = async (sessionId: string): Promise<StreamingSession | undefined> => (
+    sessions.get(sessionId)
+  );
+
+  return {
+    createSession,
+    getSession
+  };
+};
+
+export type StreamingPreparationService = ReturnType<typeof createStreamingPreparationService>;

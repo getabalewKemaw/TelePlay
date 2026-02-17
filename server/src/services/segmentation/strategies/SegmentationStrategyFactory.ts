@@ -4,34 +4,40 @@
 
 import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { SegmentationStrategy } from '../../../types/segmentation/SegmentationTypes.js';
-import { FixedSegmentationStrategy } from './FixedSegmentationStrategy.js';
-import { AdaptiveSegmentationStrategy } from './AdaptiveSegmentationStrategy.js';
-import { ProgressiveSegmentationStrategy } from './ProgressiveSegmentationStrategy.js';
-import { LowLatencySegmentationStrategy } from './LowLatencySegmentationStrategy.js';
-import { SegmentationStrategyError } from '../../../errors/segmentation/SegmentationErrors.js';
+import { createFixedSegmentationStrategy } from './FixedSegmentationStrategy.js';
+import { createAdaptiveSegmentationStrategy } from './AdaptiveSegmentationStrategy.js';
+import { createProgressiveSegmentationStrategy } from './ProgressiveSegmentationStrategy.js';
+import { createLowLatencySegmentationStrategy } from './LowLatencySegmentationStrategy.js';
+import { createSegmentationStrategyError } from '../../../errors/segmentation/SegmentationErrors.js';
 
 /**
  * Factory for creating segmentation strategies
  */
-export class SegmentationStrategyFactory {
-  static create(strategy: SegmentationStrategy): ISegmentationStrategy {
+export const createSegmentationStrategyFactory = () => {
+  const create = (strategy: SegmentationStrategy): ISegmentationStrategy => {
     switch (strategy) {
       case 'fixed':
-        return new FixedSegmentationStrategy();
+        return createFixedSegmentationStrategy();
       case 'adaptive':
-        return new AdaptiveSegmentationStrategy();
+        return createAdaptiveSegmentationStrategy();
       case 'progressive':
-        return new ProgressiveSegmentationStrategy();
+        return createProgressiveSegmentationStrategy();
       case 'low-latency':
-        return new LowLatencySegmentationStrategy();
+        return createLowLatencySegmentationStrategy();
       default:
-        throw new SegmentationStrategyError(
+        throw createSegmentationStrategyError(
           `Unknown segmentation strategy: ${strategy}`,
           strategy
         );
     }
-  }
-  static getDefault(): ISegmentationStrategy {
-    return new AdaptiveSegmentationStrategy();
-  }
-}
+  };
+
+  const getDefault = (): ISegmentationStrategy => createAdaptiveSegmentationStrategy();
+
+  return {
+    create,
+    getDefault
+  };
+};
+
+export type SegmentationStrategyFactory = ReturnType<typeof createSegmentationStrategyFactory>;

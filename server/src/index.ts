@@ -3,8 +3,8 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import apiRoutes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { FileService } from './services/file/FileService.js';
-import { ChunkingService } from './services/chunking/ChunkingService.js';
+import { createFileService } from './services/file/FileService.js';
+import { createChunkingService } from './services/chunking/ChunkingService.js';
 import path from 'path';
 import cors from 'cors';
 import fs from 'fs';
@@ -17,7 +17,7 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 3000;
-const fileService = new FileService(new ChunkingService());
+const fileService = createFileService(createChunkingService());
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR || './uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });

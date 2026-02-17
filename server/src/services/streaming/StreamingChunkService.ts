@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import type { ChunkingService } from '../chunking/ChunkingService.js';
+import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
 import type { StreamingSession } from '../../types/streaming/StreamingTypes.js';
 import fs from 'fs';
@@ -14,26 +14,29 @@ import {
   spawnFfmpeg,
   type StreamingOutputFormat
 } from '../../utils/streaming/streamingFfmpegUtils.js';
-export class StreamingChunkService {
-  constructor(private readonly chunkingService: ChunkingService) {}
-
-  getSessionChunkDuration(session: StreamingSession): number {
+export const createStreamingChunkService = (
+  chunkingService: IChunkingService
+) => {
+  const getSessionChunkDuration = (session: StreamingSession): number => {
     return session.chunkDuration ?? 10;
-  }
+  };
 
-  async resolveSessionChunk(session: StreamingSession, indexRaw: string): Promise<ChunkMetadata | null> {
-    const chunkDuration = this.getSessionChunkDuration(session);
-    const chunks = await this.chunkingService.getAllChunks(session.filePath, { chunkDuration });
+  const resolveSessionChunk = async (
+    session: StreamingSession,
+    indexRaw: string
+  ): Promise<ChunkMetadata | null> => {
+    const chunkDuration = getSessionChunkDuration(session);
+    const chunks = await chunkingService.getAllChunks(session.filePath, { chunkDuration });
     const idx = parseInt(indexRaw, 10);
     return Number.isFinite(idx) ? (chunks[idx] ?? null) : null;
-  }
+  };
 
-  buildChunkStreamArgs(
+  const buildChunkStreamArgs = (
     session: StreamingSession,
     filePath: string,
     chunk: ChunkMetadata,
     outputFormat: StreamingOutputFormat
-  ): string[] {
+  ): string[] => {
     const args: string[] = [
       ...resolveInputCodecArgs(session),
       '-i', filePath,
@@ -45,9 +48,9 @@ export class StreamingChunkService {
     appendOutputCodecArgs(args, outputFormat, session);
     args.push('-f', outputFormat, 'pipe:1');
     return args;
-  }
+  };
 
-  buildChunkPeaksArgs(session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] {
+  const buildChunkPeaksArgs = (session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] => {
     return [
       ...resolveInputCodecArgs(session),
       '-i', filePath,
@@ -60,15 +63,15 @@ export class StreamingChunkService {
       '-f', 's16le',
       'pipe:1'
     ];
-  }
+  };
 
-  applyChunkStreamHeaders(res: Response, mimeType: string): void {
+  const applyChunkStreamHeaders = (res: Response, mimeType: string): void => {
     res.setHeader('Content-Type', mimeType);
     res.setHeader('Transfer-Encoding', 'chunked');
     res.removeHeader('Accept-Ranges');
-  }
+  };
 
-  calculatePeaks(buffer: Buffer, bins: number): number[] {
+  const calculatePeaks = (buffer: Buffer, bins: number): number[] => {
     const sampleCount = Math.floor(buffer.length / 2);
     const samplesPerBin = Math.max(1, Math.floor(sampleCount / bins));
     const peaks: number[] = new Array(bins).fill(0);
@@ -85,11 +88,15 @@ export class StreamingChunkService {
       peaks[i] = max / 32768;
     }
     return peaks;
-  }
+  };
 
-  async getChunkPeaks(session: StreamingSession, chunk: ChunkMetadata, bins: number): Promise<number[]> {
+  const getChunkPeaks = async (
+    session: StreamingSession,
+    chunk: ChunkMetadata,
+    bins: number
+  ): Promise<number[]> => {
     const filePath = path.resolve(session.filePath);
-    const args = this.buildChunkPeaksArgs(session, filePath, chunk);
+    const args = buildChunkPeaksArgs(session, filePath, chunk);
 
     return await new Promise<number[]>((resolve, reject) => {
       const ffmpeg = spawnFfmpeg(args);
@@ -110,16 +117,16 @@ export class StreamingChunkService {
           reject(new Error(`FFmpeg failed: ${stderr}`));
           return;
         }
-        resolve(this.calculatePeaks(Buffer.concat(chunksBuf), bins));
+        resolve(calculatePeaks(Buffer.concat(chunksBuf), bins));
       });
       ffmpeg.on('error', reject);
     });
-  }
+  };
 
-  streamLive(session: StreamingSession, res: Response): void {
+  const streamLive = (session: StreamingSession, res: Response): void => {
     const filePath = path.resolve(session.filePath);
     const outputFormat: StreamingOutputFormat = session.outputFormat || 'mp3';
-    this.applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
+    applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
 
     const args: string[] = [...resolveInputCodecArgs(session), '-i', filePath, '-map', '0:a:0', '-vn'];
     appendOutputCodecArgs(args, outputFormat, session);
@@ -153,9 +160,13 @@ export class StreamingChunkService {
     ffmpeg.on('error', (error) => {
       console.error('FFmpeg stream error:', error);
     });
-  }
+  };
 
-  async streamFileBased(session: StreamingSession, range: string | undefined, res: Response): Promise<void> {
+  const streamFileBased = async (
+    session: StreamingSession,
+    range: string | undefined,
+    res: Response
+  ): Promise<void> => {
     const filePath = path.resolve(session.filePath);
     const stat = await fs.promises.stat(filePath);
     const ext = path.extname(filePath).toLowerCase();
@@ -196,22 +207,22 @@ export class StreamingChunkService {
       'Content-Type': mimeType
     });
     fs.createReadStream(filePath, { start, end }).pipe(res);
-  }
+  };
 
-  streamChunk(
+  const streamChunk = (
     session: StreamingSession,
     chunk: ChunkMetadata,
     requestedFormat: string | undefined,
     res: Response
-  ): void {
+  ): void => {
     const filePath = path.resolve(session.filePath);
     const outputFormat: StreamingOutputFormat =
       requestedFormat === 'mp3' || requestedFormat === 'wav'
         ? requestedFormat
         : (session.outputFormat || 'mp3');
 
-    this.applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
-    const args = this.buildChunkStreamArgs(session, filePath, chunk, outputFormat);
+    applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
+    const args = buildChunkStreamArgs(session, filePath, chunk, outputFormat);
     const ffmpeg = spawnFfmpeg(args);
     attachResponseCleanup(ffmpeg, res);
 
@@ -226,5 +237,20 @@ export class StreamingChunkService {
     ffmpeg.on('error', (error) => {
       console.error('FFmpeg chunk stream error:', error);
     });
-  }
-}
+  };
+
+  return {
+    getSessionChunkDuration,
+    resolveSessionChunk,
+    buildChunkStreamArgs,
+    buildChunkPeaksArgs,
+    applyChunkStreamHeaders,
+    calculatePeaks,
+    getChunkPeaks,
+    streamLive,
+    streamFileBased,
+    streamChunk
+  };
+};
+
+export type StreamingChunkService = ReturnType<typeof createStreamingChunkService>;

@@ -7,17 +7,14 @@ import { stat } from 'fs/promises';
 import path from 'path';
 import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
-import { ChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
+import { createChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 import { FFPROBE_EXECUTABLE,type RawFileProfile, BASE_ARGS,RAW_PROFILES} from '../../../utils/chunking/chunlingUtils.js';
-export class FFprobeMetadataProvider implements IMediaMetadataProvider {
-  private readonly executable: string;
-  constructor(executable: string = FFPROBE_EXECUTABLE) {
-    this.executable = executable;
-  }
-
-  private runProbe(filePath: string, args: string[]): Promise<string> {
+export const createFFprobeMetadataProvider = (
+  executable: string = FFPROBE_EXECUTABLE
+): IMediaMetadataProvider => {
+  const runProbe = (filePath: string, args: string[]): Promise<string> => {
     return new Promise<string>((resolve, reject) => {
-      const process = spawn(this.executable, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      const process = spawn(executable, args, { stdio: ['ignore', 'pipe', 'pipe'] });
       let stdout = '';
       let stderr = '';
 
@@ -31,19 +28,19 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
 
       process.on('close', (exitCode) => {
         if (exitCode !== 0) {
-          reject(new ChunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
+          reject(createChunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
           return;
         }
         resolve(stdout);
       });
 
       process.on('error', (error: Error) => {
-        reject(new ChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
+        reject(createChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
       });
     });
-  }
+  };
 
-  private buildRawArgs(filePath: string, profile: RawFileProfile): string[] {
+  const buildRawArgs = (filePath: string, profile: RawFileProfile): string[] => {
     return [
       ...BASE_ARGS,
       '-f', profile.format,
@@ -51,33 +48,37 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
       '-ac', profile.channels.toString(),
       filePath
     ];
-  }
+  };
 
-  async getMetadata(filePath: string): Promise<MediaMetadata> {
+  const getMetadata = async (filePath: string): Promise<MediaMetadata> => {
     try {
-      const stdout = await this.runProbe(filePath, [...BASE_ARGS, filePath]);
-      return this.parseFFprobeOutput(stdout, filePath);
+      const stdout = await runProbe(filePath, [...BASE_ARGS, filePath]);
+      return parseFFprobeOutput(stdout, filePath);
     } catch (error) {
       const ext = path.extname(filePath).toLowerCase();
       const profile = RAW_PROFILES[ext];
       if (profile) {
         try {
-          const stdout = await this.runProbe(filePath, this.buildRawArgs(filePath, profile));
-          return this.parseFFprobeOutput(stdout, filePath, profile);
+          const stdout = await runProbe(filePath, buildRawArgs(filePath, profile));
+          return parseFFprobeOutput(stdout, filePath, profile);
         } catch {
-          return this.fallbackRawMetadata(filePath, profile);
+          return fallbackRawMetadata(filePath, profile);
         }
       }
       throw error;
     }
-  }
+  };
   // parse the ffprobe json output.
-  private parseFFprobeOutput(output: string, filePath: string, fallback?: { codec: string; bitrate: number }): MediaMetadata {
+  const parseFFprobeOutput = (
+    output: string,
+    filePath: string,
+    fallback?: { codec: string; bitrate: number }
+  ): MediaMetadata => {
     let data: any;
     try {
       data = JSON.parse(output);
     } catch {
-      throw new ChunkingMetadataError('FFprobe returned invalid JSON output', filePath);
+      throw createChunkingMetadataError('FFprobe returned invalid JSON output', filePath);
     }
 
     const format = data.format ?? {};
@@ -92,7 +93,7 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
     }
 
     if (!Number.isFinite(duration) || duration <= 0) {
-      throw new ChunkingMetadataError('Invalid or missing duration in media file', filePath);
+      throw createChunkingMetadataError('Invalid or missing duration in media file', filePath);
     }
 
     return {
@@ -102,12 +103,12 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
       codec: stream.codec_name || fallback?.codec,
       bitrate
     };
-  }
+  };
 
-  private async fallbackRawMetadata(
+  const fallbackRawMetadata = async (
     filePath: string,
     profile: RawFileProfile
-  ): Promise<MediaMetadata> {
+  ): Promise<MediaMetadata> => {
     const stats = await stat(filePath);
     const duration = (stats.size * 8) / profile.bitrate;
     return {
@@ -117,5 +118,11 @@ export class FFprobeMetadataProvider implements IMediaMetadataProvider {
       codec: profile.codec,
       bitrate: profile.bitrate
     };
-  }
-}
+  };
+
+  return {
+    getMetadata
+  };
+};
+
+export type FFprobeMetadataProvider = ReturnType<typeof createFFprobeMetadataProvider>;

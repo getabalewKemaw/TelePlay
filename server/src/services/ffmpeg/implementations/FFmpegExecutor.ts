@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import type { IFfmpegExecutor } from '../../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate } from '../../../types/ffmpeg/FFmpegTypes.js';
-import { FFmpegExecutionError, FFmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
+import { createFFmpegExecutionError, createFFmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
 import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
 import {
   buildCommandArgs,
@@ -12,29 +12,43 @@ import {
   updateProgressFromChunk,
   validateOutputFile
 } from '../../../utils/ffmpeg/ffmpegExecutorUtils.js';
-export class FFmpegExecutor implements IFfmpegExecutor {
-  private readonly executable: string;
-  private readonly defaultTimeout: number;
-  private readonly defaultMaxBufferBytes = 256 * 1024;
-  private readonly defaultTimeoutGraceMs = 2000;
+export const createFFmpegExecutor = (
+  executable: string = FFMPEG_EXECUTABLE,
+  defaultTimeout: number = DEFAULT_TIMEOUT
+): IFfmpegExecutor => {
+  const defaultMaxBufferBytes = 256 * 1024;
+  const defaultTimeoutGraceMs = 2000;
 
-  constructor(executable: string = FFMPEG_EXECUTABLE, defaultTimeout: number = DEFAULT_TIMEOUT) {
-    this.executable = executable;
-    this.defaultTimeout = defaultTimeout;
-  }
-  async execute(
+  const validateOutput = async (
     options: FFmpegCommandOptions,
-    timeout: number = this.defaultTimeout
-  ): Promise<FFmpegExecutionResult> {
+    result: FFmpegExecutionResult
+  ): Promise<void> => {
+    await validateOutputFile(
+      options,
+      result,
+      (path) => fs.stat(path),
+      (message) => createFFmpegExecutionError(
+        message,
+        result.exitCode,
+        result.stderr,
+        result.executionTime
+      )
+    );
+  };
+
+  const execute = async (
+    options: FFmpegCommandOptions,
+    timeout: number = defaultTimeout
+  ): Promise<FFmpegExecutionResult> => {
     const startTime = Date.now();
     const normalizedOptions = normalizeOptions(options);
     const args = buildCommandArgs(normalizedOptions);
-    const maxBufferBytes = normalizedOptions.maxBufferBytes ?? this.defaultMaxBufferBytes;
-    const timeoutGraceMs = normalizedOptions.timeoutGraceMs ?? this.defaultTimeoutGraceMs;
+    const maxBufferBytes = normalizedOptions.maxBufferBytes ?? defaultMaxBufferBytes;
+    const timeoutGraceMs = normalizedOptions.timeoutGraceMs ?? defaultTimeoutGraceMs;
     const logger = normalizedOptions.logger;
     return new Promise<FFmpegExecutionResult>((resolve, reject) => {
       const stdio = resolveStdio(normalizedOptions.stdin, normalizedOptions.stdout, normalizedOptions.stderr);
-      const process = spawn(this.executable, args, { stdio });
+      const process = spawn(executable, args, { stdio });
       let stdout = '';
       let stderr = '';
       let timeoutId: NodeJS.Timeout | null = null;
@@ -68,7 +82,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
           finalize(() => {
             const executionTime = Date.now() - startTime;
             reject(
-              new FFmpegTimeoutError(
+              createFFmpegTimeoutError(
                 `FFmpeg execution timed out after ${timeout}ms`,
                 timeout
               )
@@ -117,7 +131,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
 
           if (exitCode === 0) {
             if (normalizedOptions.validateOutput) {
-              this.validateOutput(normalizedOptions, result)
+              validateOutput(normalizedOptions, result)
                 .then(() => resolve(result))
                 .catch((error) => reject(error));
             } else {
@@ -125,7 +139,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
             }
           } else {
             reject(
-              new FFmpegExecutionError(
+              createFFmpegExecutionError(
                 `FFmpeg execution failed with exit code ${exitCode}`,
                 exitCode ?? -1,
                 stderr.trim(),
@@ -140,7 +154,7 @@ export class FFmpegExecutor implements IFfmpegExecutor {
         finalize(() => {
           const executionTime = Date.now() - startTime;
           reject(
-            new FFmpegExecutionError(
+            createFFmpegExecutionError(
               `Failed to spawn FFmpeg process: ${error.message}`,
               -1,
               error.message,
@@ -150,22 +164,11 @@ export class FFmpegExecutor implements IFfmpegExecutor {
         });
       });
     });
-  }
+  };
 
-  private async validateOutput(
-    options: FFmpegCommandOptions,
-    result: FFmpegExecutionResult
-  ): Promise<void> {
-    await validateOutputFile(
-      options,
-      result,
-      (path) => fs.stat(path),
-      (message) => new FFmpegExecutionError(
-        message,
-        result.exitCode,
-        result.stderr,
-        result.executionTime
-      )
-    );
-  }
-}
+  return {
+    execute
+  };
+};
+
+export type FFmpegExecutor = ReturnType<typeof createFFmpegExecutor>;

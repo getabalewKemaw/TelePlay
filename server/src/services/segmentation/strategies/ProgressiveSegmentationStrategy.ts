@@ -7,11 +7,10 @@ import type { ISegmentationStrategy } from './ISegmentationStrategy.js';
 import type { ChunkMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import type { SegmentMetadata, SegmentationConfig } from '../../../types/segmentation/SegmentationTypes.js';
 import { SegmentPriority } from '../../../types/segmentation/SegmentationTypes.js';
-export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
-  getName(): string {
-    return 'progressive';
-  }
-  createSegments(chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] {
+export const createProgressiveSegmentationStrategy = (): ISegmentationStrategy => {
+  const getName = (): string => 'progressive';
+
+  const createSegments = (chunks: ChunkMetadata[], config: SegmentationConfig): SegmentMetadata[] => {
     if (chunks.length === 0) {
       return [];
     }
@@ -73,5 +72,12 @@ export class ProgressiveSegmentationStrategy implements ISegmentationStrategy {
     }
 
     return segments;
-  }
-}
+  };
+
+  return {
+    getName,
+    createSegments
+  };
+};
+
+export type ProgressiveSegmentationStrategy = ReturnType<typeof createProgressiveSegmentationStrategy>;

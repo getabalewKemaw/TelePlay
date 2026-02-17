@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FFprobeMetadataProvider } from '../../services/chunking/implementations/FFprobeMetadataProvider.js';
-import { ChunkingMetadataError } from '../../errors/chunking/ChunkingErrors.js';
+import { createFFprobeMetadataProvider, type FFprobeMetadataProvider } from '../../services/chunking/implementations/FFprobeMetadataProvider.js';
+
 import { spawn } from 'child_process';
 
 // Mock child_process
@@ -20,7 +20,7 @@ describe('FFprobeMetadataProvider', () => {
   let mockProcess: any;
 
   beforeEach(() => {
-    provider = new FFprobeMetadataProvider('ffprobe');
+    provider = createFFprobeMetadataProvider('ffprobe');
     mockProcess = {
       stdout: { on: vi.fn() },
       stderr: { on: vi.fn() },
@@ -147,7 +147,7 @@ describe('FFprobeMetadataProvider', () => {
 
       await expect(
         provider.getMetadata('/path/to/file.mp3')
-      ).rejects.toThrow(ChunkingMetadataError);
+      ).rejects.toMatchObject({ name: 'ChunkingMetadataError' });
     });
 
     it('should throw error on FFprobe failure', async () => {
@@ -164,7 +164,7 @@ describe('FFprobeMetadataProvider', () => {
 
       await expect(
         provider.getMetadata('/path/to/file.mp3')
-      ).rejects.toThrow(ChunkingMetadataError);
+      ).rejects.toMatchObject({ name: 'ChunkingMetadataError' });
     });
 
     it('should throw error on spawn failure', async () => {
@@ -176,7 +176,7 @@ describe('FFprobeMetadataProvider', () => {
 
       await expect(
         provider.getMetadata('/path/to/file.mp3')
-      ).rejects.toThrow(ChunkingMetadataError);
+      ).rejects.toMatchObject({ name: 'ChunkingMetadataError' });
     });
   });
 

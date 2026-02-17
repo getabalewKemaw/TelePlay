@@ -5,13 +5,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { ChunkingService } from '../../services/chunking/ChunkingService.js';
+import { createChunkingService, type ChunkingService } from '../../services/chunking/ChunkingService.js';
 
 import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 
 import type { MediaMetadata } from '../../types/chunking/ChunkingTypes.js';
 
-import { ChunkingFileError,ChunkingSeekError,ChunkingValidationError } from '../../errors/chunking/ChunkingErrors.js';
+
 import { existsSync } from 'fs';
 import path from 'path';
 
@@ -34,7 +34,7 @@ describe('ChunkingService', () => {
 
     };
 
-    chunkingService = new ChunkingService(mockMetadataProvider, 120);
+    chunkingService = createChunkingService(mockMetadataProvider, 120);
     
     // Mock existsSync to return true by default
     vi.mocked(existsSync).mockReturnValue(true);
@@ -113,7 +113,7 @@ describe('ChunkingService', () => {
 
       await expect(
         chunkingService.generateChunks('/nonexistent/file.mp3')
-      ).rejects.toThrow(ChunkingFileError);
+      ).rejects.toMatchObject({ name: 'ChunkingFileError' });
     });
 
     it('should throw error if output directory does not exist when generateFiles is true', async () => {
@@ -132,7 +132,7 @@ describe('ChunkingService', () => {
           outputDirectory: '/nonexistent',
           baseFilename: 'test'
         })
-      ).rejects.toThrow(ChunkingFileError);
+      ).rejects.toMatchObject({ name: 'ChunkingFileError' });
     });
 
     it('should throw error for invalid chunk duration', async () => {
@@ -146,7 +146,7 @@ describe('ChunkingService', () => {
         chunkingService.generateChunks('/path/to/file.mp3', {
           chunkDuration: -10
         })
-      ).rejects.toThrow(ChunkingValidationError);
+      ).rejects.toMatchObject({ name: 'ChunkingValidationError' });
     });
   });
 
@@ -174,11 +174,11 @@ describe('ChunkingService', () => {
 
       await expect(
         chunkingService.getChunk('/path/to/file.mp3', 10)
-      ).rejects.toThrow(ChunkingValidationError);
+      ).rejects.toMatchObject({ name: 'ChunkingValidationError' });
 
       await expect(
         chunkingService.getChunk('/path/to/file.mp3', -1)
-      ).rejects.toThrow(ChunkingValidationError);
+      ).rejects.toMatchObject({ name: 'ChunkingValidationError' });
     });
   });
 
@@ -225,11 +225,11 @@ describe('ChunkingService', () => {
 
       await expect(
         chunkingService.seek('/path/to/file.mp3', { time: 500 })
-      ).rejects.toThrow(ChunkingSeekError);
+      ).rejects.toMatchObject({ name: 'ChunkingSeekError' });
 
       await expect(
         chunkingService.seek('/path/to/file.mp3', { time: -10 })
-      ).rejects.toThrow(ChunkingSeekError);
+      ).rejects.toMatchObject({ name: 'ChunkingSeekError' });
     });
   });
 
@@ -282,11 +282,11 @@ describe('ChunkingService', () => {
 
       await expect(
         chunkingService.getChunksInRange('/path/to/file.mp3', 250, 100)
-      ).rejects.toThrow(ChunkingValidationError);
+      ).rejects.toMatchObject({ name: 'ChunkingValidationError' });
 
       await expect(
         chunkingService.getChunksInRange('/path/to/file.mp3', 100, 100)
-      ).rejects.toThrow(ChunkingValidationError);
+      ).rejects.toMatchObject({ name: 'ChunkingValidationError' });
     });
   });
 

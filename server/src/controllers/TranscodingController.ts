@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { TranscodingService } from '../services/transcoding/TranscodingService.js';
+import { createTranscodingService } from '../services/transcoding/TranscodingService.js';
 import type { TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { ApiResponse } from '../dto/base.dto.js';
 import { buildChunkTranscodingParams } from '../utils/transcoding/transcodingRequestUtils.js';
@@ -11,14 +11,10 @@ import { enforcePathPolicy } from '../utils/pathPolicy.js';
 
 type TranscodeConvertRequest = TranscodeRequestDto & { fileId?: string };
 
-export class TranscodingController {
-  private transcodingService: TranscodingService;
-
-  constructor(transcodingService?: TranscodingService) {
-    this.transcodingService = transcodingService ?? new TranscodingService();
-  }
-
-  convert = async (req: Request<{}, {}, TranscodeConvertRequest>, res: Response, next: NextFunction) => {
+export const createTranscodingController = (
+  transcodingService = createTranscodingService()
+) => {
+  const convert = async (req: Request<{}, {}, TranscodeConvertRequest>, res: Response, next: NextFunction) => {
     try {
       const { input, output, sourceEncoding, targetEncoding } = req.body;
 
@@ -31,7 +27,7 @@ export class TranscodingController {
       }
 
       const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
-      const result = await this.transcodingService.transcodeChunk(params);
+      const result = await transcodingService.transcodeChunk(params);
 
       const response: ApiResponse<any> = {
         success: true,
@@ -48,7 +44,7 @@ export class TranscodingController {
     }
   };
 
-  convertDownload = async (req: Request<{}, {}, TranscodeConvertRequest>, res: Response, next: NextFunction) => {
+  const convertDownload = async (req: Request<{}, {}, TranscodeConvertRequest>, res: Response, next: NextFunction) => {
     try {
       const { input, output, sourceEncoding, targetEncoding } = req.body;
 
@@ -58,7 +54,7 @@ export class TranscodingController {
       const outputPath = path.join(tempBase, downloadName);
 
       const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
-      await this.transcodingService.transcodeChunk(params);
+      await transcodingService.transcodeChunk(params);
 
       res.download(outputPath, downloadName, async () => {
         try {
@@ -72,4 +68,10 @@ export class TranscodingController {
       next(error);
     }
   };
-}
+  return {
+    convert,
+    convertDownload
+  };
+};
+
+export type TranscodingController = ReturnType<typeof createTranscodingController>;

@@ -7,6 +7,7 @@ import path from 'path';
 import { isdirectoryExists } from '../../utils/fileUtils.js';
 
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
+import { createChunkingService } from '../chunking/ChunkingService.js';
 
 const ALLOWED_SORT_FIELDS = new Set([
     'createdAt',
@@ -19,17 +20,17 @@ const ALLOWED_SORT_FIELDS = new Set([
     'status'
 ]);
 
-export class FileService implements IFileService {
-    constructor(private readonly chunkingService: IChunkingService) { }
-
-    private toFileMetadataDto(file: any): FileMetadataDto {
+export const createFileService = (
+    chunkingService: IChunkingService = createChunkingService()
+): IFileService => {
+    const toFileMetadataDto = (file: any): FileMetadataDto => {
         return {
             ...file,
             fileSize: file.fileSize?.toString()
         };
-    }
+    };
 
-    async discoverFiles(directoryPath: string): Promise<void> {
+    const discoverFiles = async (directoryPath: string): Promise<void> => {
         const dirExists = await isdirectoryExists(directoryPath);
         if (!dirExists) return;
 
@@ -71,7 +72,7 @@ export class FileService implements IFileService {
                 const filePath = filesToProcess[index];
                 if (!filePath) continue;
                 try {
-                    await this.processFile(filePath);
+                    await processFile(filePath);
                 } catch (error) {
                     console.error(`Failed to discover file ${filePath}:`, error);
                 }
@@ -79,9 +80,9 @@ export class FileService implements IFileService {
         });
 
         await Promise.all(workers);
-    }
+    };
 
-    async listFiles(criteria: ListFilesRequestDto): Promise<{ files: FileMetadataDto[]; total: number }> {
+    const listFiles = async (criteria: ListFilesRequestDto): Promise<{ files: FileMetadataDto[]; total: number }> => {
         const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
         //serve side validation for the  page sizes
         const hasPageParam = typeof page === 'number' && Number.isFinite(page);
@@ -119,20 +120,20 @@ export class FileService implements IFileService {
         ]);
 
         return {
-            files: files.map((f: any) => this.toFileMetadataDto(f)),
+            files: files.map((f: any) => toFileMetadataDto(f)),
             total
         };
-    }
+    };
 
-    async getFileMetadata(id: string): Promise<FileMetadataDto> {
+    const getFileMetadata = async (id: string): Promise<FileMetadataDto> => {
         const file = await prisma.mediaFile.findUnique({ where: { id } });
         if (!file) throw new Error('File not found');
-        return this.toFileMetadataDto(file);
+        return toFileMetadataDto(file);
 
-    }
+    };
 
     // taking a file path and either linking to the existing database or creating a record in a database 
-    async processFile(filePath: string): Promise<FileMetadataDto> {
+    const processFile = async (filePath: string): Promise<FileMetadataDto> => {
         const normalizedPath = path.resolve(filePath);
         const filename = path.basename(normalizedPath);
         const pathVariations = getPathVariations(normalizedPath);
@@ -145,7 +146,7 @@ export class FileService implements IFileService {
                 OR: pathFilters
             }
         });
-        if (existing) return this.toFileMetadataDto(existing);
+        if (existing) return toFileMetadataDto(existing);
 
 
 
@@ -168,12 +169,12 @@ export class FileService implements IFileService {
                         status: 'ready'
                     }
                 });
-                return this.toFileMetadataDto(updated);
+                return toFileMetadataDto(updated);
             }
         }
 
         try {
-            const metadataResult = await this.chunkingService.getMetadata(normalizedPath);
+            const metadataResult = await chunkingService.getMetadata(normalizedPath);
             const file = await prisma.mediaFile.upsert({
                 where: { originalPath: normalizedPath },
                 create: {
@@ -196,7 +197,7 @@ export class FileService implements IFileService {
                     status: 'ready'
                 }
             });
-            return this.toFileMetadataDto(file);
+            return toFileMetadataDto(file);
         } catch (error) {
             console.error(`Failed to process file ${normalizedPath}:`, error);
             const file = await prisma.mediaFile.upsert({
@@ -213,11 +214,21 @@ export class FileService implements IFileService {
 
                 }
             });
-            return this.toFileMetadataDto(file);
+            return toFileMetadataDto(file);
         }
-    }
+    };
 
-    async registerFile(filename: string, filePath: string): Promise<FileMetadataDto> {
-        return this.processFile(filePath);
-    }
-}
+    const registerFile = async (filename: string, filePath: string): Promise<FileMetadataDto> => {
+        return processFile(filePath);
+    };
+
+    return {
+        discoverFiles,
+        listFiles,
+        getFileMetadata,
+        processFile,
+        registerFile
+    };
+};
+
+export type FileService = ReturnType<typeof createFileService>;

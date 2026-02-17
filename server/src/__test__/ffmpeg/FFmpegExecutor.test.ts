@@ -4,8 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FFmpegExecutor } from '../../services/ffmpeg/implementations/FFmpegExecutor.js';
-import { FFmpegExecutionError, FFmpegTimeoutError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { createFFmpegExecutor, type FFmpegExecutor } from '../../services/ffmpeg/implementations/FFmpegExecutor.js';
 import type { FFmpegCommandOptions } from '../../types/ffmpeg/FFmpegTypes.js';
 import { spawn } from 'child_process';
 
@@ -21,7 +20,7 @@ describe('FFmpegExecutor', () => {
   let mockProcess: any;
 
   beforeEach(() => {
-    executor = new FFmpegExecutor('ffmpeg', 5000);
+    executor = createFFmpegExecutor('ffmpeg', 5000);
     mockProcess = {
       stdout: { on: vi.fn() },
       stderr: { on: vi.fn() },
@@ -87,7 +86,7 @@ describe('FFmpegExecutor', () => {
       const stderrHandler = mockProcess.stderr.on.mock.calls.find(([event]) => event === 'data')?.[1];
       if (stderrHandler) stderrHandler(Buffer.from('Error: Invalid input'));
 
-      await expect(executor.execute(options)).rejects.toThrow(FFmpegExecutionError);
+      await expect(executor.execute(options)).rejects.toMatchObject({ name: 'FFmpegExecutionError' });
     });
 
     it('should handle timeout', async () => {
@@ -96,7 +95,7 @@ describe('FFmpegExecutor', () => {
         output: 'output.mp3'
       };
 
-      executor = new FFmpegExecutor('ffmpeg', 100); // Short timeout
+      executor = createFFmpegExecutor('ffmpeg', 100); // Short timeout
 
       mockProcess.on.mockImplementation((event: string, handler: any) => {
         if (event === 'close') {
@@ -104,7 +103,7 @@ describe('FFmpegExecutor', () => {
         }
       });
 
-      await expect(executor.execute(options, 100)).rejects.toThrow(FFmpegTimeoutError);
+      await expect(executor.execute(options, 100)).rejects.toMatchObject({ name: 'FFmpegTimeoutError' });
       expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
     });
 
@@ -120,7 +119,7 @@ describe('FFmpegExecutor', () => {
         }
       });
 
-      await expect(executor.execute(options)).rejects.toThrow(FFmpegExecutionError);
+      await expect(executor.execute(options)).rejects.toMatchObject({ name: 'FFmpegExecutionError' });
     });
 
     it('should build correct command arguments', async () => {
@@ -247,7 +246,7 @@ describe('FFmpegExecutor', () => {
         }
       });
 
-      await expect(executor.getVersion()).rejects.toThrow(FFmpegExecutionError);
+      await expect(executor.getVersion()).rejects.toMatchObject({ name: 'FFmpegExecutionError' });
     });
   });
 });

@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import type { Request, Response, NextFunction } from 'express';
-import { FFmpegService } from '../services/ffmpeg/FFmpegService.js';
+import { createFFmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { DecodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { IFfmpegService } from '../interfaces/ffmpeg/IFfmpegService.js';
 import type { ApiResponse } from '../dto/base.dto.js';
@@ -8,13 +8,11 @@ import prisma from '../lib/prisma.js';
 import path from 'path';
 import { isdirectoryExists } from '../utils/fileUtils.js';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
-export class FFmpegController {
-    private ffmpegService: IFfmpegService;
-    constructor(ffmpegService?: IFfmpegService) {
-        this.ffmpegService = ffmpegService || new FFmpegService();
-    }
+export const createFFmpegController = (
+    ffmpegService: IFfmpegService = createFFmpegService()
+) => {
     // reqparams,resbody,req.body,query
-    decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
+    const decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
         try {
             const { fileId, ...decodeParams } = req.body;
             decodeParams.input.path = enforcePathPolicy(decodeParams.input.path, 'Input path');
@@ -66,7 +64,7 @@ export class FFmpegController {
                 }
             }
 
-            const result = await this.ffmpegService.decode(decodeParams);
+            const result = await ffmpegService.decode(decodeParams);
 
             // If we have a fileId, update the database with the decoded path
             if (fileId && result.success && result.outputPath) {
@@ -93,4 +91,9 @@ export class FFmpegController {
         }
     };
 
-}
+    return {
+        decode
+    };
+};
+
+export type FFmpegController = ReturnType<typeof createFFmpegController>;

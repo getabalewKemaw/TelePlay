@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
-import { FFmpegValidationError, FFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { createFFmpegService, type FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
+import { isFFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -18,7 +18,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
   let sourceWavFile: string;
 
   beforeAll(async () => {
-    ffmpegService = new FFmpegService();
+    ffmpegService = createFFmpegService();
     
     // Check if FFmpeg is available
     const isAvailable = await ffmpegService.isAvailable();
@@ -101,7 +101,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           codec: 'g711'
           // Missing sampleRate and channels
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should fail if channels is not provided for G.711', async () => {
@@ -116,7 +116,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           sampleRate: 8000
           // Missing channels
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -156,7 +156,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           expect(existsSync(outputFile)).toBe(true);
           expect(result.executionTime).toBeGreaterThan(0);
         } catch (error) {
-          if (error instanceof FFmpegExecutionError) {
+          if (isFFmpegExecutionError(error)) {
             // G.726 might not be supported in this FFmpeg build
             // Check if it's a codec/format issue
             if (error.stderr.includes('g726') || error.stderr.includes('not found') || error.stderr.includes('Invalid')) {
@@ -182,7 +182,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           channels: 1
           // Missing bitrate
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should fail if sampleRate is not provided for G.726', async () => {
@@ -198,7 +198,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           bitrate: 16
           // Missing sampleRate
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -245,7 +245,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           codec: 'g728'
           // Missing sampleRate and channels
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should fail if channels is not provided for G.728', async () => {
@@ -260,7 +260,7 @@ describe('FFmpegService Integration Tests - Real FFmpeg Execution', () => {
           sampleRate: 8000
           // Missing channels
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 

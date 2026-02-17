@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { FFmpegValidator } from '../../validator/ffmpeg/FFmpegValidator.js';
-import { FFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { isFFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -24,7 +24,7 @@ describe('FFmpegValidator', () => {
       const invalidCodecs = ['invalid', 'h264', 'vp9', ''];
 
       invalidCodecs.forEach(codec => {
-        expect(() => FFmpegValidator.validateCodec(codec)).toThrow(FFmpegValidationError);
+        expect(() => FFmpegValidator.validateCodec(codec)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
       });
     });
 
@@ -33,8 +33,9 @@ describe('FFmpegValidator', () => {
         FFmpegValidator.validateCodec('invalid');
         expect.fail('Should have thrown');
       } catch (error) {
-        expect(error).toBeInstanceOf(FFmpegValidationError);
-        if (error instanceof FFmpegValidationError) {
+        expect(error).toBeInstanceOf(Error);
+        expect(isFFmpegValidationError(error)).toBe(true);
+        if (isFFmpegValidationError(error)) {
           expect(error.field).toBe('codec');
           expect(error.message).toContain('Unsupported codec');
         }
@@ -55,7 +56,7 @@ describe('FFmpegValidator', () => {
       const invalidRates = [11025, 32000, 96000, 0, -1];
 
       invalidRates.forEach(rate => {
-        expect(() => FFmpegValidator.validateSampleRate(rate)).toThrow(FFmpegValidationError);
+        expect(() => FFmpegValidator.validateSampleRate(rate)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
       });
     });
   });
@@ -70,7 +71,7 @@ describe('FFmpegValidator', () => {
       const invalidChannels = [0, 3, 4, 5, 6, -1];
 
       invalidChannels.forEach(channels => {
-        expect(() => FFmpegValidator.validateChannels(channels)).toThrow(FFmpegValidationError);
+        expect(() => FFmpegValidator.validateChannels(channels)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
       });
     });
   });
@@ -84,9 +85,9 @@ describe('FFmpegValidator', () => {
     });
 
     it('should reject invalid bitrates', () => {
-      expect(() => FFmpegValidator.validateBitrate(0)).toThrow(FFmpegValidationError);
-      expect(() => FFmpegValidator.validateBitrate(-1)).toThrow(FFmpegValidationError);
-      expect(() => FFmpegValidator.validateBitrate(10001)).toThrow(FFmpegValidationError);
+      expect(() => FFmpegValidator.validateBitrate(0)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
+      expect(() => FFmpegValidator.validateBitrate(-1)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
+      expect(() => FFmpegValidator.validateBitrate(10001)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -109,19 +110,19 @@ describe('FFmpegValidator', () => {
         channels: 1 as const
       };
 
-      expect(() => FFmpegValidator.validateEncodingParams(invalidParams)).toThrow(FFmpegValidationError);
+      expect(() => FFmpegValidator.validateEncodingParams(invalidParams)).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
     });
   });
 
   describe('validateInputFile', () => {
     it('should reject empty or non-string paths', async () => {
-      await expect(FFmpegValidator.validateInputFile('')).rejects.toThrow(FFmpegValidationError);
-      await expect(FFmpegValidator.validateInputFile(null as any)).rejects.toThrow(FFmpegValidationError);
+      await expect(FFmpegValidator.validateInputFile('')).rejects.toMatchObject({ name: 'FFmpegValidationError' });
+      await expect(FFmpegValidator.validateInputFile(null as any)).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should reject non-existent files', async () => {
       const nonExistentPath = path.join(tmpdir(), 'non-existent-file-' + Date.now() + '.txt');
-      await expect(FFmpegValidator.validateInputFile(nonExistentPath)).rejects.toThrow(FFmpegValidationError);
+      await expect(FFmpegValidator.validateInputFile(nonExistentPath)).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should accept existing readable files', async () => {
@@ -140,15 +141,15 @@ describe('FFmpegValidator', () => {
 
   describe('validateOutputPath', () => {
     it('should reject empty or non-string paths', async () => {
-      await expect(FFmpegValidator.validateOutputPath('')).rejects.toThrow(FFmpegValidationError);
-      await expect(FFmpegValidator.validateOutputPath(null as any)).rejects.toThrow(FFmpegValidationError);
+      await expect(FFmpegValidator.validateOutputPath('')).rejects.toMatchObject({ name: 'FFmpegValidationError' });
+      await expect(FFmpegValidator.validateOutputPath(null as any)).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should reject non-existent directories', async () => {
       const nonExistentDir = path.join(tmpdir(), 'non-existent-dir-' + Date.now());
       const outputPath = path.join(nonExistentDir, 'output.txt');
       
-      await expect(FFmpegValidator.validateOutputPath(outputPath)).rejects.toThrow(FFmpegValidationError);
+      await expect(FFmpegValidator.validateOutputPath(outputPath)).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should accept writable output directories', async () => {
@@ -161,8 +162,8 @@ describe('FFmpegValidator', () => {
 
   describe('validateFilePath', () => {
     it('should reject empty or non-string paths', () => {
-      expect(() => FFmpegValidator.validateFilePath('', 'test')).toThrow(FFmpegValidationError);
-      expect(() => FFmpegValidator.validateFilePath(null as any, 'test')).toThrow(FFmpegValidationError);
+      expect(() => FFmpegValidator.validateFilePath('', 'test')).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
+      expect(() => FFmpegValidator.validateFilePath(null as any, 'test')).toThrowErrorMatchingObject({ name: 'FFmpegValidationError' });
     });
 
     it('should accept valid file paths', () => {

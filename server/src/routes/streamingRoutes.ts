@@ -1,8 +1,8 @@
 
 import { Router } from 'express';
-import { StreamingController } from '../controllers/StreamingController.js';
+import { createStreamingController } from '../controllers/StreamingController.js';
 const router = Router();
-const controller = new StreamingController();
+const controller = createStreamingController();
 router.post('/sessions', controller.createSession);
 router.get('/sessions/:sessionId/chunks', controller.getChunks);
 router.get('/sessions/:sessionId/segments', controller.getSegments);

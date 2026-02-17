@@ -1,17 +1,23 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { IFileService } from '../interfaces/file/IFileService.js';
-import { FileService } from '../services/file/FileService.js';
-import { ChunkingService } from '../services/chunking/ChunkingService.js';
+import { createFileService } from '../services/file/FileService.js';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 
-export class FileController {
-    private fileService: IFileService;
-    constructor(fileService?: IFileService) {
-        this.fileService = fileService ?? new FileService(new ChunkingService());
-    }
-// pagination and sorting.
-    listFiles = async (req: Request, res: Response, next: NextFunction) => {
+export const createFileController = (
+    fileService: IFileService = createFileService()
+) => {
+    //convert the massive number in to a string before sending to the user preventing a  server crashs.
+    const normalizeFile = (file: any) => {
+        if (!file) return file;
+        if (typeof file.fileSize === 'bigint') {
+            return { ...file, fileSize: file.fileSize.toString() };
+        }
+        return file;
+    };
+
+    // pagination and sorting.
+    const listFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { query, sort, order, page, limit, decodedOnly } = req.query;
             const parsedPage = page ? parseInt(page as string, 10) : undefined;
@@ -23,7 +29,7 @@ export class FileController {
             const parsedDecodedOnly =
                 decodedOnly === 'true' || decodedOnly === '1';
 
-            const result = await this.fileService.listFiles({
+            const result = await fileService.listFiles({
                 query: query as string,
                 sort: (sort as string) || 'createdAt',
                 order: (order as 'asc' | 'desc') || 'desc',
@@ -48,10 +54,10 @@ export class FileController {
         }
     };
 
-    getFileMetadata = async (req: Request, res: Response, next: NextFunction) => {
+    const getFileMetadata = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
-            const metadata = await this.fileService.getFileMetadata(id as string);
+            const metadata = await fileService.getFileMetadata(id as string);
             res.json({
                 success: true,
                 data: metadata,
@@ -62,13 +68,13 @@ export class FileController {
         }
     };
     //folder scanning.
-    discoverFiles = async (req: Request, res: Response, next: NextFunction) => {
+    const discoverFiles = async (req: Request, res: Response, next: NextFunction) => {
         try {
             // Allow user to specify path, default to ./uploads
             const { path: customPath } = req.body;
             const targetDir = enforcePathPolicy(customPath || './uploads', 'Discovery path');
 
-            await this.fileService.discoverFiles(targetDir);
+            await fileService.discoverFiles(targetDir);
 
             res.json({
                 success: true,
@@ -80,10 +86,10 @@ export class FileController {
         }
     };
 
-    downloadFile = async (req: Request, res: Response, next: NextFunction) => {
+    const downloadFile = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
-            const file = await this.fileService.getFileMetadata(id as string);
+            const file = await fileService.getFileMetadata(id as string);
 
             // Prefer decoded path if it exists
             const filePath = file.decodedPath || file.originalPath;
@@ -104,16 +110,16 @@ export class FileController {
         }
     };
 
-    uploadFile = async (req: Request, res: Response, next: NextFunction) => {
+    const uploadFile = async (req: Request, res: Response, next: NextFunction) => {
         try {
             if (!req.file) {
                 throw new Error('No file uploaded');
             }
             // Register it in the system
-            const result = await this.fileService.registerFile(req.file.filename, req.file.path);
+            const result = await fileService.registerFile(req.file.filename, req.file.path);
             res.json({
                 success: true,
-                data: this.normalizeFile(result),
+                data: normalizeFile(result),
                 meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
             });
         } catch (error) {
@@ -121,13 +127,13 @@ export class FileController {
         }
     };
 
+    return {
+        listFiles,
+        getFileMetadata,
+        discoverFiles,
+        downloadFile,
+        uploadFile
+    };
+};
 
- //convert the massive number in to a string before sending to the user preventing a  server crashs.
-    private normalizeFile(file: any) {
-        if (!file) return file;
-        if (typeof file.fileSize === 'bigint') {
-            return { ...file, fileSize: file.fileSize.toString() };
-        }
-        return file;
-    }
-}
+export type FileController = ReturnType<typeof createFileController>;

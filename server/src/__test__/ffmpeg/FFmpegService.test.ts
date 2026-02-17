@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
+import { createFFmpegService, type FFmpegService } from '../../services/ffmpeg/FFmpegService.js';
 import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type { FFmpegExecutionResult } from '../../types/ffmpeg/FFmpegTypes.js';
-import { FFmpegValidationError, FFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { createFFmpegExecutionError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
@@ -32,7 +32,7 @@ describe('FFmpegService', () => {
       getVersion: vi.fn()
     };
 
-    service = new FFmpegService(mockExecutor);
+    service = createFFmpegService(mockExecutor);
   });
 
   describe('decode', () => {
@@ -64,7 +64,7 @@ describe('FFmpegService', () => {
           input: { path: nonExistentFile },
           output: { path: testOutputFile }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should validate output directory exists', async () => {
@@ -75,7 +75,7 @@ describe('FFmpegService', () => {
           input: { path: testInputFile },
           output: { path: invalidOutput }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should validate codec if provided', async () => {
@@ -85,7 +85,7 @@ describe('FFmpegService', () => {
           output: { path: testOutputFile },
           codec: 'invalid' as any
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -127,7 +127,7 @@ describe('FFmpegService', () => {
             channels: 2
           }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should validate sample rate', async () => {
@@ -141,7 +141,7 @@ describe('FFmpegService', () => {
             channels: 2
           }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
 
     it('should validate channels', async () => {
@@ -155,7 +155,7 @@ describe('FFmpegService', () => {
             channels: 5 as any
           }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -206,7 +206,7 @@ describe('FFmpegService', () => {
             channels: 2
           }
         })
-      ).rejects.toThrow(FFmpegValidationError);
+      ).rejects.toMatchObject({ name: 'FFmpegValidationError' });
     });
   });
 
@@ -280,7 +280,7 @@ describe('FFmpegService', () => {
 
   describe('error handling', () => {
     it('should propagate execution errors', async () => {
-      const executionError = new FFmpegExecutionError(
+      const executionError = createFFmpegExecutionError(
         'FFmpeg failed',
         1,
         'Error message',
@@ -294,7 +294,7 @@ describe('FFmpegService', () => {
           input: { path: testInputFile },
           output: { path: testOutputFile }
         })
-      ).rejects.toThrow(FFmpegExecutionError);
+      ).rejects.toMatchObject({ name: 'FFmpegExecutionError' });
     });
   });
 });

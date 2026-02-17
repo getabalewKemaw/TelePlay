@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TranscodingService } from '../../services/transcoding/TranscodingService.js';
+import { createTranscodingService, type TranscodingService } from '../../services/transcoding/TranscodingService.js';
 import type { IFfmpegService } from '../../interfaces/transcoding/IFfmpegService.js';
 import type { FFmpegExecutionResult } from '../../types/ffmpeg/FFmpegTypes.js';
-import { TranscodingValidationError, TranscodingCodecError, TranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
+
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
@@ -43,7 +43,7 @@ describe('TranscodingService', () => {
       isAvailable: vi.fn().mockResolvedValue(true)
     };
 
-    transcodingService = new TranscodingService(mockFFmpegService);
+    transcodingService = createTranscodingService(mockFFmpegService);
 
     // Mock file system
     vi.mocked(existsSync).mockReturnValue(true);
@@ -108,7 +108,7 @@ describe('TranscodingService', () => {
 
       await expect(
         transcodingService.transcode('/nonexistent/file.g711')
-      ).rejects.toThrow(TranscodingFileError);
+      ).rejects.toMatchObject({ name: 'TranscodingFileError' });
     });
 
     it('should throw error for G.726 without bitrate', async () => {
@@ -117,7 +117,7 @@ describe('TranscodingService', () => {
           sourceCodec: 'g726',
           targetCodec: 'aac'
         })
-      ).rejects.toThrow(TranscodingValidationError);
+      ).rejects.toMatchObject({ name: 'TranscodingValidationError' });
     });
 
     it('should use recommended target codec if not specified', async () => {
@@ -207,7 +207,7 @@ describe('TranscodingService', () => {
           30,
           {}
         )
-      ).rejects.toThrow(TranscodingValidationError);
+      ).rejects.toMatchObject({ name: 'TranscodingValidationError' });
     });
 
     it('should throw error for invalid duration', async () => {
@@ -218,7 +218,7 @@ describe('TranscodingService', () => {
           0, // invalid
           {}
         )
-      ).rejects.toThrow(TranscodingValidationError);
+      ).rejects.toMatchObject({ name: 'TranscodingValidationError' });
     });
   });
 

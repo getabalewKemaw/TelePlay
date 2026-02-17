@@ -4,12 +4,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StreamingPreparationService } from '../../services/streaming/StreamingPreparationService.js';
+import { createStreamingPreparationService, type StreamingPreparationService } from '../../services/streaming/StreamingPreparationService.js';
 import type { IChunkingService } from '../../interfaces/streaming/IChunkingService.js';
 import type { ISegmentationService } from '../../interfaces/streaming/ISegmentationService.js';
 import type { ITranscodingService } from '../../interfaces/streaming/ITranscodingService.js';
 import type { ICompressionService } from '../../interfaces/streaming/ICompressionService.js';
-import { StreamingSessionError, StreamingPlaybackError } from '../../errors/streaming/StreamingErrors.js';
+
 import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
@@ -59,7 +59,7 @@ describe('StreamingPreparationService', () => {
       compress: vi.fn()
     };
 
-    streamingService = new StreamingPreparationService(
+    streamingService = createStreamingPreparationService(
       mockChunkingService,
       mockSegmentationService,
       mockTranscodingService,
@@ -143,7 +143,7 @@ describe('StreamingPreparationService', () => {
     it('should throw error for invalid session', async () => {
       await expect(
         streamingService.prepareChunks('invalid-session-id')
-      ).rejects.toThrow(StreamingSessionError);
+      ).rejects.toMatchObject({ name: 'StreamingSessionError' });
     });
   });
 
@@ -253,7 +253,7 @@ describe('StreamingPreparationService', () => {
         streamingService.handlePlaybackControl(session.sessionId, {
           action: 'unknown' as any
         })
-      ).rejects.toThrow(StreamingPlaybackError);
+      ).rejects.toMatchObject({ name: 'StreamingPlaybackError' });
     });
   });
 
@@ -316,7 +316,7 @@ describe('StreamingPreparationService', () => {
       // Session should be removed
       await expect(
         streamingService.getStreamMetadata(session.sessionId)
-      ).rejects.toThrow(StreamingSessionError);
+      ).rejects.toMatchObject({ name: 'StreamingSessionError' });
     });
   });
 });

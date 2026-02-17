@@ -70,7 +70,6 @@ export function buildDecodeAdditionalArgs(params: {
   }
   return additionalArgs;
 }
-
 export function buildDecodeCommandOptions(
   params: DecodeParams,
   normalizedCodec: string | undefined,
