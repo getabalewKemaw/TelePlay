@@ -7,7 +7,7 @@ import { stat } from 'fs/promises';
 import path from 'path';
 import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
-import { createChunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
+import { chunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 import { FFPROBE_EXECUTABLE, type RawFileProfile, BASE_ARGS, RAW_PROFILES } from '../../../utils/chunking/chunlingUtils.js';
 
 const executable = FFPROBE_EXECUTABLE;
@@ -28,14 +28,14 @@ const runProbe = (filePath: string, args: string[]): Promise<string> => {
 
     process.on('close', (exitCode) => {
       if (exitCode !== 0) {
-        reject(createChunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
+        reject(chunkingMetadataError(`FFprobe failed with exit code ${exitCode}: ${stderr}`, filePath));
         return;
       }
       resolve(stdout);
     });
 
     process.on('error', (error: Error) => {
-      reject(createChunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
+      reject(chunkingMetadataError(`Failed to spawn FFprobe process: ${error.message}`, filePath));
     });
   });
 };
@@ -59,7 +59,7 @@ const parseFFprobeOutput = (
   try {
     data = JSON.parse(output);
   } catch {
-    throw createChunkingMetadataError('FFprobe returned invalid JSON output', filePath);
+    throw chunkingMetadataError('FFprobe returned invalid JSON output', filePath);
   }
 
   const format = data.format ?? {};
@@ -74,7 +74,7 @@ const parseFFprobeOutput = (
   }
 
   if (!Number.isFinite(duration) || duration <= 0) {
-    throw createChunkingMetadataError('Invalid or missing duration in media file', filePath);
+    throw chunkingMetadataError('Invalid or missing duration in media file', filePath);
   }
 
   return {

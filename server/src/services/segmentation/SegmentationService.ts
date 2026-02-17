@@ -11,7 +11,7 @@ import type {
   SegmentationConfig,
 } from '../../types/segmentation/SegmentationTypes.js';
 import { createStrategy } from './strategies/SegmentationStrategyFactory.js';
-import { createSegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
+import { segmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
 import { isSegmentInRange, validateTimeRange } from '../../utils/segmentation/segmentationRangeUtils.js';
 
@@ -46,21 +46,21 @@ const buildConfig = (options?: SegmentationOptions): SegmentationConfig => {
 
 const validateConfig = (config: SegmentationConfig): void => {
   if (config.chunksPerSegment !== undefined && (!Number.isFinite(config.chunksPerSegment) || config.chunksPerSegment <= 0)) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Chunks per segment must be greater than 0, got ${config.chunksPerSegment}`,
       'chunksPerSegment'
     );
   }
 
   if (config.targetSegmentDuration !== undefined && (!Number.isFinite(config.targetSegmentDuration) || config.targetSegmentDuration <= 0)) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Target segment duration must be greater than 0, got ${config.targetSegmentDuration}`,
       'targetSegmentDuration'
     );
   }
 
   if (config.minSegmentDuration !== undefined && (!Number.isFinite(config.minSegmentDuration) || config.minSegmentDuration <= 0)) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Minimum segment duration must be greater than 0, got ${config.minSegmentDuration}`,
       'minSegmentDuration'
     );
@@ -71,21 +71,21 @@ const validateConfig = (config: SegmentationConfig): void => {
     config.maxSegmentDuration &&
     config.minSegmentDuration > config.maxSegmentDuration
   ) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Minimum segment duration (${config.minSegmentDuration}s) cannot be greater than maximum (${config.maxSegmentDuration}s)`,
       'segmentDuration'
     );
   }
 
   if (config.initialSegmentMultiplier !== undefined && (!Number.isFinite(config.initialSegmentMultiplier) || config.initialSegmentMultiplier <= 0)) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Initial segment multiplier must be greater than 0, got ${config.initialSegmentMultiplier}`,
       'initialSegmentMultiplier'
     );
   }
 
   if (config.bufferSize !== undefined && (!Number.isFinite(config.bufferSize) || config.bufferSize <= 0)) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Buffer size must be greater than 0, got ${config.bufferSize}`,
       'bufferSize'
     );
@@ -94,7 +94,7 @@ const validateConfig = (config: SegmentationConfig): void => {
 
 export const getAllSegments = async (filePath: string, options?: SegmentationOptions): Promise<SegmentMetadata[]> => {
   if (!filePath) {
-    throw createSegmentationValidationError('filePath is required', 'filePath');
+    throw segmentationValidationError('filePath is required', 'filePath');
   }
 
   const config = buildConfig(options);

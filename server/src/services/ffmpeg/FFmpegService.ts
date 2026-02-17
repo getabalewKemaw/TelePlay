@@ -9,7 +9,7 @@ import {
   validateOutputPath,
   validateSampleRate
 } from '../../validator/ffmpeg/FFmpegValidator.js';
-import { createFFmpegFileError, createFFmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { ffmpegFileError, ffmpegValidationError } from '../../errors/ffmpeg/FFmpegErrors.js';
 import { ffmpegExecutor } from './implementations/FFmpegExecutor.js';
 import {
   buildDecodeAdditionalArgs,
@@ -27,20 +27,20 @@ const validateDecodeCodecRequirements = (codec: string, params: DecodeParams): v
   if (!isRawCodec(codec)) return;
 
   if (!params.sampleRate) {
-    throw createFFmpegValidationError(
+    throw ffmpegValidationError(
       `Sample rate is required for ${codec} decoding`,
       'sampleRate'
     );
   }
   if (!params.channels) {
-    throw createFFmpegValidationError(
+    throw ffmpegValidationError(
       `Channels are required for ${codec} decoding`,
       'channels'
     );
   }
 
   if (codec === 'g726' && !params.bitrate) {
-    throw createFFmpegValidationError(
+    throw ffmpegValidationError(
       'Bitrate is required for G.726 decoding (8, 16, 24, or 32 kbps)',
       'bitrate'
     );
@@ -49,7 +49,7 @@ const validateDecodeCodecRequirements = (codec: string, params: DecodeParams): v
 
 const handleExecutionError = (error: unknown, inputPath: string): void => {
   if (error instanceof Error && error.message.includes('ENOENT')) {
-    throw createFFmpegFileError(
+    throw ffmpegFileError(
       `File not found: ${inputPath}`,
       inputPath
     );

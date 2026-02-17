@@ -16,7 +16,7 @@ export type SegmentationBufferingError = SegmentationError & {
   bufferSize: number;
 };
 
-const createSegmentationBaseError = <T extends object>(
+const segmentationBaseError = <T extends object>(
   name: string,
   message: string,
   code: string,
@@ -33,7 +33,7 @@ const createSegmentationBaseError = <T extends object>(
     Object.assign(error, extras);
   }
   if (Error.captureStackTrace) {
-    Error.captureStackTrace(error, createSegmentationBaseError);
+    Error.captureStackTrace(error, segmentationBaseError);
   }
   return error;
 };
@@ -42,37 +42,37 @@ const isNamedSegmentationError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
 
-export const createSegmentationError = (
+export const segmentationError = (
   message: string,
   code: string,
   cause?: Error
-): SegmentationError => createSegmentationBaseError('SegmentationError', message, code, undefined, cause);
+): SegmentationError => segmentationBaseError('SegmentationError', message, code, undefined, cause);
 
-export const createSegmentationValidationError = (
+export const segmentationValidationError = (
   message: string,
   field?: string
 ): SegmentationValidationError => (
-  createSegmentationBaseError('SegmentationValidationError', message, 'VALIDATION_ERROR', { field })
+  segmentationBaseError('SegmentationValidationError', message, 'VALIDATION_ERROR', { field })
 );
 
 /**
  * Strategy error - thrown when segmentation strategy fails
  */
-export const createSegmentationStrategyError = (
+export const segmentationStrategyError = (
   message: string,
   strategy: string
 ): SegmentationStrategyError => (
-  createSegmentationBaseError('SegmentationStrategyError', message, 'STRATEGY_ERROR', { strategy })
+  segmentationBaseError('SegmentationStrategyError', message, 'STRATEGY_ERROR', { strategy })
 );
 
 /**
  * Buffering error - thrown when buffering operations fail
  */
-export const createSegmentationBufferingError = (
+export const segmentationBufferingError = (
   message: string,
   bufferSize: number
 ): SegmentationBufferingError => (
-  createSegmentationBaseError('SegmentationBufferingError', message, 'BUFFERING_ERROR', { bufferSize })
+  segmentationBaseError('SegmentationBufferingError', message, 'BUFFERING_ERROR', { bufferSize })
 );
 
 export const isSegmentationValidationError = (err: unknown): err is SegmentationValidationError => (

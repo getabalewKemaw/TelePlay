@@ -6,7 +6,7 @@ import type {
   TargetCodec,
   TargetEncoding
 } from '../../types/transcoding/TranscodingTypes.js';
-import { createTranscodingValidationError } from '../../errors/transcoding/TranscodingErrors.js';
+import { transcodingValidationError } from '../../errors/transcoding/TranscodingErrors.js';
 
 const SOURCE_CODECS = new Set<SourceCodec>([
   'g711',
@@ -63,7 +63,7 @@ export const CODEC_COMPATIBILITY: Record<SourceCodec, { recommended: TargetCodec
 };
 function toSourceEncoding(input: AudioEncodingParamsDto): SourceEncoding {
   if (!SOURCE_CODECS.has(input.codec as SourceCodec)) {
-    throw createTranscodingValidationError(`Unsupported source codec: ${input.codec}`, 'sourceEncoding.codec');
+    throw transcodingValidationError(`Unsupported source codec: ${input.codec}`, 'sourceEncoding.codec');
   }
   return {
     codec: input.codec as SourceCodec,
@@ -75,7 +75,7 @@ function toSourceEncoding(input: AudioEncodingParamsDto): SourceEncoding {
 
 function toTargetEncoding(input: AudioEncodingParamsDto): TargetEncoding {
   if (!TARGET_CODECS.has(input.codec as TargetCodec)) {
-    throw createTranscodingValidationError(`Unsupported target codec: ${input.codec}`, 'targetEncoding.codec');
+    throw transcodingValidationError(`Unsupported target codec: ${input.codec}`, 'targetEncoding.codec');
   }
   return {
     codec: input.codec as TargetCodec,

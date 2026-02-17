@@ -26,7 +26,7 @@ export type FFmpegTimeoutError = FFmpegError & {
   timeout: number;
 };
 
-const createFFmpegBaseError = <T extends object>(
+const ffmpegBaseError = <T extends object>(
   name: string,
   message: string,
   code: string,
@@ -43,7 +43,7 @@ const createFFmpegBaseError = <T extends object>(
     Object.assign(error, extras);
   }
   if (Error.captureStackTrace) {
-    Error.captureStackTrace(error, createFFmpegBaseError);
+    Error.captureStackTrace(error, ffmpegBaseError);
   }
   return error;
 };
@@ -52,29 +52,29 @@ const isNamedFFmpegError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
 
-export const createFFmpegError = (
+export const ffmpegError = (
   message: string,
   code: string,
   cause?: Error
-): FFmpegError => createFFmpegBaseError('FFmpegError', message, code, undefined, cause);
+): FFmpegError => ffmpegBaseError('FFmpegError', message, code, undefined, cause);
 
-export const createFFmpegValidationError = (
+export const ffmpegValidationError = (
   message: string,
   field?: string
 ): FFmpegValidationError => (
-  createFFmpegBaseError('FFmpegValidationError', message, 'VALIDATION_ERROR', { field })
+  ffmpegBaseError('FFmpegValidationError', message, 'VALIDATION_ERROR', { field })
 );
 
 /**
  * Execution error - thrown when FFmpeg execution fails
  */
-export const createFFmpegExecutionError = (
+export const ffmpegExecutionError = (
   message: string,
   exitCode: number,
   stderr: string,
   executionTime: number
 ): FFmpegExecutionError => (
-  createFFmpegBaseError('FFmpegExecutionError', message, 'EXECUTION_ERROR', {
+  ffmpegBaseError('FFmpegExecutionError', message, 'EXECUTION_ERROR', {
     exitCode,
     stderr,
     executionTime
@@ -84,31 +84,31 @@ export const createFFmpegExecutionError = (
 /**
  * File error - thrown when input/output file operations fail
  */
-export const createFFmpegFileError = (
+export const ffmpegFileError = (
   message: string,
   filePath: string
 ): FFmpegFileError => (
-  createFFmpegBaseError('FFmpegFileError', message, 'FILE_ERROR', { filePath })
+  ffmpegBaseError('FFmpegFileError', message, 'FILE_ERROR', { filePath })
 );
 
 /**
  * Codec error - thrown when codec is not supported or unavailable
  */
-export const createFFmpegCodecError = (
+export const ffmpegCodecError = (
   message: string,
   codec: string
 ): FFmpegCodecError => (
-  createFFmpegBaseError('FFmpegCodecError', message, 'CODEC_ERROR', { codec })
+  ffmpegBaseError('FFmpegCodecError', message, 'CODEC_ERROR', { codec })
 );
 
 /**
  * Timeout error - thrown when FFmpeg operation exceeds time limit
  */
-export const createFFmpegTimeoutError = (
+export const ffmpegTimeoutError = (
   message: string,
   timeout: number
 ): FFmpegTimeoutError => (
-  createFFmpegBaseError('FFmpegTimeoutError', message, 'TIMEOUT_ERROR', { timeout })
+  ffmpegBaseError('FFmpegTimeoutError', message, 'TIMEOUT_ERROR', { timeout })
 );
 
 export const isFFmpegValidationError = (err: unknown): err is FFmpegValidationError => (

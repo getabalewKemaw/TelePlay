@@ -3,24 +3,20 @@ export type StreamingError = Error & {
   code: string;
   cause?: Error;
 };
-
 export type StreamingValidationError = StreamingError & {
   field?: string;
 };
-
 export type StreamingSessionError = StreamingError & {
   sessionId: string;
 };
-
 export type StreamingPlaybackError = StreamingError & {
   action: string;
 };
-
 export type StreamingPreparationError = StreamingError & {
   chunkIndex?: number;
 };
 
-const createStreamingBaseError = <T extends object>(
+const streamingBaseError = <T extends object>(
   name: string,
   message: string,
   code: string,
@@ -37,7 +33,7 @@ const createStreamingBaseError = <T extends object>(
     Object.assign(error, extras);
   }
   if (Error.captureStackTrace) {
-    Error.captureStackTrace(error, createStreamingBaseError);
+    Error.captureStackTrace(error, streamingBaseError);
   }
   return error;
 };
@@ -46,41 +42,41 @@ const isNamedStreamingError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
 
-export const createStreamingError = (
+export const streamingError = (
   message: string,
   code: string,
   cause?: Error
-): StreamingError => createStreamingBaseError('StreamingError', message, code, undefined, cause);
+): StreamingError => streamingBaseError('StreamingError', message, code, undefined, cause);
 
-export const createStreamingValidationError = (
+export const streamingValidationError = (
   message: string,
   field?: string
 ): StreamingValidationError => (
-  createStreamingBaseError('StreamingValidationError', message, 'VALIDATION_ERROR', { field })
+  streamingBaseError('StreamingValidationError', message, 'VALIDATION_ERROR', { field })
 );
 
-export const createStreamingSessionError = (
+export const streamingSessionError = (
   message: string,
   sessionId: string
 ): StreamingSessionError => (
-  createStreamingBaseError('StreamingSessionError', message, 'SESSION_ERROR', { sessionId })
+  streamingBaseError('StreamingSessionError', message, 'SESSION_ERROR', { sessionId })
 );
 
-export const createStreamingPlaybackError = (
+export const streamingPlaybackError = (
   message: string,
   action: string
 ): StreamingPlaybackError => (
-  createStreamingBaseError('StreamingPlaybackError', message, 'PLAYBACK_ERROR', { action })
+  streamingBaseError('StreamingPlaybackError', message, 'PLAYBACK_ERROR', { action })
 );
 
 /**
  * Preparation error - thrown when chunk/segment preparation fails
  */
-export const createStreamingPreparationError = (
+export const streamingPreparationError = (
   message: string,
   chunkIndex?: number
 ): StreamingPreparationError => (
-  createStreamingBaseError('StreamingPreparationError', message, 'PREPARATION_ERROR', { chunkIndex })
+  streamingBaseError('StreamingPreparationError', message, 'PREPARATION_ERROR', { chunkIndex })
 );
 
 export const isStreamingValidationError = (err: unknown): err is StreamingValidationError => (

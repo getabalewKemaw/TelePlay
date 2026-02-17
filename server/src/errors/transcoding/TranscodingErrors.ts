@@ -21,7 +21,7 @@ export type TranscodingChunkError = TranscodingError & {
   chunkIndex: number;
 };
 
-const createTranscodingBaseError = <T extends object>(
+const transcodingBaseError = <T extends object>(
   name: string,
   message: string,
   code: string,
@@ -38,7 +38,7 @@ const createTranscodingBaseError = <T extends object>(
     Object.assign(error, extras);
   }
   if (Error.captureStackTrace) {
-    Error.captureStackTrace(error, createTranscodingBaseError);
+    Error.captureStackTrace(error, transcodingBaseError);
   }
   return error;
 };
@@ -47,51 +47,51 @@ const isNamedTranscodingError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
 
-export const createTranscodingError = (
+export const transcodingError = (
   message: string,
   code: string,
   cause?: Error
-): TranscodingError => createTranscodingBaseError('TranscodingError', message, code, undefined, cause);
+): TranscodingError => transcodingBaseError('TranscodingError', message, code, undefined, cause);
 
 /**
  * Validation error - thrown when input parameters are invalid
  */
-export const createTranscodingValidationError = (
+export const transcodingValidationError = (
   message: string,
   field?: string
 ): TranscodingValidationError => (
-  createTranscodingBaseError('TranscodingValidationError', message, 'VALIDATION_ERROR', { field })
+  transcodingBaseError('TranscodingValidationError', message, 'VALIDATION_ERROR', { field })
 );
 
 /**
  * Codec error - thrown when codec operations fail
  */
-export const createTranscodingCodecError = (
+export const transcodingCodecError = (
   message: string,
   sourceCodec: string,
   targetCodec: string
 ): TranscodingCodecError => (
-  createTranscodingBaseError('TranscodingCodecError', message, 'CODEC_ERROR', { sourceCodec, targetCodec })
+  transcodingBaseError('TranscodingCodecError', message, 'CODEC_ERROR', { sourceCodec, targetCodec })
 );
 
 /**
  * File error - thrown when file operations fail
  */
-export const createTranscodingFileError = (
+export const transcodingFileError = (
   message: string,
   filePath: string
 ): TranscodingFileError => (
-  createTranscodingBaseError('TranscodingFileError', message, 'FILE_ERROR', { filePath })
+  transcodingBaseError('TranscodingFileError', message, 'FILE_ERROR', { filePath })
 );
 
 /**
  * Chunk error - thrown when chunk transcoding fails
  */
-export const createTranscodingChunkError = (
+export const transcodingChunkError = (
   message: string,
   chunkIndex: number
 ): TranscodingChunkError => (
-  createTranscodingBaseError('TranscodingChunkError', message, 'CHUNK_ERROR', { chunkIndex })
+  transcodingBaseError('TranscodingChunkError', message, 'CHUNK_ERROR', { chunkIndex })
 );
 
 export const isTranscodingValidationError = (err: unknown): err is TranscodingValidationError => (

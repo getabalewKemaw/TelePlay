@@ -7,7 +7,7 @@ import type {
   ChunkingConfig,
   MediaMetadata
 } from '../../types/chunking/ChunkingTypes.js';
-import { createChunkingValidationError, createChunkingSeekError, createChunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
+import { chunkingValidationError, chunkingSeekError, chunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
 import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import { ffprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
 import { ffmpegService } from '../ffmpeg/FFmpegService.js';
@@ -50,7 +50,7 @@ const writeChunkFiles = async (filePath: string, chunks: ChunkMetadata[]): Promi
 
 const generateChunks = async (filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> => {
   if (!existsSync(filePath)) {
-    throw createChunkingFileError(`Media file does not exist: ${filePath}`, filePath);
+    throw chunkingFileError(`Media file does not exist: ${filePath}`, filePath);
   }
 
   const metadata = await metadataProvider.getMetadata(filePath);
@@ -85,17 +85,17 @@ export const getChunkAtTime = async (
   options?: ChunkingOptions
 ): Promise<ChunkMetadata> => {
   if (!Number.isFinite(time) || time < 0) {
-    throw createChunkingSeekError(`Invalid seek time: ${time}`, time, filePath);
+    throw chunkingSeekError(`Invalid seek time: ${time}`, time, filePath);
   }
   const chunks = await getAllChunks(filePath, options);
   if (chunks.length === 0) {
-    throw createChunkingSeekError('No chunks available for seek operation', time, filePath);
+    throw chunkingSeekError('No chunks available for seek operation', time, filePath);
   }
 
   const chunk = chunks.find((c) => c.startTime <= time && c.endTime > time)
     ?? chunks[chunks.length - 1];
   if (!chunk) {
-    throw createChunkingSeekError('Seek target chunk not found', time, filePath);
+    throw chunkingSeekError('Seek target chunk not found', time, filePath);
   }
   return chunk;
 };
@@ -135,14 +135,14 @@ const calculateChunks = (config: ChunkingConfig): ChunkMetadata[] => {
 
 const validateConfig = (config: ChunkingConfig): void => {
   if (config.chunkDuration <= 0) {
-    throw createChunkingValidationError(
+    throw chunkingValidationError(
       `Chunk duration must be greater than 0, got ${config.chunkDuration}`,
       'chunkDuration'
     );
   }
 
   if (config.totalDuration <= 0) {
-    throw createChunkingValidationError(
+    throw chunkingValidationError(
       `Total duration must be greater than 0, got ${config.totalDuration}`,
       'totalDuration'
     );
@@ -150,7 +150,7 @@ const validateConfig = (config: ChunkingConfig): void => {
 
   if (config.generateFiles) {
     if (!config.outputDirectory) {
-      throw createChunkingValidationError(
+      throw chunkingValidationError(
         'Output directory is required when generateFiles is true',
         'outputDirectory'
       );

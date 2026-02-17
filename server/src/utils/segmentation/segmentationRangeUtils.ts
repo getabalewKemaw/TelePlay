@@ -1,10 +1,10 @@
 import type { SegmentMetadata } from '../../types/segmentation/SegmentationTypes.js';
-import { createSegmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
+import { segmentationValidationError } from '../../errors/segmentation/SegmentationErrors.js';
 
 export function validateTimeRange(startTime: number, endTime: number): void {
   const values = [startTime, endTime];
   if (values.some((value) => !Number.isFinite(value)) || startTime < 0 || endTime <= startTime) {
-    throw createSegmentationValidationError(
+    throw segmentationValidationError(
       `Invalid segment range: start=${startTime}, end=${endTime}`,
       'timeRange'
     );

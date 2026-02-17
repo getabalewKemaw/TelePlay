@@ -8,7 +8,7 @@ import { createSegments as createFixedSegments } from './FixedSegmentationStrate
 import { createSegments as createAdaptiveSegments } from './AdaptiveSegmentationStrategy.js';
 import { createSegments as createProgressiveSegments } from './ProgressiveSegmentationStrategy.js';
 import { createSegments as createLowLatencySegments } from './LowLatencySegmentationStrategy.js';
-import { createSegmentationStrategyError } from '../../../errors/segmentation/SegmentationErrors.js';
+import { segmentationStrategyError } from '../../../errors/segmentation/SegmentationErrors.js';
 
 export const createStrategy = (strategy: SegmentationStrategy): ISegmentationStrategy => {
   switch (strategy) {
@@ -33,7 +33,7 @@ export const createStrategy = (strategy: SegmentationStrategy): ISegmentationStr
         createSegments: createLowLatencySegments
       };
     default:
-      throw createSegmentationStrategyError(
+      throw segmentationStrategyError(
         `Unknown segmentation strategy: ${strategy}`,
         strategy
       );

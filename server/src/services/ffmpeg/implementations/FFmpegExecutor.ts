@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import type { IFfmpegExecutor } from '../../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate } from '../../../types/ffmpeg/FFmpegTypes.js';
-import { createFFmpegExecutionError, createFFmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
+import { ffmpegExecutionError, ffmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
 import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
 import {
   buildCommandArgs,
@@ -26,7 +26,7 @@ const validateOutput = async (
     options,
     result,
     (path) => fs.stat(path),
-    (message) => createFFmpegExecutionError(
+    (message) => ffmpegExecutionError(
       message,
       result.exitCode,
       result.stderr,
@@ -81,7 +81,7 @@ export const execute = async (
         finalize(() => {
           const executionTime = Date.now() - startTime;
           reject(
-            createFFmpegTimeoutError(
+            ffmpegTimeoutError(
               `FFmpeg execution timed out after ${timeout}ms`,
               timeout
             )
@@ -138,7 +138,7 @@ export const execute = async (
           }
         } else {
           reject(
-            createFFmpegExecutionError(
+            ffmpegExecutionError(
               `FFmpeg execution failed with exit code ${exitCode}`,
               exitCode ?? -1,
               stderr.trim(),
@@ -153,7 +153,7 @@ export const execute = async (
       finalize(() => {
         const executionTime = Date.now() - startTime;
         reject(
-          createFFmpegExecutionError(
+          ffmpegExecutionError(
             `Failed to spawn FFmpeg process: ${error.message}`,
             -1,
             error.message,

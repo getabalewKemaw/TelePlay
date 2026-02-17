@@ -21,7 +21,7 @@ export type ChunkingSeekError = ChunkingError & {
   filePath?: string;
 };
 
-const createChunkingBaseError = <T extends object>(
+const chunkingBaseError = <T extends object>(
   name: string,
   message: string,
   code: string,
@@ -38,7 +38,7 @@ const createChunkingBaseError = <T extends object>(
     Object.assign(error, extras);
   }
   if (Error.captureStackTrace) {
-    Error.captureStackTrace(error, createChunkingBaseError);
+    Error.captureStackTrace(error, chunkingBaseError);
   }
   return error;
 };
@@ -47,51 +47,51 @@ const isNamedChunkingError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
 
-export const createChunkingError = (
+export const chunkingError = (
   message: string,
   code: string,
   cause?: Error
-): ChunkingError => createChunkingBaseError('ChunkingError', message, code, undefined, cause);
+): ChunkingError => chunkingBaseError('ChunkingError', message, code, undefined, cause);
 
 /**
  * Validation error - thrown when input parameters are invalid
  */
-export const createChunkingValidationError = (
+export const chunkingValidationError = (
   message: string,
   field?: string
 ): ChunkingValidationError => (
-  createChunkingBaseError('ChunkingValidationError', message, 'VALIDATION_ERROR', { field })
+  chunkingBaseError('ChunkingValidationError', message, 'VALIDATION_ERROR', { field })
 );
 
 /**
  * File error - thrown when file operations fail
  */
-export const createChunkingFileError = (
+export const chunkingFileError = (
   message: string,
   filePath: string
 ): ChunkingFileError => (
-  createChunkingBaseError('ChunkingFileError', message, 'FILE_ERROR', { filePath })
+  chunkingBaseError('ChunkingFileError', message, 'FILE_ERROR', { filePath })
 );
 
 /**
  * Metadata error - thrown when metadata retrieval fails
  */
-export const createChunkingMetadataError = (
+export const chunkingMetadataError = (
   message: string,
   filePath: string
 ): ChunkingMetadataError => (
-  createChunkingBaseError('ChunkingMetadataError', message, 'METADATA_ERROR', { filePath })
+  chunkingBaseError('ChunkingMetadataError', message, 'METADATA_ERROR', { filePath })
 );
 
 /**
  * Seek error - thrown when seek operation fails
  */
-export const createChunkingSeekError = (
+export const chunkingSeekError = (
   message: string,
   time: number,
   filePath?: string
 ): ChunkingSeekError => (
-  createChunkingBaseError('ChunkingSeekError', message, 'SEEK_ERROR', { time, filePath })
+  chunkingBaseError('ChunkingSeekError', message, 'SEEK_ERROR', { time, filePath })
 );
 
 export const isChunkingValidationError = (err: unknown): err is ChunkingValidationError => (

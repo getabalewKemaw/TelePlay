@@ -6,7 +6,7 @@ import type {
   StreamingSession,
   StreamingPreparationOptions
 } from '../../types/streaming/StreamingTypes.js';
-import { createStreamingValidationError } from '../../errors/streaming/StreamingErrors.js';
+import { streamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
 
@@ -35,7 +35,7 @@ export const createSession = async (
   options?: StreamingPreparationOptions
 ): Promise<StreamingSession> => {
   if (!existsSync(filePath)) {
-    throw createStreamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
+    throw streamingValidationError(`Media file does not exist: ${filePath}`, 'filePath');
   }
   const sessionId = randomUUID();
   const opts = { ...DEFAULT_OPTIONS, ...options };

@@ -7,7 +7,7 @@ import type {
   SourceCodec,
   TargetCodec
 } from '../../types/transcoding/TranscodingTypes.js';
-import { createTranscodingValidationError, createTranscodingCodecError, createTranscodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
+import { transcodingValidationError, transcodingCodecError, transcodingFileError } from '../../errors/transcoding/TranscodingErrors.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ffmpegExecutor } from '../ffmpeg/implementations/FFmpegExecutor.js';
@@ -21,7 +21,7 @@ const executor: IFfmpegExecutor = ffmpegExecutor;
 
 const validateSourceEncoding = (encoding: { codec: SourceCodec; bitrate?: number }): void => {
   if (encoding.codec === 'g726' && !encoding.bitrate) {
-    throw createTranscodingValidationError(
+    throw transcodingValidationError(
       'Source bitrate is required for G.726 codec',
       'sourceBitrate'
     );
@@ -31,13 +31,13 @@ const validateSourceEncoding = (encoding: { codec: SourceCodec; bitrate?: number
 const validateTargetEncoding = (sourceCodec: SourceCodec, encoding: { codec: TargetCodec; bitrate?: number }): void => {
   const compatibility = CODEC_COMPATIBILITY[sourceCodec];
   if (!compatibility.compatible.includes(encoding.codec)) {
-    throw createTranscodingValidationError(
+    throw transcodingValidationError(
       `Target codec ${encoding.codec} is not compatible with source codec ${sourceCodec}`,
       'targetEncoding.codec'
     );
   }
   if (encoding.bitrate !== undefined && encoding.bitrate <= 0) {
-    throw createTranscodingValidationError(
+    throw transcodingValidationError(
       'Target bitrate must be greater than 0',
       'targetEncoding.bitrate'
     );
@@ -82,7 +82,7 @@ const performTranscoding = async (
 
 export const transcodeChunk = async (params: ChunkTranscodingParams): Promise<TranscodingResult> => {
   if (! await isdirectoryExists(params.inputPath)) {
-    throw createTranscodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
+    throw transcodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
   }
 
   validateSourceEncoding(params.sourceEncoding);
@@ -100,7 +100,7 @@ export const transcodeChunk = async (params: ChunkTranscodingParams): Promise<Tr
   try {
     await performTranscoding(params.inputPath, params.outputPath, config);
   } catch (error) {
-    throw createTranscodingCodecError(
+    throw transcodingCodecError(
       `Chunk transcoding failed: ${error instanceof Error ? error.message : String(error)}`,
       params.sourceEncoding.codec,
       params.targetEncoding.codec
