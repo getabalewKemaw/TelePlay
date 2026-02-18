@@ -5,7 +5,7 @@ import { FileTable } from './components/FileTable/FileTable'
 import { AppHeader } from './components/App/AppHeader'
 import { FileTableCard } from './components/App/FileTableCard'
 import { EmptyState } from './components/App/EmptyState'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useUIStore } from './stores/useUIStore'
 import { useShallow } from 'zustand/shallow'
 import { useFileStore } from './stores/useFileStore'
@@ -13,6 +13,7 @@ import { useFileActions } from './hooks/useFileActions'
 import { useFileDerivedSync } from './hooks/useFileDerivedSync'
 export default function App() {
   useFileDerivedSync()
+  const playerSectionRef = useRef<HTMLDivElement | null>(null)
 
   const {
     filteredFiles,
@@ -81,6 +82,11 @@ export default function App() {
       setPage(1)
     }
   }, [debouncedSearchTerm, filterDecoded, sortDir, sortKey, setPage, page])
+
+  useEffect(() => {
+    if (!selectedFile || !playerSectionRef.current) return
+    playerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [selectedFile?.id])
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1
@@ -173,11 +179,13 @@ export default function App() {
               />
             </FileTableCard>
 
-            {selectedFile ? (
-              <Player />
-            ) : (
-              <EmptyState />
-            )}
+            <div ref={playerSectionRef}>
+              {selectedFile ? (
+                <Player />
+              ) : (
+                <EmptyState />
+              )}
+            </div>
           </div>
         </div>
       </main>

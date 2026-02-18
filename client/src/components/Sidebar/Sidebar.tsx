@@ -1,4 +1,5 @@
 import { FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
 import { cn } from '../../utils/utils'
@@ -29,6 +30,14 @@ export function Sidebar({
     onToggleCollapsed
 }: SidebarProps) {
     const filteredFiles = files || []
+    const listRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        if (!selectedFile?.id || !listRef.current) return
+        const selectedEl = listRef.current.querySelector<HTMLElement>(`[data-file-id="${selectedFile.id}"]`)
+        selectedEl?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }, [selectedFile?.id])
+
     const handleFileClick = (file: MediaFile) => {
         onFileSelect(file)
         if (window.innerWidth < 768) {
@@ -121,14 +130,15 @@ export function Sidebar({
                     </div>
                 )}
 
-                <div className="space-y-3">
+                <div className="space-y-3" ref={listRef}>
                     {!collapsed && filteredFiles.map((file) => (
-                        <FileItem
-                            key={file.id}
-                            file={file}
-                            isSelected={selectedFile?.id === file.id}
-                            onClick={handleFileClick}
-                        />
+                        <div key={file.id} data-file-id={file.id}>
+                            <FileItem
+                                file={file}
+                                isSelected={selectedFile?.id === file.id}
+                                onClick={handleFileClick}
+                            />
+                        </div>
                     ))}
 
                     {!collapsed && filteredFiles.length === 0 && (
