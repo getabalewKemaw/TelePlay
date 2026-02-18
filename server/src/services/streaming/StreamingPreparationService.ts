@@ -1,7 +1,6 @@
 /**
  * Prepares processed chunks for network streaming with playback controls
  */
-import type { IStreamingPreparationService } from '../../interfaces/streaming/IStreamingPreparationService.js';
 import type {
   StreamingSession,
   StreamingPreparationOptions
@@ -70,7 +69,7 @@ export const getSession = async (sessionId: string): Promise<StreamingSession | 
   sessions.get(sessionId)
 );
 
-export const streamingPreparationService: IStreamingPreparationService = {
+export const streamingPreparationService = {
   createSession,
   getSession
 };

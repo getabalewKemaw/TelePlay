@@ -1,5 +1,4 @@
 import type { Response } from 'express';
-import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
 import type { StreamingSession } from '../../types/streaming/StreamingTypes.js';
 import fs from 'fs';
@@ -16,7 +15,7 @@ import {
 } from '../../utils/streaming/streamingFfmpegUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
 
-const chunking: IChunkingService = chunkingService;
+const chunking = chunkingService;
 
 export const getSessionChunkDuration = (session: StreamingSession): number => {
   return session.chunkDuration ?? 10;

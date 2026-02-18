@@ -1,5 +1,3 @@
-import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
-import type { IMediaMetadataProvider } from '../../interfaces/chunking/IMediaMetadataProvider.js';
 import type {
   ChunkingResult,
   ChunkMetadata,
@@ -8,7 +6,6 @@ import type {
   MediaMetadata
 } from '../../types/chunking/ChunkingTypes.js';
 import { chunkingValidationError, chunkingSeekError, chunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
-import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import { ffprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
 import { ffmpegService } from '../ffmpeg/FFmpegService.js';
 import { existsSync, mkdirSync } from 'fs';
@@ -16,8 +13,8 @@ import path from 'path';
 
 const DEFAULT_CHUNK_DURATION = 120;
 
-const metadataProvider: IMediaMetadataProvider = ffprobeMetadataProvider;
-const ffmpeg: IFfmpegService = ffmpegService;
+const metadataProvider = ffprobeMetadataProvider;
+const ffmpeg = ffmpegService;
 const defaultChunkDuration = DEFAULT_CHUNK_DURATION;
 
 const buildConfig = (filePath: string, totalDuration: number, options?: ChunkingOptions): ChunkingConfig => {
@@ -158,7 +155,7 @@ const validateConfig = (config: ChunkingConfig): void => {
   }
 };
 
-export const chunkingService: IChunkingService = {
+export const chunkingService = {
   getAllChunks,
   getMetadata,
   getChunkAtTime

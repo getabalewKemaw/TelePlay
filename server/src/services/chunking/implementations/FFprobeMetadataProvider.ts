@@ -5,7 +5,6 @@
 import { spawn } from 'child_process';
 import { stat } from 'fs/promises';
 import path from 'path';
-import type { IMediaMetadataProvider } from '../../../interfaces/chunking/IMediaMetadataProvider.js';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { chunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
 import { FFPROBE_EXECUTABLE, type RawFileProfile, BASE_ARGS, RAW_PROFILES } from '../../../utils/chunking/chunlingUtils.js';
@@ -120,7 +119,7 @@ export const getMetadata = async (filePath: string): Promise<MediaMetadata> => {
   }
 };
 
-export const ffprobeMetadataProvider: IMediaMetadataProvider = {
+export const ffprobeMetadataProvider = {
   getMetadata
 };
 

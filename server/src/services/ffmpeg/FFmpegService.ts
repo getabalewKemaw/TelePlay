@@ -1,4 +1,3 @@
-import type { IFfmpegService } from '../../interfaces/ffmpeg/IFfmpegService.js';
 import type { FFmpegExecutionResult, DecodeParams } from '../../types/ffmpeg/FFmpegTypes.js';
 import {
   validateBitrate,
@@ -38,7 +37,6 @@ const validateDecodeCodecRequirements = (codec: string, params: DecodeParams): v
       'channels'
     );
   }
-
   if (codec === 'g726' && !params.bitrate) {
     throw ffmpegValidationError(
       'Bitrate is required for G.726 decoding (8, 16, 24, or 32 kbps)',
@@ -99,7 +97,7 @@ export const decode = async (params: DecodeParams): Promise<FFmpegExecutionResul
   }
 };
 
-export const ffmpegService: IFfmpegService = {
+export const ffmpegService = {
   decode
 };
 

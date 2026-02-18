@@ -1,5 +1,3 @@
-import type { IFileService } from '../../interfaces/file/IFileService.js';
-import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import prisma from '../../lib/prisma.js';
 import type { FileMetadataDto, ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
@@ -19,7 +17,7 @@ const ALLOWED_SORT_FIELDS = new Set([
     'status'
 ]);
 
-const chunking: IChunkingService = chunkingService;
+const chunking = chunkingService;
 
 const toFileMetadataDto = (file: any): FileMetadataDto => {
     return {
@@ -216,7 +214,7 @@ export const registerFile = async (filename: string, filePath: string): Promise<
     return processFile(filePath);
 };
 
-export const fileService: IFileService = {
+export const fileService = {
     discoverFiles,
     listFiles,
     getFileMetadata,

@@ -1,6 +1,5 @@
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
-import type { IFfmpegExecutor } from '../../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate } from '../../../types/ffmpeg/FFmpegTypes.js';
 import { ffmpegExecutionError, ffmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
 import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
@@ -165,7 +164,7 @@ export const execute = async (
   });
 };
 
-export const ffmpegExecutor: IFfmpegExecutor = {
+export const ffmpegExecutor = {
   execute
 };
 

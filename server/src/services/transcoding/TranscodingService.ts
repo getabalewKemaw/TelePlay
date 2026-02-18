@@ -1,5 +1,3 @@
-import type { ITranscodingService } from '../../interfaces/transcoding/ITranscodingService.js';
-import type { IFfmpegExecutor } from '../../interfaces/ffmpeg/IFfmpegExecutor.js';
 import type {
   TranscodingResult,
   ChunkTranscodingParams,
@@ -17,7 +15,7 @@ const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 
 import { CODEC_COMPATIBILITY } from '../../utils/transcoding/transcodingRequestUtils.js';
 
-const executor: IFfmpegExecutor = ffmpegExecutor;
+const executor = ffmpegExecutor;
 
 const validateSourceEncoding = (encoding: { codec: SourceCodec; bitrate?: number }): void => {
   if (encoding.codec === 'g726' && !encoding.bitrate) {
@@ -131,7 +129,7 @@ export const getRecommendedTargetCodec = (sourceCodec: string): string => {
   return compatibility.recommended;
 };
 
-export const transcodingService: ITranscodingService = {
+export const transcodingService = {
   transcodeChunk,
   getRecommendedTargetCodec
 };

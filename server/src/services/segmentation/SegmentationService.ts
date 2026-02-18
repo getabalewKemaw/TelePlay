@@ -3,8 +3,6 @@
  * Groups time-based chunks into logical segments for efficient network delivery
  */
 
-import type { ISegmentationService } from '../../interfaces/segmentation/ISegmentationService.js';
-import type { IChunkingService } from '../../interfaces/chunking/IChunkingService.js';
 import type {
   SegmentMetadata,
   SegmentationOptions,
@@ -28,7 +26,7 @@ const DEFAULT_CONFIG: SegmentationConfig = {
 
 const DEFAULT_BASE_CHUNK_DURATION = 10;
 
-const chunking: IChunkingService = chunkingService;
+const chunking = chunkingService;
 const defaultConfig: SegmentationConfig = DEFAULT_CONFIG;
 
 const buildConfig = (options?: SegmentationOptions): SegmentationConfig => {
@@ -118,7 +116,7 @@ export const getSegmentsInRange = async (
   return segments.filter((segment) => isSegmentInRange(segment, startTime, endTime));
 };
 
-export const segmentationService: ISegmentationService = {
+export const segmentationService = {
   getAllSegments,
   getSegmentsInRange
 };
