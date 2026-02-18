@@ -100,6 +100,25 @@ export const getChunkPeaks = async (req: Request<{ sessionId: string; index: str
     }
 };
 
+export const getChunkByTime = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
+    try {
+        const { sessionId } = req.params;
+        const session = await getSessionOr404(sessionId, res);
+        if (!session) return;
+
+        const timeRaw = typeof req.query.time === 'string' ? Number(req.query.time) : Number.NaN;
+        if (!Number.isFinite(timeRaw) || timeRaw < 0) {
+            return res.status(400).json({ success: false, message: 'Invalid time query parameter' });
+        }
+
+        const chunkDuration = streamingChunkService.getSessionChunkDuration(session);
+        const chunk = await chunkingService.getChunkAtTime(session.filePath, timeRaw, { chunkDuration });
+        sendSuccess(res, chunk);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const stream = async (req: Request<{ sessionId: string }>, res: Response, next: NextFunction) => {
     try {
         const { sessionId } = req.params;
@@ -107,6 +126,14 @@ export const stream = async (req: Request<{ sessionId: string }>, res: Response,
         if (!session) return;
 
         if (session.mode === 'live') {
+            const seekTimeRaw = typeof req.query.time === 'string' ? Number(req.query.time) : Number.NaN;
+            if (Number.isFinite(seekTimeRaw) && seekTimeRaw >= 0) {
+                const chunkDuration = streamingChunkService.getSessionChunkDuration(session);
+                const chunk = await chunkingService.getChunkAtTime(session.filePath, seekTimeRaw, { chunkDuration });
+                const requestedFormat = typeof req.query.format === 'string' ? req.query.format : undefined;
+                streamingChunkService.streamChunk(session, chunk, requestedFormat, res);
+                return;
+            }
             streamingChunkService.streamLive(session, res);
             return;
         }

@@ -5,6 +5,8 @@ import path from 'path';
 import { isdirectoryExists } from '../../utils/fileUtils.js';
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
+import { ffmpegService } from '../ffmpeg/FFmpegService.js';
+import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 
 const ALLOWED_SORT_FIELDS = new Set([
     'createdAt',
@@ -18,6 +20,93 @@ const ALLOWED_SORT_FIELDS = new Set([
 ]);
 
 const chunking = chunkingService;
+const processedDir = path.resolve(process.env.PROCESSED_DIR || './processed');
+
+const inferDecodeCodec = (filename: string, codec?: string | null): AudioCodec | undefined => {
+    const name = filename.toLowerCase();
+    const codecName = (codec || '').toLowerCase();
+
+    if (codecName.includes('alaw') || name.includes('g711a') || name.includes('alaw')) return 'pcm_alaw';
+    if (codecName.includes('mulaw') || name.includes('g711u') || name.includes('g711') || name.includes('mulaw')) return 'pcm_mulaw';
+    if (codecName === 'g726' || name.includes('g726')) return 'g726';
+    if (codecName === 'g728' || name.includes('g728')) return 'g728';
+    if (codecName === 'pcm_mulaw' || codecName === 'pcm_alaw' || codecName === 'adpcm_g726') return codecName as AudioCodec;
+    if (name.endsWith('.g711') || name.endsWith('.g711u') || name.endsWith('.g711a')) return 'pcm_mulaw';
+
+    return undefined;
+};
+
+const inferSampleRate = (codec?: AudioCodec): SampleRate | undefined => {
+    if (codec === 'g728') return 16000;
+    if (codec === 'g726' || codec === 'pcm_mulaw' || codec === 'pcm_alaw') return 8000;
+    return undefined;
+};
+
+const inferChannels = (codec?: AudioCodec): ChannelConfig | undefined => {
+    if (codec === 'g728' || codec === 'g726' || codec === 'pcm_mulaw' || codec === 'pcm_alaw') return 1;
+    return undefined;
+};
+
+const inferG726Bitrate = (bitrate?: number | null): number | undefined => {
+    if (!bitrate || !Number.isFinite(bitrate)) return 32;
+    const kbps = bitrate >= 1000 ? Math.round(bitrate / 1000) : bitrate;
+    const supported = [8, 16, 24, 32];
+    let closest = supported[0]!;
+    for (const value of supported) {
+        if (Math.abs(value - kbps) < Math.abs(closest - kbps)) {
+            closest = value;
+        }
+    }
+    return closest;
+};
+
+const buildDecodedOutputPath = (filename: string): string => {
+    const base = path.parse(filename).name;
+    return path.join(processedDir, `${base}_decoded.mp3`);
+};
+
+const tryAutoDecode = async (file: {
+    id: string;
+    filename: string;
+    originalPath: string;
+    decodedPath?: string | null;
+    codec?: string | null;
+    bitrate?: number | null;
+}): Promise<void> => {
+    if (file.decodedPath) return;
+
+    const outputPath = buildDecodedOutputPath(file.filename);
+    try {
+        await fs.access(outputPath);
+        await prisma.mediaFile.update({
+            where: { id: file.id },
+            data: { decodedPath: outputPath, status: 'ready' }
+        });
+        return;
+    } catch {
+        // output does not exist, continue and decode
+    }
+
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    const codec = inferDecodeCodec(file.filename, file.codec);
+    const sampleRate = inferSampleRate(codec);
+    const channels = inferChannels(codec);
+    const bitrate = codec === 'g726' ? inferG726Bitrate(file.bitrate) : undefined;
+
+    await ffmpegService.decode({
+        input: { path: file.originalPath },
+        output: { path: outputPath, format: 'mp3' },
+        codec,
+        sampleRate,
+        channels,
+        bitrate
+    });
+
+    await prisma.mediaFile.update({
+        where: { id: file.id },
+        data: { decodedPath: outputPath, status: 'ready' }
+    });
+};
 
 const toFileMetadataDto = (file: any): FileMetadataDto => {
     return {
@@ -68,7 +157,12 @@ export const discoverFiles = async (directoryPath: string): Promise<void> => {
             const filePath = filesToProcess[index];
             if (!filePath) continue;
             try {
-                await processFile(filePath);
+                const file = await processFile(filePath);
+                try {
+                    await tryAutoDecode(file);
+                } catch (decodeError) {
+                    console.error(`Auto decode failed for ${filePath}:`, decodeError);
+                }
             } catch (error) {
                 console.error(`Failed to discover file ${filePath}:`, error);
             }
@@ -211,7 +305,15 @@ export const processFile = async (filePath: string): Promise<FileMetadataDto> =>
 };
 
 export const registerFile = async (filename: string, filePath: string): Promise<FileMetadataDto> => {
-    return processFile(filePath);
+    const file = await processFile(filePath);
+    try {
+        await tryAutoDecode(file);
+        const updated = await prisma.mediaFile.findUnique({ where: { id: file.id } });
+        if (updated) return toFileMetadataDto(updated);
+    } catch (error) {
+        console.error(`Auto decode failed for uploaded file ${filePath}:`, error);
+    }
+    return file;
 };
 
 export const fileService = {

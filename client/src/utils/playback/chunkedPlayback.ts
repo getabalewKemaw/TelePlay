@@ -1,4 +1,4 @@
-import { fetchStreamingChunkPeaks, fetchStreamingChunks, fetchStreamingSegments } from '../../api/api'
+import { fetchStreamingChunkByTime, fetchStreamingChunkPeaks, fetchStreamingChunks, fetchStreamingSegments } from '../../api/api'
 import type { StartChunkedPlaybackArgs } from '../../types/chunkingtypes';
 const API_BASE_URL=import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 export const clamp = (time: number, duration: number) => Math.min(Math.max(time, 0), duration || 0)
@@ -165,8 +165,15 @@ export async function startChunkedPlayback({
       clearTimeout(seekDebounceRef.current)
     }
     seekDebounceRef.current = setTimeout(() => {
-      const targetIndex = getChunkIndexForTime(time)
-      startChunkPipeline(targetIndex, time)
+      const fallbackIndex = getChunkIndexForTime(time)
+      fetchStreamingChunkByTime(sessionId, time)
+        .then((chunk: any) => {
+          const targetIndex = typeof chunk?.index === 'number' ? chunk.index : fallbackIndex
+          startChunkPipeline(targetIndex, time)
+        })
+        .catch(() => {
+          startChunkPipeline(fallbackIndex, time)
+        })
     }, 180)
   })
 

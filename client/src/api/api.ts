@@ -115,6 +115,13 @@ export const fetchStreamingChunkPeaks = async (sessionId: string, index: number,
     return response.data.data;
 };
 
+export const fetchStreamingChunkByTime = async (sessionId: string, time: number) => {
+    const response = await api.get(`/streaming/sessions/${sessionId}/chunks/by-time`, {
+        params: { time }
+    });
+    return response.data.data;
+};
+
 export const discoverFiles = async (path?: string) => {
     const response = await api.post('/files/discover', { path });
     return response.data;
@@ -131,4 +138,3 @@ export const uploadFile = async (file: File) => {
 };
 
 export default api;
-
