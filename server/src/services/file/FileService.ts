@@ -41,7 +41,7 @@ const inferChannels = (codec?: AudioCodec): ChannelConfig | undefined => {
 const inferG726Bitrate = (bitrate?: number | null): number | undefined => {
     if (!bitrate || !Number.isFinite(bitrate)) return 32;
     const kbps = bitrate >= 1000 ? Math.round(bitrate / 1000) : bitrate;
-    const supported = [8, 16, 24, 32];
+    const supported = [16, 24, 32,40];
     let closest = supported[0]!;
     for (const value of supported) {
         if (Math.abs(value - kbps) < Math.abs(closest - kbps)) {
