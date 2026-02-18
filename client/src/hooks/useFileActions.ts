@@ -54,8 +54,9 @@ export function useFileActions() {
       setFiles(filesArray)
       const total = result.meta?.total ?? filesArray.length
       setTotal(total)
-      if (selectedFile) {
-        const refreshedSelection = filesArray.find((f) => f.id === selectedFile.id)
+      const currentSelected = useFileStore.getState().selectedFile
+      if (currentSelected) {
+        const refreshedSelection = filesArray.find((f) => f.id === currentSelected.id)
         if (refreshedSelection) {
           setSelectedFile(refreshedSelection)
         }
@@ -67,7 +68,7 @@ export function useFileActions() {
     } finally {
       isLoading = false
     }
-  }, [debouncedSearchTerm, filterDecoded, limit, page, selectedFile, setFiles, setSelectedFile, setTotal, sortDir, sortKey])
+  }, [debouncedSearchTerm, filterDecoded, limit, page, setFiles, setSelectedFile, setTotal, sortDir, sortKey])
 
   const handleFileSelect = useCallback((file: MediaFile) => {
     setSelectedFile(file)
