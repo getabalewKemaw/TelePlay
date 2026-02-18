@@ -180,7 +180,6 @@ const tryAutoDecode = async (file: {
         }
     });
 };
-
 const scheduleAutoDecode = (file: {
     id: string;
     filename: string;

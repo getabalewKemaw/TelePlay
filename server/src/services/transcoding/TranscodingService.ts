@@ -16,7 +16,6 @@ const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 import { CODEC_COMPATIBILITY } from '../../utils/transcoding/transcodingRequestUtils.js';
 
 const executor = ffmpegExecutor;
-
 const validateSourceEncoding = (encoding: { codec: SourceCodec; bitrate?: number }): void => {
   if (encoding.codec === 'g726' && !encoding.bitrate) {
     throw transcodingValidationError(

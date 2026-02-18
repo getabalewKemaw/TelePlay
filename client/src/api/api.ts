@@ -19,7 +19,6 @@ export interface MediaFile {
     bitrate?: number;
     fileSize?:number
 }
-
 export interface FetchFilesParams {
     page?: number;
     limit?: number;

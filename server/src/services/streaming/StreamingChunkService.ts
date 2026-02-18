@@ -14,9 +14,7 @@ import {
   type StreamingOutputFormat
 } from '../../utils/streaming/streamingFfmpegUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
-
 const chunking = chunkingService;
-
 export const getSessionChunkDuration = (session: StreamingSession): number => {
   return session.chunkDuration ?? 10;
 };
