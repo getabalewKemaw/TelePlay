@@ -76,87 +76,92 @@ export async function startChunkedPlayback({
     audioRef.current.play().catch(() => undefined)
 
     mediaSource.addEventListener('sourceopen', async () => {
-      if (requestId !== streamState.requestId) return
-
-      const mime = 'audio/mpeg'
-      if (!MediaSource.isTypeSupported(mime)) {
-        throw new Error('MSE does not support audio/mpeg')
-      }
-
-      const sourceBuffer = mediaSource.addSourceBuffer(mime)
-      sourceBuffer.mode = 'segments'
-      sourceBuffer.timestampOffset = baseChunkStart
-      if (totalDuration > 0) {
-        try {
-          mediaSource.duration = totalDuration
-        } catch {
-          // ignore duration set errors
-        }
-      }
-
-      let index = startIndex
-      let firstChunkAppended = false
-
-      const waitForBuffer = () => new Promise<void>((resolve) => {
-        if (!sourceBuffer.updating) {
-          resolve()
-          return
-        }
-        const onUpdate = () => {
-          sourceBuffer.removeEventListener('updateend', onUpdate)
-          resolve()
-        }
-        sourceBuffer.addEventListener('updateend', onUpdate)
-      })
-
-      const appendChunk = async () => {
+      try {
         if (requestId !== streamState.requestId) return
-        if (index >= chunks.length) {
-          try { mediaSource.endOfStream() } catch { /* ignore */ }
-          return
+
+        const mime = 'audio/mpeg'
+        if (!MediaSource.isTypeSupported(mime)) {
+          throw new Error('MSE does not support audio/mpeg')
         }
 
-        fetchStreamingChunkPeaks(sessionId, index, binsPerChunk).then((peaks) => {
-          if (Array.isArray(peaks)) {
-            setStreamingPeaks((prev: number[] | null) => {
-              if (!prev) return prev
-              const next = prev.slice()
-              const offset = index * binsPerChunk
-              for (let i = 0; i < binsPerChunk; i++) {
-                next[offset + i] = peaks[i] ?? Number.NaN
-              }
-              return next
-            })
+        const sourceBuffer = mediaSource.addSourceBuffer(mime)
+        // MPEG byte streams use generated timestamps; "segments" is invalid in this case.
+        sourceBuffer.mode = 'sequence'
+        sourceBuffer.timestampOffset = baseChunkStart
+        if (totalDuration > 0) {
+          try {
+            mediaSource.duration = totalDuration
+          } catch {
+            // ignore duration set errors
           }
-        }).catch(() => undefined)
+        }
 
-        const chunkUrl = `${API_BASE_URL}/api/streaming/sessions/${sessionId}/chunks/${index}/stream?format=${chunkedOutputFormat}`
-        const response = await fetch(chunkUrl, { signal: chunkSessionRef.current.abort?.signal })
-        if (!response.ok) throw new Error(`Chunk request failed: ${response.status}`)
-        const buffer = await response.arrayBuffer()
+        let index = startIndex
+        let firstChunkAppended = false
 
-        await waitForBuffer()
-        if (requestId !== streamState.requestId) return
-        sourceBuffer.appendBuffer(buffer)
-        const onAppended = () => {
-          sourceBuffer.removeEventListener('updateend', onAppended)
+        const waitForBuffer = () => new Promise<void>((resolve) => {
+          if (!sourceBuffer.updating) {
+            resolve()
+            return
+          }
+          const onUpdate = () => {
+            sourceBuffer.removeEventListener('updateend', onUpdate)
+            resolve()
+          }
+          sourceBuffer.addEventListener('updateend', onUpdate)
+        })
+
+        const appendChunk = async () => {
           if (requestId !== streamState.requestId) return
-          if (!firstChunkAppended && audioRef.current) {
-            firstChunkAppended = true
-            const boundedSeek = clamp(streamState.seekTime, totalDuration || streamState.seekTime)
-            try {
-              audioRef.current.currentTime = Math.max(0.01, boundedSeek)
-              audioRef.current.play().catch(() => undefined)
-            } catch {
-              // ignore seek errors during init
-            }
+          if (index >= chunks.length) {
+            try { mediaSource.endOfStream() } catch { /* ignore */ }
+            return
           }
-          index += 1
-          appendChunk().catch(() => undefined)
+
+          fetchStreamingChunkPeaks(sessionId, index, binsPerChunk).then((peaks) => {
+            if (Array.isArray(peaks)) {
+              setStreamingPeaks((prev: number[] | null) => {
+                if (!prev) return prev
+                const next = prev.slice()
+                const offset = index * binsPerChunk
+                for (let i = 0; i < binsPerChunk; i++) {
+                  next[offset + i] = peaks[i] ?? Number.NaN
+                }
+                return next
+              })
+            }
+          }).catch(() => undefined)
+
+          const chunkUrl = `${API_BASE_URL}/api/streaming/sessions/${sessionId}/chunks/${index}/stream?format=${chunkedOutputFormat}`
+          const response = await fetch(chunkUrl, { signal: chunkSessionRef.current.abort?.signal })
+          if (!response.ok) throw new Error(`Chunk request failed: ${response.status}`)
+          const buffer = await response.arrayBuffer()
+
+          await waitForBuffer()
+          if (requestId !== streamState.requestId) return
+          sourceBuffer.appendBuffer(buffer)
+          const onAppended = () => {
+            sourceBuffer.removeEventListener('updateend', onAppended)
+            if (requestId !== streamState.requestId) return
+            if (!firstChunkAppended && audioRef.current) {
+              firstChunkAppended = true
+              const boundedSeek = clamp(streamState.seekTime, totalDuration || streamState.seekTime)
+              try {
+                audioRef.current.currentTime = Math.max(0.01, boundedSeek)
+                audioRef.current.play().catch(() => undefined)
+              } catch {
+                // ignore seek errors during init
+              }
+            }
+            index += 1
+            appendChunk().catch(() => undefined)
+          }
+          sourceBuffer.addEventListener('updateend', onAppended)
         }
-        sourceBuffer.addEventListener('updateend', onAppended)
+        appendChunk().catch(() => undefined)
+      } catch (error) {
+        console.error('Chunk pipeline init failed:', error)
       }
-      appendChunk().catch(() => undefined)
     })
   }
 

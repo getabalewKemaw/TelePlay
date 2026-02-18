@@ -43,7 +43,7 @@ export function PlayerFileCard({
 }: PlayerFileCardProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const convertedDuartions = formatTime(selectedFile.duration)
-  const isDecodedReady = selectedFile.status === 'ready' && !!selectedFile.decodedPath
+  const isDecodedReady = !!selectedFile.decodedPath && selectedFile.status !== 'processing' && selectedFile.status !== 'error'
   const canPlaySelectedFormat = ((selectedFile.decodedPath || '').toLowerCase().endsWith(`.${outputFormat}`) || canDirectPlay) && (isDecodedReady || canDirectPlay)
   const decodeProgress = typeof selectedFile.decodeProgress === 'number'
     ? Math.max(0, Math.min(100, Math.round(selectedFile.decodeProgress)))

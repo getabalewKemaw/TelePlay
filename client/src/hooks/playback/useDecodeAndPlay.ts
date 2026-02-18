@@ -39,7 +39,7 @@ export function useDecodeAndPlay({
     setChunkSeekHandler(null)
 
     const decodedFormat = getDecodedFormat(targetFile)
-    const isDecodedReady = targetFile.status === 'ready' && !!targetFile.decodedPath
+    const isDecodedReady = !!targetFile.decodedPath && targetFile.status !== 'processing' && targetFile.status !== 'error'
     const directPlayable = outputFormat === 'wav' && isDirectPlayable(targetFile)
     const hasPlayableOutput = (isDecodedReady && decodedFormat === outputFormat) || directPlayable
     setIsDecoding(true)
@@ -64,22 +64,6 @@ export function useDecodeAndPlay({
         setStreamingPeaks(null)
         setStreamingDuration(null)
         setChunkSeekHandler(null)
-      }
-
-      if (useChunkedStreaming && !finalPath && targetFile.status !== 'processing') {
-        const liveDecodePath = getOutputPath(targetFile.filename, outputFormat)
-        decodeFile(buildDecodePayload(targetFile, liveDecodePath, outputFormat))
-          .then(async (decodeResult) => {
-            if (!decodeResult?.outputPath) return
-            const updatedFile = { ...targetFile, decodedPath: decodeResult.outputPath }
-            setSelectedFile(updatedFile)
-            await loadFiles(true)
-            toast.success('Background decode completed. Next play will use file-based stream.')
-          })
-          .catch((err) => {
-            console.error('Background decode failed:', err)
-            toast.error('Background decode failed. File was streamed but not saved as decoded.')
-          })
       }
 
       if (!finalPath && isDecodedReady && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {

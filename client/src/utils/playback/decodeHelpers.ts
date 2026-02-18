@@ -38,7 +38,7 @@ export const buildDecodePayload = (targetFile: MediaFile, outputPath: string, ou
 export const buildStreamOptions = (targetFile: MediaFile, outputFormat: 'wav' | 'mp3', useChunkedStreaming: boolean) => {
   const inferredCodec = inferCodec(targetFile)
   const streamingOutputFormat = useChunkedStreaming ? 'mp3' : outputFormat
-   const d=targetFile.duration;
+  const d = targetFile.duration
   return {
     liveOptions: {
       transport: 'http',
@@ -48,9 +48,10 @@ export const buildStreamOptions = (targetFile: MediaFile, outputFormat: 'wav' | 
       sampleRate: targetFile.codec === 'g728' ? 16000 : 8000,
       channels: 1,
       bitrate: targetFile.codec === 'g726' ? (getG726BitrateKbps(targetFile) || 32) : undefined,
-      saveOutputPath: getOutputPath(targetFile.filename, outputFormat),
+      // Background auto-decode handles persisted decoded files. Avoid concurrent writes during live stream.
+      saveOutputPath: undefined,
       fileId: targetFile.id,
-      chunkDuration:d>3600?30:d>1800?20:10
+      chunkDuration: d > 3600 ? 30 : d > 1800 ? 20 : 10
     },
     fileOptions: {
       transport: 'http',

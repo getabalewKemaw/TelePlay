@@ -55,8 +55,10 @@ export function useFileActions() {
       const total = result.meta?.total ?? filesArray.length
       setTotal(total)
       if (selectedFile) {
-        const refreshedSelection = filesArray.find((f) => f.id === selectedFile.id) || null
-        setSelectedFile(refreshedSelection)
+        const refreshedSelection = filesArray.find((f) => f.id === selectedFile.id)
+        if (refreshedSelection) {
+          setSelectedFile(refreshedSelection)
+        }
       }
       if (!quiet) toast.success(`Inventory synchronized: ${total} files detected.`)
     } catch (error) {
@@ -65,7 +67,7 @@ export function useFileActions() {
     } finally {
       isLoading = false
     }
-  }, [debouncedSearchTerm, filterDecoded, limit, page, setFiles, setTotal, sortDir, sortKey])
+  }, [debouncedSearchTerm, filterDecoded, limit, page, selectedFile, setFiles, setSelectedFile, setTotal, sortDir, sortKey])
 
   const handleFileSelect = useCallback((file: MediaFile) => {
     setSelectedFile(file)
