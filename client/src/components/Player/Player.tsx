@@ -82,6 +82,9 @@ export function Player() {
   const effectiveDuration = isChunkedStreaming
     ? (streamingDuration || nativeDuration)
     : (forceNativeAudio ? nativeDuration : duration)
+  const streamProgressPercent = effectiveDuration > 0
+    ? (effectiveCurrentTime / effectiveDuration) * 100
+    : 0;
 
   return (
     <div className="max-w-9xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -108,6 +111,7 @@ export function Player() {
           activeSession={activeSession}
           isWaveformReady={isWaveformReady}
           playbackRate={playbackRate}
+          streamProgressPercent={isChunkedStreaming ? streamProgressPercent : undefined}
           onRateChange={handleRateChange}
         />
 

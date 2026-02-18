@@ -96,15 +96,33 @@ export function FileTable({
                   </div>
                 </td>
                 <td className="px-6 py-4">
+                  {(() => {
+                    const progress = typeof file.decodeProgress === 'number'
+                      ? Math.max(0, Math.min(100, Math.round(file.decodeProgress)))
+                      : undefined
+                    const statusLabel = file.status || 'pending'
+                    const isReady = statusLabel === 'ready'
+                    const isProcessing = statusLabel === 'processing'
+                    const chipClass = isReady
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : isProcessing
+                        ? 'bg-blue-50 text-blue-700'
+                        : statusLabel === 'error'
+                          ? 'bg-rose-50 text-rose-700'
+                          : 'bg-amber-50 text-amber-700'
+                    const label = isProcessing && typeof progress === 'number'
+                      ? `processing ${progress}%`
+                      : statusLabel
+                    return (
                   <div className={cn(
                     'inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm',
-                    file.decodedPath
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'bg-amber-50 text-amber-700'
+                    chipClass
                   )}>
                     <CheckCircle2 size={12} />
-                    {file.decodedPath ? 'Processed' : file.status || 'Pending'}
+                    {label}
                   </div>
+                    )
+                  })()}
                 </td>
               </tr>
             )

@@ -6,6 +6,7 @@ interface PlayerHeaderProps {
   activeSession: any
   isWaveformReady: boolean
   playbackRate: number
+  streamProgressPercent?: number
   onRateChange: (rate: number) => void
 }
 
@@ -13,6 +14,7 @@ export function PlayerHeader({
   activeSession,
   isWaveformReady,
   playbackRate,
+  streamProgressPercent,
   onRateChange
 }: PlayerHeaderProps) {
   const [showSpeedMenu, setShowSpeedMenu] = useState(false)
@@ -89,6 +91,11 @@ export function PlayerHeader({
             <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 border-2 text-[9px] font-black uppercase tracking-wider shadow-sm">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
               <span>L-STREAM: </span>{activeSession.sessionId.slice(0, 8)}
+            </div>
+          )}
+          {activeSession && typeof streamProgressPercent === 'number' && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 border text-[9px] font-black uppercase tracking-wider shadow-sm">
+              Stream {Math.max(0, Math.min(100, Math.round(streamProgressPercent)))}%
             </div>
           )}
           <div className={cn(

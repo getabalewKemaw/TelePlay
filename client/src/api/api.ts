@@ -12,6 +12,7 @@ export interface MediaFile {
     originalPath: string;
     decodedPath?: string;
     status: string;
+    decodeProgress?: number;
     duration: number;
     format?: string;
     codec?: string;

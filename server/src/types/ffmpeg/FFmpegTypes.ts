@@ -22,6 +22,7 @@ export interface DecodeParams {
   bitrate?: number; // Required for G.726 (8, 16, 24, 32 kbps)
   startTime?: number;
   duration?: number;
+  onProgress?: (update: FFmpegProgressUpdate) => void;
 }
 export interface TranscodeParams {
   input: FileConfig;

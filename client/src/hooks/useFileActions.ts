@@ -54,6 +54,10 @@ export function useFileActions() {
       setFiles(filesArray)
       const total = result.meta?.total ?? filesArray.length
       setTotal(total)
+      if (selectedFile) {
+        const refreshedSelection = filesArray.find((f) => f.id === selectedFile.id) || null
+        setSelectedFile(refreshedSelection)
+      }
       if (!quiet) toast.success(`Inventory synchronized: ${total} files detected.`)
     } catch (error) {
       console.error('Failed to fetch files:', error)

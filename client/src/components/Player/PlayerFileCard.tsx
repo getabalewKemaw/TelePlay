@@ -43,6 +43,11 @@ export function PlayerFileCard({
 }: PlayerFileCardProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const convertedDuartions = formatTime(selectedFile.duration)
+  const isDecodedReady = selectedFile.status === 'ready' && !!selectedFile.decodedPath
+  const canPlaySelectedFormat = ((selectedFile.decodedPath || '').toLowerCase().endsWith(`.${outputFormat}`) || canDirectPlay) && (isDecodedReady || canDirectPlay)
+  const decodeProgress = typeof selectedFile.decodeProgress === 'number'
+    ? Math.max(0, Math.min(100, Math.round(selectedFile.decodeProgress)))
+    : undefined
 
   return (
     <div className={cn(
@@ -123,11 +128,18 @@ export function PlayerFileCard({
                   <div className="w-4 h-4 bg-coffee-400 animate-pulse rounded-full" />
                   <span className="text-xs font-bold">Processing...</span>
                 </>
+              ) : selectedFile.status === 'processing' ? (
+                <>
+                  <div className="w-4 h-4 bg-blue-400 animate-pulse rounded-full" />
+                  <span className="text-xs font-bold">
+                    {typeof decodeProgress === 'number' ? `Decoding ${decodeProgress}%` : 'Decoding...'}
+                  </span>
+                </>
               ) : (
                 <>
                   <Play size={16} fill="currentColor" />
                   <span className="text-xs font-bold">
-                    {((selectedFile.decodedPath || '').toLowerCase().endsWith(`.${outputFormat}`) || canDirectPlay)
+                    {canPlaySelectedFormat
                       ? 'Play'
                       : `Decode (${outputFormat.toUpperCase()})`}
                   </span>
@@ -253,10 +265,15 @@ export function PlayerFileCard({
                   <div className="w-5 h-5 bg-white/40 animate-pulse" />
                   Processing
                 </>
+              ) : selectedFile.status === 'processing' ? (
+                <>
+                  <div className="w-5 h-5 bg-white/40 animate-pulse" />
+                  {typeof decodeProgress === 'number' ? `Decoding ${decodeProgress}%` : 'Decoding...'}
+                </>
               ) : (
                 <>
                   <Play size={18} fill="currentColor" />
-                  {((selectedFile.decodedPath || '').toLowerCase().endsWith(`.${outputFormat}`) || canDirectPlay)
+                  {canPlaySelectedFormat
                     ? 'Play'
                     : `Decode & Play (${outputFormat.toUpperCase()})`}
                 </>
@@ -265,14 +282,14 @@ export function PlayerFileCard({
 
             <button
               onClick={onDownload}
-              aria-disabled={!selectedFile.decodedPath}
+              aria-disabled={selectedFile.status !== 'ready' || !selectedFile.decodedPath}
               className={cn(
                 "p-5 font-bold flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg border",
-                selectedFile.decodedPath
+                (selectedFile.status === 'ready' && selectedFile.decodedPath)
                   ? "bg-coffee-accent text-white shadow-coffee-accent/40"
                   : "bg-white text-coffee-400 hover:bg-coffee-50 shadow-sm opacity-60 cursor-not-allowed"
               )}
-              title={selectedFile.decodedPath ? "Download HQ WAV" : "Decode first to download"}
+              title={selectedFile.status === 'ready' && selectedFile.decodedPath ? "Download HQ WAV" : "Decode first to download"}
             >
               <Download size={24} />
             </button>

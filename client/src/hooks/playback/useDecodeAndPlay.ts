@@ -39,15 +39,16 @@ export function useDecodeAndPlay({
     setChunkSeekHandler(null)
 
     const decodedFormat = getDecodedFormat(targetFile)
+    const isDecodedReady = targetFile.status === 'ready' && !!targetFile.decodedPath
     const directPlayable = outputFormat === 'wav' && isDirectPlayable(targetFile)
-    const hasPlayableOutput = decodedFormat === outputFormat || directPlayable
+    const hasPlayableOutput = (isDecodedReady && decodedFormat === outputFormat) || directPlayable
     setIsDecoding(true)
     const toastId = toast.loading(
       hasPlayableOutput ? 'Starting playback...' : `Converting to ${outputFormat.toUpperCase()}...`
     )
 
     try {
-      let finalPath = decodedFormat === outputFormat
+      let finalPath = (isDecodedReady && decodedFormat === outputFormat)
         ? targetFile.decodedPath
         : (directPlayable ? targetFile.originalPath : undefined)
 
@@ -65,7 +66,7 @@ export function useDecodeAndPlay({
         setChunkSeekHandler(null)
       }
 
-      if (useChunkedStreaming && !finalPath) {
+      if (useChunkedStreaming && !finalPath && targetFile.status !== 'processing') {
         const liveDecodePath = getOutputPath(targetFile.filename, outputFormat)
         decodeFile(buildDecodePayload(targetFile, liveDecodePath, outputFormat))
           .then(async (decodeResult) => {
@@ -81,7 +82,7 @@ export function useDecodeAndPlay({
           })
       }
 
-      if (!finalPath && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {
+      if (!finalPath && isDecodedReady && decodedFormat && decodedFormat !== outputFormat && targetFile.decodedPath) {
         const convertedPath = getOutputPath(targetFile.filename, outputFormat)
         const decodeResult = await decodeFile({
           fileId: targetFile.id,

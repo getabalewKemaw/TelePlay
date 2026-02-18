@@ -9,6 +9,7 @@ export interface FileMetadataDto {
     codec?: string;
     bitrate?: number;
     status: string;
+    decodeProgress?: number;
     metadata?: unknown;
     createdAt: string | Date;
     updatedAt: string | Date;

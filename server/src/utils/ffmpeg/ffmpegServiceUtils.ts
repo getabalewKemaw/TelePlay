@@ -92,6 +92,7 @@ export function buildDecodeCommandOptions(
     format: outputFormat,
     startTime: params.startTime,
     duration: params.duration,
+    onProgress: params.onProgress,
     additionalArgs: additionalArgs.length > 0 ? additionalArgs : undefined,
     validateOutput: true,
     minOutputBytes: 1
