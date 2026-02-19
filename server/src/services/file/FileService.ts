@@ -64,8 +64,12 @@ const buildTempDecodedOutputPath = (fileId: string, filename: string): string =>
 };
 
 const coerceDecodeProgress = (value: unknown): number | undefined => {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
-    return Math.max(0, Math.min(100, value));
+    //conver a  numbe if the value comes in the string form
+    const parsed=Number(value);
+    if(isNaN(parsed) || !Number.isFinite(parsed)||value===null){
+        return undefined;
+    }
+        return Math.max(0, Math.min(100, parsed));
 };
 
 const toFileMetadataDto = (file: any): FileMetadataDto => {
