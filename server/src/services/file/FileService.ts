@@ -1,4 +1,3 @@
-// import { inferChannels } from './../../utils/fileUtils';
 import prisma from '../../lib/prisma.js';
 import type { FileMetadataDto, ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
@@ -7,7 +6,6 @@ import { isdirectoryExists } from '../../utils/fileUtils.js';
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
 import { ffmpegService } from '../ffmpeg/FFmpegService.js';
-import type { AudioCodec, SampleRate, ChannelConfig } from '../../types/ffmpeg/FFmpegTypes.js';
 import { ALLOWED_SORT_FIELDS } from '../../constants/file/index.js';
 import {toFileMetadataDto
 ,buildTempDecodedOutputPath,
@@ -17,7 +15,7 @@ buildDecodedOutputPath,inferG726Bitrate,inferDecodeCodec
 const chunking = chunkingService;
 const activeAutoDecodeJobs = new Set<string>();
 const decodeProgressStep = 1;
-const tryAutoDecode = async (file: {
+type File={
     id: string;
     filename: string;
     originalPath: string;
@@ -25,7 +23,8 @@ const tryAutoDecode = async (file: {
     decodedPath?: string | null;
     codec?: string | null;
     bitrate?: number | null;
-}): Promise<void> => {
+}
+const tryAutoDecode = async (file: File): Promise<void> => {
     if (file.decodedPath) {
         await prisma.mediaFile.update({
             where: { id: file.id },
@@ -39,7 +38,6 @@ const tryAutoDecode = async (file: {
         });
         return;
     }
-
     const finalOutputPath = buildDecodedOutputPath(file.filename);
     const tempOutputPath = buildTempDecodedOutputPath(file.id, file.filename);
     try {
@@ -122,18 +120,9 @@ const tryAutoDecode = async (file: {
         }
     });
 };
-const scheduleAutoDecode = (file: {
-    id: string;
-    filename: string;
-    originalPath: string;
-    duration?: number | null;
-    decodedPath?: string | null;
-    codec?: string | null;
-    bitrate?: number | null;
-}): void => {
+const scheduleAutoDecode = (file: File): void => {
     if (file.decodedPath) return;
     if (activeAutoDecodeJobs.has(file.id)) return;
-
     activeAutoDecodeJobs.add(file.id);
     void tryAutoDecode(file)
         .catch(async (error) => {
@@ -155,7 +144,6 @@ const scheduleAutoDecode = (file: {
             activeAutoDecodeJobs.delete(file.id);
         });
 };
-
 export const discoverFiles = async (directoryPath: string): Promise<void> => {
     const dirExists = await isdirectoryExists(directoryPath);
     if (!dirExists) return;
@@ -297,7 +285,6 @@ export const processFile = async (filePath: string): Promise<FileMetadataDto> =>
             return toFileMetadataDto(updated);
         }
     }
-
     try {
         const metadataResult = await chunking.getMetadata(normalizedPath);
         const file = await prisma.mediaFile.upsert({
