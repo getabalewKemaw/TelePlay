@@ -14,18 +14,23 @@ const activeAutoDecodeJobs = new Set<string>();
 const decodeProgressStep = 1;
 
 const inferDecodeCodec = (filename: string, codec?: string | null): AudioCodec | undefined => {
-    const name = filename.toLowerCase();
     const codecName = (codec || '').toLowerCase();
+    const name = filename.toLowerCase();
+    if (codecName) {
+        if (codecName.includes('alaw') || codecName === 'pcm_alaw') return 'pcm_alaw';
+        if (codecName.includes('mulaw') || codecName === 'pcm_mulaw') return 'pcm_mulaw';
+        if (codecName.includes('g726') || codecName === 'adpcm_g726') return 'g726';
+        if (codecName.includes('g728')) return 'g728';
+    }
 
-    if (codecName.includes('alaw') || name.includes('g711a') || name.includes('alaw')) return 'pcm_alaw';
-    if (codecName.includes('mulaw') || name.includes('g711u') || name.includes('g711') || name.includes('mulaw')) return 'pcm_mulaw';
-    if (codecName === 'g726' || name.includes('g726')) return 'g726';
-    if (codecName === 'g728' || name.includes('g728')) return 'g728';
-    if (codecName === 'pcm_mulaw' || codecName === 'pcm_alaw' || codecName === 'adpcm_g726') return codecName as AudioCodec;
-    if (name.endsWith('.g711') || name.endsWith('.g711u') || name.endsWith('.g711a')) return 'pcm_mulaw';
-
+    //  USE FILENAME ONLY AS A FALLBACK (If codec is missing/null)
+    if (name.includes('g711a') || name.includes('alaw')) return 'pcm_alaw';
+    if (name.includes('g711u') || name.includes('mulaw') || name.includes('g711')) return 'pcm_mulaw';
+    if (name.includes('g726')) return 'g726';
+    
     return undefined;
 };
+
 
 const inferSampleRate = (codec?: AudioCodec): SampleRate | undefined => {
     if (codec === 'g728') return 16000;
