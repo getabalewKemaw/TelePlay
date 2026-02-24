@@ -2,7 +2,6 @@ import type { Request, Response, NextFunction } from 'express';
 import { transcodingService } from '../services/transcoding/TranscodingService.js';
 import type { TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
 import { buildChunkTranscodingParams } from '../utils/transcoding/transcodingRequestUtils.js';
-import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
@@ -19,9 +18,7 @@ export const convert = async (req: Request<{}, {}, TranscodeConvertRequest>, res
     const outputPath = enforcePathPolicy(output.path, 'Output path', { allowNonExisting: true, allowTemp: true });
     const outputDir = path.dirname(outputPath);
 
-    if (!existsSync(outputDir)) {
-      mkdirSync(outputDir, { recursive: true });
-    }
+    await fs.mkdir(outputDir, { recursive: true });
 
     const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
     const result = await transcodingService.transcodeChunk(params);
