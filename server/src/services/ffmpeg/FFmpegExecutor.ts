@@ -1,8 +1,8 @@
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
-import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate } from '../../../types/ffmpeg/FFmpegTypes.js';
-import { ffmpegExecutionError, ffmpegTimeoutError } from '../../../errors/ffmpeg/FFmpegErrors.js';
-import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../../constants/ffmpeg/index.js';
+import type { FFmpegCommandOptions, FFmpegExecutionResult, FFmpegProgressUpdate } from '../../types/ffmpeg/FFmpegTypes.js';
+import { ffmpegExecutionError, ffmpegTimeoutError } from '../../errors/ffmpeg/FFmpegErrors.js';
+import { FFMPEG_EXECUTABLE, DEFAULT_TIMEOUT } from '../../constants/ffmpeg/index.js';
 import {
   buildCommandArgs,
   normalizeOptions,
@@ -10,7 +10,7 @@ import {
   shouldPipeStdin,
   updateProgressFromChunk,
   validateOutputFile
-} from '../../../utils/ffmpeg/ffmpegExecutorUtils.js';
+} from '../../utils/ffmpeg/ffmpegExecutorUtils.js';
 
 const executable = FFMPEG_EXECUTABLE;
 const defaultTimeout = DEFAULT_TIMEOUT;
@@ -60,7 +60,6 @@ export const execute = async (
       if (Buffer.byteLength(next) <= maxBufferBytes) return next;
       return next.slice(next.length - maxBufferBytes);
     };
-
     const finalize = (fn: () => void) => {
       if (settled) return;
       settled = true;
@@ -78,7 +77,6 @@ export const execute = async (
           }, timeoutGraceMs);
         }
         finalize(() => {
-          const executionTime = Date.now() - startTime;
           reject(
             ffmpegTimeoutError(
               `FFmpeg execution timed out after ${timeout}ms`,
