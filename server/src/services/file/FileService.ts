@@ -1,180 +1,15 @@
-import prisma from '../../lib/prisma.js';
 import type { FileMetadataDto, ListFilesRequestDto } from '../../dto/file.dto.js';
-import { promises as fs } from 'fs';
 import path from 'path';
-import { isDirectoryExists } from '../../utils/fileUtils.js';
-import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
+import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename, toFileMetadataDto } from '../../utils/fileUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
-import { ffmpegService } from '../ffmpeg/FFmpegService.js';
 import { ALLOWED_SORT_FIELDS } from '../../constants/file/index.js';
-import {toFileMetadataDto
-,buildTempDecodedOutputPath,
-buildDecodedOutputPath,inferG726Bitrate,inferDecodeCodec
-    ,inferSampleRate,inferChannels
-}  from '../../utils/fileUtils.js';
+import { fileRepository } from '../../repositories/file/FileRepository.js';
+import { fileDiscoveryService } from './FileDiscoveryService.js';
+import { fileDecodeService, type FileRecord } from './FileDecodeService.js';
 const chunking = chunkingService;
-const activeAutoDecodeJobs = new Set<string>();
-const decodeProgressStep = 1;
-type File={
-    id: string;
-    filename: string;
-    originalPath: string;
-    duration?: number | null;
-    decodedPath?: string | null;
-    codec?: string | null;
-    bitrate?: number | null;
-}
-const tryAutoDecode = async (file: File): Promise<void> => {
-    if (file.decodedPath) {
-        await prisma.mediaFile.update({
-            where: { id: file.id },
-            data: {
-                status: 'ready',
-                metadata: {
-                    decodeProgress: 100,
-                    decodeState: 'completed'
-                } as any
-            }
-        });
-        return;
-    }
-    const finalOutputPath = buildDecodedOutputPath(file.filename);
-    const tempOutputPath = buildTempDecodedOutputPath(file.id, file.filename);
-    try {
-        await fs.access(finalOutputPath);
-        await prisma.mediaFile.update({
-            where: { id: file.id },
-            data: {
-                decodedPath: finalOutputPath,
-                status: 'ready',
-                metadata: {
-                    decodeProgress: 100,
-                    decodeState: 'completed'
-                } as any
-            }
-        });
-        return;
-    } catch {
-        // output does not exist, continue and decode
-    }
-
-    await fs.mkdir(path.dirname(finalOutputPath), { recursive: true });
-    await prisma.mediaFile.update({
-        where: { id: file.id },
-        data: {
-            status: 'processing',
-            metadata: {
-                decodeProgress: 0,
-                decodeState: 'processing'
-            } as any
-        }
-    });
-
-    const codec = inferDecodeCodec(file.filename, file.codec);
-    const sampleRate = inferSampleRate(codec);
-    const channels = inferChannels(codec);
-    const bitrate = codec === 'g726' ? inferG726Bitrate(file.bitrate) : undefined;
-    let lastPersistedProgress = -decodeProgressStep;
-    const totalDurationMs = (file.duration && Number.isFinite(file.duration) && file.duration > 0)
-        ? file.duration * 1000
-        : undefined;
-
-    await fs.rm(tempOutputPath, { force: true }).catch(() => undefined);
-
-    await ffmpegService.decode({
-        input: { path: file.originalPath },
-        output: { path: tempOutputPath, format: 'mp3' },
-        codec,
-        sampleRate,
-        channels,
-        bitrate,
-        onProgress: (update) => {
-            if (!totalDurationMs || typeof update.out_time_ms !== 'number') return;
-            const progress = Math.floor(Math.max(0, Math.min(100, (update.out_time_ms / totalDurationMs) * 100)));
-            if (progress < lastPersistedProgress + decodeProgressStep && progress !== 100) return;
-            lastPersistedProgress = progress;
-            void prisma.mediaFile.update({
-                where: { id: file.id },
-                data: {
-                    status: 'processing',
-                    metadata: {
-                        decodeProgress: progress,
-                        decodeState: 'processing'
-                    } as any
-                }
-            }).catch(() => undefined);
-        }
-    });
-
-    await fs.rename(tempOutputPath, finalOutputPath);
-
-    await prisma.mediaFile.update({
-        where: { id: file.id },
-        data: {
-            decodedPath: finalOutputPath,
-            status: 'ready',
-            metadata: {
-                decodeProgress: 100,
-                decodeState: 'completed'
-            } as any
-        }
-    });
-};
-const scheduleAutoDecode = (file: File): void => {
-    if (file.decodedPath) return;
-    if (activeAutoDecodeJobs.has(file.id)) return;
-    activeAutoDecodeJobs.add(file.id);
-    void tryAutoDecode(file)
-        .catch(async (error) => {
-            await prisma.mediaFile.update({
-                where: { id: file.id },
-                data: {
-                    status: 'error',
-                    metadata: {
-                        error: error instanceof Error ? error.message : String(error),
-                        decodeState: 'failed'
-                    } as any
-                }
-            }).catch(() => undefined);
-            console.error(`Auto decode failed for file ${file.originalPath}:`, error);
-        })
-        .finally(() => {
-            const tempOutputPath = buildTempDecodedOutputPath(file.id, file.filename);
-            void fs.rm(tempOutputPath, { force: true }).catch(() => undefined);
-            activeAutoDecodeJobs.delete(file.id);
-        });
-};
 export const discoverFiles = async (directoryPath: string): Promise<void> => {
-    const dirExists = await isDirectoryExists(directoryPath);
-    if (!dirExists) return;
-
-    const directoriesToScan: string[] = [directoryPath];
-    const filesToProcess: string[] = [];
-
-    while (directoriesToScan.length > 0) {
-        const dir = directoriesToScan.shift();
-        if (!dir) break;
-
-        try {
-            const entries = await fs.readdir(dir, { withFileTypes: true });
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-                if (entry.isDirectory()) {
-                    directoriesToScan.push(fullPath);
-                    continue;
-                }
-                if (entry.isFile()) {
-                    const ext = path.extname(entry.name).toLowerCase();
-                    if (AUDIO_EXTENSIONS.includes(ext)) {
-                        filesToProcess.push(fullPath);
-                    }
-                }
-            }
-        } catch (error) {
-            // keep scanning other folders if one directory fails (e.g. permissions)
-            console.error(`Skipping ${dir}:`, error);
-        }
-    }
+    const filesToProcess = await fileDiscoveryService.discoverAudioFiles(directoryPath);
+    if (filesToProcess.length === 0) return;
 
     const maxConcurrencyRaw = Number(process.env.DISCOVERY_FILE_CONCURRENCY || 8);
     const maxConcurrency = Math.max(1, Math.min(32, Number.isFinite(maxConcurrencyRaw) ? maxConcurrencyRaw : 8));
@@ -187,7 +22,7 @@ export const discoverFiles = async (directoryPath: string): Promise<void> => {
             if (!filePath) continue;
             try {
                 const file = await processFile(filePath);
-                scheduleAutoDecode(file);
+                fileDecodeService.scheduleAutoDecode(file as FileRecord);
             } catch (error) {
                 console.error(`Failed to discover file ${filePath}:`, error);
             }
@@ -230,8 +65,8 @@ export const listFiles = async (criteria: ListFilesRequestDto): Promise<{ files:
     }
 
     const [files, total] = await Promise.all([
-        prisma.mediaFile.findMany(queryOptions),
-        prisma.mediaFile.count({ where }),
+        fileRepository.listFiles(queryOptions),
+        fileRepository.countFiles(where),
     ]);
 
     return {
@@ -241,7 +76,7 @@ export const listFiles = async (criteria: ListFilesRequestDto): Promise<{ files:
 };
 
 export const getFileMetadata = async (id: string): Promise<FileMetadataDto> => {
-    const file = await prisma.mediaFile.findUnique({ where: { id } });
+    const file = await fileRepository.findById(id);
     if (!file) throw new Error('File not found');
     return toFileMetadataDto(file);
 };
@@ -255,85 +90,37 @@ export const processFile = async (filePath: string): Promise<FileMetadataDto> =>
         { originalPath: { equals: value, mode: 'insensitive' as const } },
         { decodedPath: { equals: value, mode: 'insensitive' as const } }
     ]));
-    const existing = await prisma.mediaFile.findFirst({
-        where: {
-            OR: pathFilters
-        }
-    });
+    const existing = await fileRepository.findFirstByPathFilters(pathFilters);
     if (existing) return toFileMetadataDto(existing);
 
     const sourceStem = parseDecodedFilename(filename);
     if (sourceStem) {
-        const sourceFile = await prisma.mediaFile.findFirst({
-            where: {
-                OR: AUDIO_EXTENSIONS.map((ext) => ({
-                    filename: { equals: `${sourceStem}${ext}`, mode: 'insensitive' as const }
-                }))
-            },
-            orderBy: { updatedAt: 'desc' }
-        });
+        const sourceFile = await fileRepository.findSourceFileByStem(sourceStem, AUDIO_EXTENSIONS);
 
         if (sourceFile) {
-            const updated = await prisma.mediaFile.update({
-                where: { id: sourceFile.id },
-                data: {
-                    decodedPath: normalizedPath,
-                    status: 'ready',
-                    metadata: { decodeProgress: 100, decodeState: 'completed' } as any
-                }
-            });
-            return toFileMetadataDto(updated);
+            await fileRepository.updateStatusReady(sourceFile.id, normalizedPath);
+            const refreshed = await fileRepository.findById(sourceFile.id);
+            return toFileMetadataDto(refreshed);
         }
     }
     try {
         const metadataResult = await chunking.getMetadata(normalizedPath);
-        const file = await prisma.mediaFile.upsert({
-            where: { originalPath: normalizedPath },
-            create: {
-                filename,
-                originalPath: normalizedPath,
-                duration: metadataResult.duration,
-                fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
-                format: metadataResult.format,
-                codec: metadataResult.codec,
-                bitrate: metadataResult.bitrate,
-                status: 'pending',
-                metadata: { decodeProgress: 0, decodeState: 'pending' } as any
-            },
-            update: {
-                filename,
-                duration: metadataResult.duration,
-                fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
-                format: metadataResult.format,
-                codec: metadataResult.codec,
-                bitrate: metadataResult.bitrate,
-                status: 'pending',
-                metadata: { decodeProgress: 0, decodeState: 'pending' } as any
-            }
-        });
+        const file = await fileRepository.upsertWithMetadata(normalizedPath, filename, metadataResult);
         return toFileMetadataDto(file);
     } catch (error) {
         console.error(`Failed to process file ${normalizedPath}:`, error);
-        const file = await prisma.mediaFile.upsert({
-            where: { originalPath: normalizedPath },
-            create: {
-                filename,
-                originalPath: normalizedPath,
-                duration: 0,
-                status: 'error',
-                metadata: { error: (error as Error).message } as any
-            },
-            update: {
-                filename
-            }
-        });
+        const file = await fileRepository.upsertWithError(
+            normalizedPath,
+            filename,
+            (error as Error).message
+        );
         return toFileMetadataDto(file);
     }
 };
 
 export const registerFile = async (filename: string, filePath: string): Promise<FileMetadataDto> => {
     const file = await processFile(filePath);
-    scheduleAutoDecode(file);
+    fileDecodeService.scheduleAutoDecode(file as FileRecord);
 
     if (!file.decodedPath && file.status !== 'processing') {
         return {
