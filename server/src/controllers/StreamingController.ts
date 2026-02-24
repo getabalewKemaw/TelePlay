@@ -9,6 +9,7 @@ import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 import { sendSuccess } from '../utils/response.js';
 import { parseIntQuery, parseNumberQuery } from '../utils/query.js';
+import { badRequestError } from '../errors/common/HttpErrors.js';
 
 const getSessionOr404 = async (sessionId: string, res: Response): Promise<StreamingSession | null> => {
     const session = await streamingPreparationService.getSession(sessionId);
@@ -94,7 +95,7 @@ export const getChunkByTime = async (req: Request<{ sessionId: string }>, res: R
 
         const timeRaw = parseNumberQuery(req.query.time, Number.NaN) ?? Number.NaN;
         if (!Number.isFinite(timeRaw) || timeRaw < 0) {
-            return res.status(400).json({ success: false, message: 'Invalid time query parameter' });
+            throw badRequestError('Invalid time query parameter', 'INVALID_TIME');
         }
 
         const chunkDuration = streamingChunkService.getSessionChunkDuration(session);
