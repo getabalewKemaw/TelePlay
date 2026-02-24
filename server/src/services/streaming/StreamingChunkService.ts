@@ -3,86 +3,30 @@ import type { ChunkMetadata } from '../../types/chunking/ChunkingTypes.js';
 import type { StreamingSession } from '../../types/streaming/StreamingTypes.js';
 import fs from 'fs';
 import path from 'path';
-import prisma from '../../lib/prisma.js';
 import {
-  appendOutputCodecArgs,
   attachResponseCleanup,
   getStreamingMimeType,
-  resolveInputCodecArgs,
   resolveLiveOutputArgs,
   spawnFfmpeg,
   type StreamingOutputFormat
 } from '../../utils/streaming/streamingFfmpegUtils.js';
+import {
+  applyChunkStreamHeaders,
+  buildChunkPeaksArgs,
+  buildChunkStreamArgs,
+  buildLiveStreamArgs,
+  calculatePeaks,
+  getSessionChunkDuration
+} from './StreamingChunkHelpers.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
+import { fileRepository } from '../../repositories/file/FileRepository.js';
 const chunking = chunkingService;
-const getSessionChunkDuration = (session: StreamingSession): number => {
-  return session.chunkDuration ?? 10;
-};
 
 const resolveSessionChunk = async (session: StreamingSession, indexRaw: string): Promise<ChunkMetadata | null> => {
   const chunkDuration = getSessionChunkDuration(session);
   const chunks = await chunking.getAllChunks(session.filePath, { chunkDuration });
   const idx = parseInt(indexRaw, 10);
   return Number.isFinite(idx) ? (chunks[idx] ?? null) : null;
-};
-
-const buildChunkStreamArgs = (
-  session: StreamingSession,
-  filePath: string,
-  chunk: ChunkMetadata,
-  outputFormat: StreamingOutputFormat
-): string[] => {
-  const args: string[] = [
-    ...resolveInputCodecArgs(session),
-    '-i', filePath,
-    '-ss', chunk.startTime.toString(),
-    '-t', chunk.duration.toString(),
-    '-map', '0:a:0',
-    '-vn'
-  ];
-  appendOutputCodecArgs(args, outputFormat, session);
-  args.push('-f', outputFormat, 'pipe:1');
-  return args;
-};
-
-const buildChunkPeaksArgs = (session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] => {
-  return [
-    ...resolveInputCodecArgs(session),
-    '-i', filePath,
-    '-ss', chunk.startTime.toString(),
-    '-t', chunk.duration.toString(),
-    '-map', '0:a:0',
-    '-vn',
-    '-ac', '1',
-    '-ar', '8000',
-    '-f', 's16le',
-    'pipe:1'
-  ];
-};
-
-const applyChunkStreamHeaders = (res: Response, mimeType: string): void => {
-  res.setHeader('Content-Type', mimeType);
-  res.setHeader('Transfer-Encoding', 'chunked');
-  res.removeHeader('Accept-Ranges');
-};
-
-const calculatePeaks = (buffer: Buffer, bins: number): number[] => {
-  const sampleCount = Math.floor(buffer.length / 2);
-  const samplesPerBin = Math.max(1, Math.floor(sampleCount / bins));
-  const peaks: number[] = new Array(bins).fill(0);
-
-  for (let i = 0; i < bins; i++) {
-    const start = i * samplesPerBin;
-    const end = Math.min(start + samplesPerBin, sampleCount);
-    let max = 0;
-    for (let s = start; s < end; s++) {
-      const sample = buffer.readInt16LE(s * 2);
-      const abs = Math.abs(sample);
-      if (abs > max) max = abs;
-    }
-    peaks[i] = max / 32768;
-  }
-  return peaks;
 };
 
 const getChunkPeaks = async (session: StreamingSession, chunk: ChunkMetadata, bins: number): Promise<number[]> => {
@@ -119,8 +63,7 @@ const streamLive = (session: StreamingSession, res: Response): void => {
   const outputFormat: StreamingOutputFormat = session.outputFormat || 'mp3';
   applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
 
-  const args: string[] = [...resolveInputCodecArgs(session), '-i', filePath, '-map', '0:a:0', '-vn'];
-  appendOutputCodecArgs(args, outputFormat, session);
+  const args: string[] = buildLiveStreamArgs(session, filePath, outputFormat);
   const liveOutput = resolveLiveOutputArgs(session, outputFormat);
   args.push(...liveOutput.args);
 
@@ -139,10 +82,10 @@ const streamLive = (session: StreamingSession, res: Response): void => {
   ffmpeg.on('close', async (code) => {
     if (code === 0 && liveOutput.savePath && session.fileId) {
       try {
-        await prisma.mediaFile.update({
-          where: { id: session.fileId },
-          data: { decodedPath: path.resolve(liveOutput.savePath), status: 'ready' }
-        });
+        await fileRepository.updateDecodedPathReady(
+          session.fileId,
+          path.resolve(liveOutput.savePath)
+        );
       } catch (error) {
         console.warn('Failed to update decodedPath after live stream:', error);
       }
@@ -234,5 +177,6 @@ export const streamingChunkService = {
   streamFileBased,
   streamChunk
 };
+
 
 export type StreamingChunkService = typeof streamingChunkService;

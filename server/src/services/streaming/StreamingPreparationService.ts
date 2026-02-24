@@ -8,6 +8,7 @@ import type {
 import { streamingValidationError } from '../../errors/streaming/StreamingErrors.js';
 import { randomUUID } from 'crypto';
 import { existsSync } from 'fs';
+import { streamingSessionRepository } from '../../repositories/streaming/StreamingSessionRepository.js';
 
 const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   transport: 'http',
@@ -26,8 +27,6 @@ const DEFAULT_OPTIONS: Required<StreamingPreparationOptions> = {
   saveOutputPath: '',
   fileId: ''
 };
-
-const sessions = new Map<string, StreamingSession>();
 
 export const createSession = async (
   filePath: string,
@@ -61,12 +60,12 @@ export const createSession = async (
     startedAt: Date.now(),
     lastActivity: Date.now()
   };
-  sessions.set(sessionId, session);
+  streamingSessionRepository.saveSession(session);
   return session;
 };
 
 export const getSession = async (sessionId: string): Promise<StreamingSession | undefined> => (
-  sessions.get(sessionId)
+  streamingSessionRepository.getSession(sessionId)
 );
 
 export const streamingPreparationService = {

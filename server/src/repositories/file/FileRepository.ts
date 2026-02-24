@@ -139,6 +139,16 @@ export const updateStatusError = async (id: string, errorMessage: string): Promi
   });
 };
 
+export const updateDecodedPathReady = async (id: string, decodedPath: string): Promise<void> => {
+  await prisma.mediaFile.update({
+    where: { id },
+    data: {
+      decodedPath,
+      status: 'ready'
+    }
+  });
+};
+
 export const listFiles = async (queryOptions: any): Promise<MediaFile[]> => {
   return prisma.mediaFile.findMany(queryOptions);
 };
@@ -157,6 +167,7 @@ export const fileRepository = {
   updateProgress,
   updateStatusReady,
   updateStatusError,
+  updateDecodedPathReady,
   listFiles,
   countFiles
 };
