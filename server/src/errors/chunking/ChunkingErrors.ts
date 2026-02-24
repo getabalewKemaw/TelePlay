@@ -43,16 +43,6 @@ const chunkingBaseError = <T extends object>(
   return error;
 };
 
-const isNamedChunkingError = (err: unknown, name: string): err is Error => (
-  err instanceof Error && err.name === name
-);
-
-export const chunkingError = (
-  message: string,
-  code: string,
-  cause?: Error
-): ChunkingError => chunkingBaseError('ChunkingError', message, code, undefined, cause);
-
 /**
  * Validation error - thrown when input parameters are invalid
  */
@@ -92,20 +82,4 @@ export const chunkingSeekError = (
   filePath?: string
 ): ChunkingSeekError => (
   chunkingBaseError('ChunkingSeekError', message, 'SEEK_ERROR', { time, filePath })
-);
-
-export const isChunkingValidationError = (err: unknown): err is ChunkingValidationError => (
-  isNamedChunkingError(err, 'ChunkingValidationError')
-);
-
-export const isChunkingFileError = (err: unknown): err is ChunkingFileError => (
-  isNamedChunkingError(err, 'ChunkingFileError')
-);
-
-export const isChunkingMetadataError = (err: unknown): err is ChunkingMetadataError => (
-  isNamedChunkingError(err, 'ChunkingMetadataError')
-);
-
-export const isChunkingSeekError = (err: unknown): err is ChunkingSeekError => (
-  isNamedChunkingError(err, 'ChunkingSeekError')
 );

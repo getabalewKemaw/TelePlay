@@ -18,9 +18,6 @@ export type FFmpegFileError = FFmpegError & {
   filePath: string;
 };
 
-export type FFmpegCodecError = FFmpegError & {
-  codec: string;
-};
 
 export type FFmpegTimeoutError = FFmpegError & {
   timeout: number;
@@ -51,12 +48,6 @@ const ffmpegBaseError = <T extends object>(
 const isNamedFFmpegError = (err: unknown, name: string): err is Error => (
   err instanceof Error && err.name === name
 );
-
-export const ffmpegError = (
-  message: string,
-  code: string,
-  cause?: Error
-): FFmpegError => ffmpegBaseError('FFmpegError', message, code, undefined, cause);
 
 export const ffmpegValidationError = (
   message: string,
@@ -94,13 +85,6 @@ export const ffmpegFileError = (
 /**
  * Codec error - thrown when codec is not supported or unavailable
  */
-export const ffmpegCodecError = (
-  message: string,
-  codec: string
-): FFmpegCodecError => (
-  ffmpegBaseError('FFmpegCodecError', message, 'CODEC_ERROR', { codec })
-);
-
 /**
  * Timeout error - thrown when FFmpeg operation exceeds time limit
  */

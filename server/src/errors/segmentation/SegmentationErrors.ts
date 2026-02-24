@@ -12,9 +12,6 @@ export type SegmentationStrategyError = SegmentationError & {
   strategy: string;
 };
 
-export type SegmentationBufferingError = SegmentationError & {
-  bufferSize: number;
-};
 
 const segmentationBaseError = <T extends object>(
   name: string,
@@ -38,16 +35,6 @@ const segmentationBaseError = <T extends object>(
   return error;
 };
 
-const isNamedSegmentationError = (err: unknown, name: string): err is Error => (
-  err instanceof Error && err.name === name
-);
-
-export const segmentationError = (
-  message: string,
-  code: string,
-  cause?: Error
-): SegmentationError => segmentationBaseError('SegmentationError', message, code, undefined, cause);
-
 export const segmentationValidationError = (
   message: string,
   field?: string
@@ -63,26 +50,4 @@ export const segmentationStrategyError = (
   strategy: string
 ): SegmentationStrategyError => (
   segmentationBaseError('SegmentationStrategyError', message, 'STRATEGY_ERROR', { strategy })
-);
-
-/**
- * Buffering error - thrown when buffering operations fail
- */
-export const segmentationBufferingError = (
-  message: string,
-  bufferSize: number
-): SegmentationBufferingError => (
-  segmentationBaseError('SegmentationBufferingError', message, 'BUFFERING_ERROR', { bufferSize })
-);
-
-export const isSegmentationValidationError = (err: unknown): err is SegmentationValidationError => (
-  isNamedSegmentationError(err, 'SegmentationValidationError')
-);
-
-export const isSegmentationStrategyError = (err: unknown): err is SegmentationStrategyError => (
-  isNamedSegmentationError(err, 'SegmentationStrategyError')
-);
-
-export const isSegmentationBufferingError = (err: unknown): err is SegmentationBufferingError => (
-  isNamedSegmentationError(err, 'SegmentationBufferingError')
 );
