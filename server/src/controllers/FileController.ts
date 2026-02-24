@@ -4,8 +4,9 @@ import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 import { sendSuccess } from '../utils/response.js';
 import { parseBooleanQuery, parseIntQuery } from '../utils/query.js';
+import { badRequestError } from '../errors/common/HttpErrors.js';
 
-//convert the massive number in to a string before sending to the user preventing a  server crashs.
+// Convert large numbers to strings before sending to the user to avoid crashes.
 const normalizeFile = (file: any) => {
     if (!file) return file;
     if (typeof file.fileSize === 'bigint') {
@@ -14,7 +15,7 @@ const normalizeFile = (file: any) => {
     return file;
 };
 
-// pagination and sorting.
+// Pagination and sorting.
 export const listFiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { query, sort, order, page, limit, decodedOnly } = req.query;
@@ -51,7 +52,7 @@ export const getFileMetadata = async (req: Request, res: Response, next: NextFun
     }
 };
 
-//folder scanning.
+// Folder scanning.
 export const discoverFiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Allow user to specify path, default to ./uploads
@@ -97,7 +98,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
 export const uploadFile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.file) {
-            throw new Error('No file uploaded');
+            throw badRequestError('No file uploaded', 'NO_FILE');
         }
         // Register it in the system
         const result = await fileService.registerFile(req.file.filename, req.file.path);

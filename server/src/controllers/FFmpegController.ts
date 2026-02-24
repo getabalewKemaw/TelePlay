@@ -23,7 +23,7 @@ const getProgressPercent = (
   return Math.max(0, Math.min(100, Math.floor((outMs / totalDurationMs) * 100)));
 };
 
-// reqparams,resbody,req.body,query
+// Request params/res body/req.query.
 export const decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Response, next: NextFunction) => {
   try {
     const { fileId, ...decodeParams } = req.body;

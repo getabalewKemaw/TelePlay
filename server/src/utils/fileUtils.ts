@@ -29,7 +29,7 @@ export const getPathVariations = (filePath: string) => {
     return Array.from(variations);
 };
 
-// check if the file is decoded or not 
+// check if the file is decoded or not
 export const parseDecodedFilename = (filename: string): string | null => {
     const match = filename.match(/^(.*)_decoded\.(wav|mp3|aac|ogg)$/i);
     return match ? match[1]! : null;
@@ -46,7 +46,7 @@ export const inferDecodeCodec = (filename: string, codec?: string | null): Audio
         if (codecName.includes('g728')) return 'g728';
     }
 
-    //  USE FILENAME ONLY AS A FALLBACK (If codec is missing/null)
+    // Use filename only as a fallback if codec is missing/null.
     if (name.includes('g711a') || name.includes('alaw')) return 'pcm_alaw';
     if (name.includes('g711u') || name.includes('mulaw') || name.includes('g711')) return 'pcm_mulaw';
     if (name.includes('g726')) return 'g726';
@@ -87,7 +87,7 @@ export const buildTempDecodedOutputPath = (fileId: string, filename: string): st
 };
 
 export const coerceDecodeProgress = (value: unknown): number | undefined => {
-    //conver a  numbe if the value comes in the string form
+    // Convert a number if the value comes in string form.
     const parsed=Number(value);
     if(isNaN(parsed) || !Number.isFinite(parsed)||value===null){
         return undefined;

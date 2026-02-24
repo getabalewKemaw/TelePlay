@@ -6,6 +6,7 @@ import { ALLOWED_SORT_FIELDS } from '../../constants/file/index.js';
 import { fileRepository } from '../../repositories/file/FileRepository.js';
 import { fileDiscoveryService } from './FileDiscoveryService.js';
 import { fileDecodeService, type FileRecord } from './FileDecodeService.js';
+import { notFoundError } from '../../errors/common/HttpErrors.js';
 const chunking = chunkingService;
 export const discoverFiles = async (directoryPath: string): Promise<void> => {
     const filesToProcess = await fileDiscoveryService.discoverAudioFiles(directoryPath);
@@ -34,11 +35,11 @@ export const discoverFiles = async (directoryPath: string): Promise<void> => {
 
 export const listFiles = async (criteria: ListFilesRequestDto): Promise<{ files: FileMetadataDto[]; total: number }> => {
     const { query, sort = 'createdAt', order = 'desc', page, limit, decodedOnly } = criteria;
-    //serve side validation for the  page sizes
+    // Server-side validation for page sizes.
     const hasPageParam = typeof page === 'number' && Number.isFinite(page);
     const hasLimitParam = typeof limit === 'number' && Number.isFinite(limit);
     const safePage = hasPageParam ? Math.max(1, page) : undefined;
-    const safeLimit = hasLimitParam ? Math.max(1, Math.min(limit, 100)) : undefined; // prevent the user from requating  a limit like 99999 and crashing the serve memory
+    const safeLimit = hasLimitParam ? Math.max(1, Math.min(limit, 100)) : undefined; // Prevent requesting a huge limit that could exhaust memory.
 
     const where: any = query ? {
         OR: [
@@ -77,11 +78,11 @@ export const listFiles = async (criteria: ListFilesRequestDto): Promise<{ files:
 
 export const getFileMetadata = async (id: string): Promise<FileMetadataDto> => {
     const file = await fileRepository.findById(id);
-    if (!file) throw new Error('File not found');
+    if (!file) throw notFoundError('File not found', 'FILE_NOT_FOUND');
     return toFileMetadataDto(file);
 };
 
-// taking a file path and either linking to the existing database or creating a record in a database 
+// Take a file path and either link to the existing database or create a record.
 export const processFile = async (filePath: string): Promise<FileMetadataDto> => {
     const normalizedPath = path.resolve(filePath);
     const filename = path.basename(normalizedPath);
