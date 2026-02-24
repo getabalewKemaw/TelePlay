@@ -1,4 +1,3 @@
-
 export const FFPROBE_EXECUTABLE = 'ffprobe';
 export type RawFileProfile = {
   format: string;
@@ -7,7 +6,6 @@ export type RawFileProfile = {
   channels: number;
   bitrate: number;
 };
-
 
 export const BASE_ARGS = [
   '-v', 'error',

@@ -7,7 +7,7 @@ import { stat } from 'fs/promises';
 import path from 'path';
 import type { MediaMetadata } from '../../../types/chunking/ChunkingTypes.js';
 import { chunkingMetadataError } from '../../../errors/chunking/ChunkingErrors.js';
-import { FFPROBE_EXECUTABLE, type RawFileProfile, BASE_ARGS, RAW_PROFILES } from '../../../utils/chunking/chunlingUtils.js';
+import { FFPROBE_EXECUTABLE, type RawFileProfile, BASE_ARGS, RAW_PROFILES } from '../../../utils/chunking/chunkingUtils.js';
 
 const executable = FFPROBE_EXECUTABLE;
 

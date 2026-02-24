@@ -5,7 +5,7 @@ import type { DecodeRequestDto } from '../dto/ffmpeg.dto.js';
 import type { DecodeParams } from '../types/ffmpeg/FFmpegTypes.js';
 import prisma from '../lib/prisma.js';
 import path from 'path';
-import { isdirectoryExists } from '../utils/fileUtils.js';
+import { isDirectoryExists } from '../utils/fileUtils.js';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 import { sendSuccess } from '../utils/response.js';
 
@@ -36,7 +36,7 @@ export const decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Respon
       const existing = await prisma.mediaFile.findUnique({ where: { id: fileId } });
       sourceDurationSeconds = typeof existing?.duration === 'number' ? existing.duration : undefined;
       const existingDecoded = existing?.decodedPath ? path.resolve(existing.decodedPath) : undefined;
-      if (existingDecoded && existing?.status === 'ready' && await isdirectoryExists(existingDecoded)) {
+      if (existingDecoded && existing?.status === 'ready' && await isDirectoryExists(existingDecoded)) {
         if (!requestedOutputPath || requestedOutputPath === existingDecoded) {
           return res.status(409).json({
             success: false,
@@ -53,7 +53,7 @@ export const decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Respon
         decodeParams.output.path = outputPath;
       }
       const outputDir = path.dirname(outputPath);
-      if (!await isdirectoryExists(outputDir)) {
+      if (!await isDirectoryExists(outputDir)) {
         await fs.mkdir(outputDir, { recursive: true });
       }
     }

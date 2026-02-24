@@ -2,7 +2,7 @@ import prisma from '../../lib/prisma.js';
 import type { FileMetadataDto, ListFilesRequestDto } from '../../dto/file.dto.js';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { isdirectoryExists } from '../../utils/fileUtils.js';
+import { isDirectoryExists } from '../../utils/fileUtils.js';
 import { AUDIO_EXTENSIONS, getPathVariations, parseDecodedFilename } from '../../utils/fileUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
 import { ffmpegService } from '../ffmpeg/FFmpegService.js';
@@ -145,7 +145,7 @@ const scheduleAutoDecode = (file: File): void => {
         });
 };
 export const discoverFiles = async (directoryPath: string): Promise<void> => {
-    const dirExists = await isdirectoryExists(directoryPath);
+    const dirExists = await isDirectoryExists(directoryPath);
     if (!dirExists) return;
 
     const directoriesToScan: string[] = [directoryPath];
@@ -353,5 +353,4 @@ export const fileService = {
     processFile,
     registerFile
 };
-
 export type FileService = typeof fileService;

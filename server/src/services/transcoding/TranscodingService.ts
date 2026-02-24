@@ -10,7 +10,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { ffmpegExecutor } from '../ffmpeg/implementations/FFmpegExecutor.js';
 import { buildTranscodeCommandOptions } from '../../utils/ffmpeg/ffmpegServiceUtils.js';
-import { isdirectoryExists } from '../../utils/fileUtils.js';
+import { isDirectoryExists } from '../../utils/fileUtils.js';
 const DEFAULT_TARGET_CODEC: TargetCodec = 'aac';
 
 import { CODEC_COMPATIBILITY } from '../../utils/transcoding/transcodingRequestUtils.js';
@@ -78,7 +78,7 @@ const performTranscoding = async (
 };
 
 export const transcodeChunk = async (params: ChunkTranscodingParams): Promise<TranscodingResult> => {
-  if (! await isdirectoryExists(params.inputPath)) {
+  if (! await isDirectoryExists(params.inputPath)) {
     throw transcodingFileError(`Chunk file does not exist: ${params.inputPath}`, params.inputPath);
   }
 

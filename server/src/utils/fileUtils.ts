@@ -5,7 +5,7 @@ import type { AudioCodec,SampleRate,ChannelConfig } from '../types/ffmpeg/FFmpeg
 import path from 'path'
 
 const processedDir = path.resolve(process.env.PROCESSED_DIR || './processed');
-export async function isdirectoryExists(dirPath:string):Promise<boolean> {
+export async function isDirectoryExists(dirPath: string): Promise<boolean> {
     try{
         await fs.access(dirPath);
         return true;
