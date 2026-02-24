@@ -295,10 +295,7 @@ docs/          # Architecture and implementation docs
          📁 segmentation
             📁 strategies
                📄 AdaptiveSegmentationStrategy.ts
-               📄 FixedSegmentationStrategy.ts
                📄 ISegmentationStrategy.ts
-               📄 LowLatencySegmentationStrategy.ts
-               📄 ProgressiveSegmentationStrategy.ts
                📄 SegmentationStrategyFactory.ts
             📄 SegmentationService.ts
          📁 streaming

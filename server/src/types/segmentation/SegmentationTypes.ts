@@ -11,7 +11,7 @@ export interface SegmentMetadata {
   isCritical: boolean;
   sequence: number;
 }
-export type SegmentationStrategy = 'fixed' | 'adaptive' | 'progressive' | 'low-latency';
+export type SegmentationStrategy = 'adaptive';
 export interface SegmentationConfig {
   strategy: SegmentationStrategy;
   chunksPerSegment?: number;
