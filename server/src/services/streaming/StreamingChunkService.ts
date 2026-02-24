@@ -15,18 +15,18 @@ import {
 } from '../../utils/streaming/streamingFfmpegUtils.js';
 import { chunkingService } from '../chunking/ChunkingService.js';
 const chunking = chunkingService;
-export const getSessionChunkDuration = (session: StreamingSession): number => {
+const getSessionChunkDuration = (session: StreamingSession): number => {
   return session.chunkDuration ?? 10;
 };
 
-export const resolveSessionChunk = async (session: StreamingSession, indexRaw: string): Promise<ChunkMetadata | null> => {
+const resolveSessionChunk = async (session: StreamingSession, indexRaw: string): Promise<ChunkMetadata | null> => {
   const chunkDuration = getSessionChunkDuration(session);
   const chunks = await chunking.getAllChunks(session.filePath, { chunkDuration });
   const idx = parseInt(indexRaw, 10);
   return Number.isFinite(idx) ? (chunks[idx] ?? null) : null;
 };
 
-export const buildChunkStreamArgs = (
+const buildChunkStreamArgs = (
   session: StreamingSession,
   filePath: string,
   chunk: ChunkMetadata,
@@ -45,7 +45,7 @@ export const buildChunkStreamArgs = (
   return args;
 };
 
-export const buildChunkPeaksArgs = (session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] => {
+const buildChunkPeaksArgs = (session: StreamingSession, filePath: string, chunk: ChunkMetadata): string[] => {
   return [
     ...resolveInputCodecArgs(session),
     '-i', filePath,
@@ -60,13 +60,13 @@ export const buildChunkPeaksArgs = (session: StreamingSession, filePath: string,
   ];
 };
 
-export const applyChunkStreamHeaders = (res: Response, mimeType: string): void => {
+const applyChunkStreamHeaders = (res: Response, mimeType: string): void => {
   res.setHeader('Content-Type', mimeType);
   res.setHeader('Transfer-Encoding', 'chunked');
   res.removeHeader('Accept-Ranges');
 };
 
-export const calculatePeaks = (buffer: Buffer, bins: number): number[] => {
+const calculatePeaks = (buffer: Buffer, bins: number): number[] => {
   const sampleCount = Math.floor(buffer.length / 2);
   const samplesPerBin = Math.max(1, Math.floor(sampleCount / bins));
   const peaks: number[] = new Array(bins).fill(0);
@@ -85,7 +85,7 @@ export const calculatePeaks = (buffer: Buffer, bins: number): number[] => {
   return peaks;
 };
 
-export const getChunkPeaks = async (session: StreamingSession, chunk: ChunkMetadata, bins: number): Promise<number[]> => {
+const getChunkPeaks = async (session: StreamingSession, chunk: ChunkMetadata, bins: number): Promise<number[]> => {
   const filePath = path.resolve(session.filePath);
   const args = buildChunkPeaksArgs(session, filePath, chunk);
 
@@ -114,7 +114,7 @@ export const getChunkPeaks = async (session: StreamingSession, chunk: ChunkMetad
   });
 };
 
-export const streamLive = (session: StreamingSession, res: Response): void => {
+const streamLive = (session: StreamingSession, res: Response): void => {
   const filePath = path.resolve(session.filePath);
   const outputFormat: StreamingOutputFormat = session.outputFormat || 'mp3';
   applyChunkStreamHeaders(res, getStreamingMimeType(outputFormat));
@@ -153,7 +153,7 @@ export const streamLive = (session: StreamingSession, res: Response): void => {
   });
 };
 
-export const streamFileBased = async (session: StreamingSession, range: string | undefined, res: Response): Promise<void> => {
+const streamFileBased = async (session: StreamingSession, range: string | undefined, res: Response): Promise<void> => {
   const filePath = path.resolve(session.filePath);
   const stat = await fs.promises.stat(filePath);
   const ext = path.extname(filePath).toLowerCase();
@@ -196,7 +196,7 @@ export const streamFileBased = async (session: StreamingSession, range: string |
   fs.createReadStream(filePath, { start, end }).pipe(res);
 };
 
-export const streamChunk = (
+const streamChunk = (
   session: StreamingSession,
   chunk: ChunkMetadata,
   requestedFormat: string | undefined,
@@ -229,10 +229,6 @@ export const streamChunk = (
 export const streamingChunkService = {
   getSessionChunkDuration,
   resolveSessionChunk,
-  buildChunkStreamArgs,
-  buildChunkPeaksArgs,
-  applyChunkStreamHeaders,
-  calculatePeaks,
   getChunkPeaks,
   streamLive,
   streamFileBased,
