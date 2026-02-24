@@ -8,6 +8,7 @@ import type { StreamingSession } from '../types/streaming/StreamingTypes.js';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 import { sendSuccess } from '../utils/response.js';
+import { parseIntQuery, parseNumberQuery } from '../utils/query.js';
 
 const getSessionOr404 = async (sessionId: string, res: Response): Promise<StreamingSession | null> => {
     const session = await streamingPreparationService.getSession(sessionId);
@@ -51,12 +52,7 @@ export const getSegments = async (req: Request<{ sessionId: string }>, res: Resp
         const session = await getSessionOr404(sessionId, res);
         if (!session) return;
 
-        const chunksPerSegmentRaw = typeof req.query.chunksPerSegment === 'string'
-            ? parseInt(req.query.chunksPerSegment, 10)
-            : 3;
-        const chunksPerSegment = Number.isFinite(chunksPerSegmentRaw) && chunksPerSegmentRaw > 0
-            ? chunksPerSegmentRaw
-            : 3;
+        const chunksPerSegment = parseIntQuery(req.query.chunksPerSegment, 3, { min: 1 }) ?? 3;
         const baseChunkDuration = session.chunkDuration ?? 10;
         const segments = await segmentationService.getAllSegments(session.filePath, {
             strategy: 'adaptive',
@@ -82,8 +78,7 @@ export const getChunkPeaks = async (req: Request<{ sessionId: string; index: str
             return res.status(404).json({ success: false, message: 'Chunk not found' });
         }
 
-        const binsRaw = typeof req.query.bins === 'string' ? parseInt(req.query.bins, 10) : 100;
-        const bins = Number.isFinite(binsRaw) ? Math.min(Math.max(binsRaw, 10), 1000) : 100;
+        const bins = parseIntQuery(req.query.bins, 100, { min: 10, max: 1000 }) ?? 100;
         const peaks = await streamingChunkService.getChunkPeaks(session, chunk, bins);
         sendSuccess(res, peaks);
     } catch (error) {
@@ -97,7 +92,7 @@ export const getChunkByTime = async (req: Request<{ sessionId: string }>, res: R
         const session = await getSessionOr404(sessionId, res);
         if (!session) return;
 
-        const timeRaw = typeof req.query.time === 'string' ? Number(req.query.time) : Number.NaN;
+        const timeRaw = parseNumberQuery(req.query.time, Number.NaN) ?? Number.NaN;
         if (!Number.isFinite(timeRaw) || timeRaw < 0) {
             return res.status(400).json({ success: false, message: 'Invalid time query parameter' });
         }
@@ -117,7 +112,7 @@ export const stream = async (req: Request<{ sessionId: string }>, res: Response,
         if (!session) return;
 
         if (session.mode === 'live') {
-            const seekTimeRaw = typeof req.query.time === 'string' ? Number(req.query.time) : Number.NaN;
+            const seekTimeRaw = parseNumberQuery(req.query.time, Number.NaN) ?? Number.NaN;
             if (Number.isFinite(seekTimeRaw) && seekTimeRaw >= 0) {
                 const chunkDuration = streamingChunkService.getSessionChunkDuration(session);
                 const chunk = await chunkingService.getChunkAtTime(session.filePath, seekTimeRaw, { chunkDuration });

@@ -3,6 +3,7 @@ import { fileService } from '../services/file/FileService.js';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
 import { sendSuccess } from '../utils/response.js';
+import { parseBooleanQuery, parseIntQuery } from '../utils/query.js';
 
 //convert the massive number in to a string before sending to the user preventing a  server crashs.
 const normalizeFile = (file: any) => {
@@ -17,14 +18,9 @@ const normalizeFile = (file: any) => {
 export const listFiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { query, sort, order, page, limit, decodedOnly } = req.query;
-        const parsedPage = page ? parseInt(page as string, 10) : undefined;
-        const parsedLimit = limit ? parseInt(limit as string, 10) : undefined;
-        const hasPageParam = Number.isFinite(parsedPage as number);
-        const hasLimitParam = Number.isFinite(parsedLimit as number);
-        const safePage = hasPageParam ? Math.max(1, parsedPage as number) : undefined;
-        const safeLimit = hasLimitParam ? Math.max(1, parsedLimit as number) : undefined;
-        const parsedDecodedOnly =
-            decodedOnly === 'true' || decodedOnly === '1';
+        const safePage = parseIntQuery(page, undefined, { min: 1 });
+        const safeLimit = parseIntQuery(limit, undefined, { min: 1 });
+        const parsedDecodedOnly = parseBooleanQuery(decodedOnly);
 
         const result = await fileService.listFiles({
             query: query as string,
@@ -32,7 +28,7 @@ export const listFiles = async (req: Request, res: Response, next: NextFunction)
             order: (order as 'asc' | 'desc') || 'desc',
             page: safePage,
             limit: safeLimit,
-            decodedOnly: parsedDecodedOnly || undefined,
+            decodedOnly: parsedDecodedOnly ?? undefined,
         });
 
         sendSuccess(res, result.files, 200, {
