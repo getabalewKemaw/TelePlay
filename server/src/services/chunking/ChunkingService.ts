@@ -2,48 +2,16 @@ import type {
   ChunkingResult,
   ChunkMetadata,
   ChunkingOptions,
-  ChunkingConfig,
   MediaMetadata
 } from '../../types/chunking/ChunkingTypes.js';
-import { chunkingValidationError, chunkingSeekError, chunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
-import { ffprobeMetadataProvider } from './implementations/FFprobeMetadataProvider.js';
-import { ffmpegService } from '../ffmpeg/FFmpegService.js';
-import { existsSync, mkdirSync } from 'fs';
-import path from 'path';
-
-const DEFAULT_CHUNK_DURATION = 120;
+import { chunkingSeekError, chunkingFileError } from '../../errors/chunking/ChunkingErrors.js';
+import { ffprobeMetadataProvider } from './FFprobeMetadataProvider.js';
+import { existsSync } from 'fs';
+import { chunkingConfigService } from './ChunkingConfigService.js';
+import { chunkingCalculator } from './ChunkingCalculator.js';
+import { chunkFileService } from './ChunkFileService.js';
 
 const metadataProvider = ffprobeMetadataProvider;
-const ffmpeg = ffmpegService;
-const defaultChunkDuration = DEFAULT_CHUNK_DURATION;
-
-const buildConfig = (filePath: string, totalDuration: number, options?: ChunkingOptions): ChunkingConfig => {
-  return {
-    chunkDuration: options?.chunkDuration ?? defaultChunkDuration,
-    totalDuration,
-    generateFiles: options?.generateFiles ?? false,
-    outputDirectory: options?.outputDirectory,
-    baseFilename: options?.baseFilename ?? path.basename(filePath, path.extname(filePath))
-  };
-};
-
-const ensureOutputDirectory = (outputDirectory: string): void => {
-  if (!existsSync(outputDirectory)) {
-    mkdirSync(outputDirectory, { recursive: true });
-  }
-};
-
-const writeChunkFiles = async (filePath: string, chunks: ChunkMetadata[]): Promise<void> => {
-  for (const chunk of chunks) {
-    if (!chunk.filePath) continue;
-    await ffmpeg.decode({
-      input: { path: filePath },
-      output: { path: chunk.filePath },
-      startTime: chunk.startTime,
-      duration: chunk.duration
-    });
-  }
-};
 
 const generateChunks = async (filePath: string, options?: ChunkingOptions): Promise<ChunkingResult> => {
   if (!existsSync(filePath)) {
@@ -51,13 +19,13 @@ const generateChunks = async (filePath: string, options?: ChunkingOptions): Prom
   }
 
   const metadata = await metadataProvider.getMetadata(filePath);
-  const config = buildConfig(filePath, metadata.duration, options);
-  validateConfig(config);
-  const chunks = calculateChunks(config);
+  const config = chunkingConfigService.buildConfig(filePath, metadata.duration, options);
+  chunkingConfigService.validateConfig(config);
+  const chunks = chunkingCalculator.calculateChunks(config);
 
   if (config.generateFiles && config.outputDirectory) {
-    ensureOutputDirectory(config.outputDirectory);
-    await writeChunkFiles(filePath, chunks);
+    chunkFileService.ensureOutputDirectory(config.outputDirectory);
+    await chunkFileService.writeChunkFiles(filePath, chunks);
   }
 
   return {
@@ -97,64 +65,6 @@ export const getChunkAtTime = async (
   return chunk;
 };
 
-const calculateChunks = (config: ChunkingConfig): ChunkMetadata[] => {
-  const chunks: ChunkMetadata[] = [];
-  const totalDuration = config.totalDuration;
-  const chunkDuration = config.chunkDuration;
-
-  // Calculate number of chunks
-  const numChunks = Math.ceil(totalDuration / chunkDuration);
-
-  for (let i = 0; i < numChunks; i++) {
-    const startTime = i * chunkDuration;
-    const endTime = Math.min(startTime + chunkDuration, totalDuration);
-    const duration = endTime - startTime;
-
-    const chunk: ChunkMetadata = {
-      index: i,
-      startTime,
-      endTime,
-      duration
-    };
-
-    if (config.generateFiles && config.outputDirectory) {
-      const extension = path.extname(config.baseFilename || 'chunk');
-      const baseName = path.basename(config.baseFilename || 'chunk', extension);
-      chunk.filePath = path.join(
-        config.outputDirectory,
-        `${baseName}_chunk_${i.toString().padStart(4, '0')}${extension}`
-      );
-    }
-    chunks.push(chunk);
-  }
-  return chunks;
-};
-
-const validateConfig = (config: ChunkingConfig): void => {
-  if (config.chunkDuration <= 0) {
-    throw chunkingValidationError(
-      `Chunk duration must be greater than 0, got ${config.chunkDuration}`,
-      'chunkDuration'
-    );
-  }
-
-  if (config.totalDuration <= 0) {
-    throw chunkingValidationError(
-      `Total duration must be greater than 0, got ${config.totalDuration}`,
-      'totalDuration'
-    );
-  }
-
-  if (config.generateFiles) {
-    if (!config.outputDirectory) {
-      throw chunkingValidationError(
-        'Output directory is required when generateFiles is true',
-        'outputDirectory'
-      );
-    }
-  }
-};
-
 export const chunkingService = {
   getAllChunks,
   getMetadata,
@@ -162,3 +72,4 @@ export const chunkingService = {
 };
 
 export type ChunkingService = typeof chunkingService;
+
