@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { fileService } from '../services/file/FileService.js';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
+import { sendSuccess } from '../utils/response.js';
 
 //convert the massive number in to a string before sending to the user preventing a  server crashs.
 const normalizeFile = (file: any) => {
@@ -34,16 +35,10 @@ export const listFiles = async (req: Request, res: Response, next: NextFunction)
             decodedOnly: parsedDecodedOnly || undefined,
         });
 
-        res.json({
-            success: true,
-            data: result.files,
-            meta: {
-                total: result.total,
-                page: safePage ?? null,
-                limit: safeLimit ?? null,
-                timestamp: new Date().toISOString(),
-                version: '1.0.0'
-            }
+        sendSuccess(res, result.files, 200, {
+            total: result.total,
+            page: safePage ?? null,
+            limit: safeLimit ?? null
         });
     } catch (error) {
         next(error);
@@ -54,11 +49,7 @@ export const getFileMetadata = async (req: Request, res: Response, next: NextFun
     try {
         const { id } = req.params;
         const metadata = await fileService.getFileMetadata(id as string);
-        res.json({
-            success: true,
-            data: metadata,
-            meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-        });
+        sendSuccess(res, metadata);
     } catch (error) {
         next(error);
     }
@@ -114,11 +105,7 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
         }
         // Register it in the system
         const result = await fileService.registerFile(req.file.filename, req.file.path);
-        res.json({
-            success: true,
-            data: normalizeFile(result),
-            meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-        });
+        sendSuccess(res, normalizeFile(result));
     } catch (error) {
         next(error);
     }

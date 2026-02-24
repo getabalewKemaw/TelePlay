@@ -4,19 +4,10 @@ import { chunkingService } from '../services/chunking/ChunkingService.js';
 import { segmentationService } from '../services/segmentation/SegmentationService.js';
 import { streamingChunkService } from '../services/streaming/StreamingChunkService.js';
 import type { CreateSessionRequestDto } from '../dto/streaming.dto.js';
-import type { ApiResponse } from '../dto/base.dto.js';
 import type { StreamingSession } from '../types/streaming/StreamingTypes.js';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
-
-const sendSuccess = (res: Response, data: any, status = 200): void => {
-    const response: ApiResponse<any> = {
-        success: true,
-        data,
-        meta: { timestamp: new Date().toISOString(), version: '1.0.0' }
-    };
-    res.status(status).json(response);
-};
+import { sendSuccess } from '../utils/response.js';
 
 const getSessionOr404 = async (sessionId: string, res: Response): Promise<StreamingSession | null> => {
     const session = await streamingPreparationService.getSession(sessionId);

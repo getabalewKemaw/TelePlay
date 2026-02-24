@@ -2,12 +2,12 @@ import { promises as fs } from 'fs';
 import type { Request, Response, NextFunction } from 'express';
 import { ffmpegService } from '../services/ffmpeg/FFmpegService.js';
 import type { DecodeRequestDto } from '../dto/ffmpeg.dto.js';
-import type { ApiResponse } from '../dto/base.dto.js';
 import type { DecodeParams } from '../types/ffmpeg/FFmpegTypes.js';
 import prisma from '../lib/prisma.js';
 import path from 'path';
 import { isdirectoryExists } from '../utils/fileUtils.js';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
+import { sendSuccess } from '../utils/response.js';
 
 const progressPersistStep = 1;
 
@@ -114,15 +114,7 @@ export const decode = async (req: Request<{}, {}, DecodeRequestDto>, res: Respon
       });
     }
 
-    const response: ApiResponse<any> = {
-      success: true,
-      data: result,
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0.0'
-      }
-    };
-    res.status(200).json(response);
+    sendSuccess(res, result);
   } catch (error) {
     const fileId = req.body?.fileId;
     if (fileId) {

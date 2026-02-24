@@ -1,13 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
 import { transcodingService } from '../services/transcoding/TranscodingService.js';
 import type { TranscodeRequestDto } from '../dto/ffmpeg.dto.js';
-import type { ApiResponse } from '../dto/base.dto.js';
 import { buildChunkTranscodingParams } from '../utils/transcoding/transcodingRequestUtils.js';
 import { existsSync, mkdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import { enforcePathPolicy } from '../utils/pathPolicy.js';
+import { sendSuccess } from '../utils/response.js';
 
 type TranscodeConvertRequest = TranscodeRequestDto & { fileId?: string };
 
@@ -26,16 +26,7 @@ export const convert = async (req: Request<{}, {}, TranscodeConvertRequest>, res
     const params = buildChunkTranscodingParams(inputPath, outputPath, sourceEncoding, targetEncoding);
     const result = await transcodingService.transcodeChunk(params);
 
-    const response: ApiResponse<any> = {
-      success: true,
-      data: result,
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0.0'
-      }
-    };
-
-    res.status(200).json(response);
+    sendSuccess(res, result);
   } catch (error) {
     next(error);
   }
