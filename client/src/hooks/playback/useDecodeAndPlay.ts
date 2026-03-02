@@ -7,7 +7,7 @@ import { startChunkedPlayback } from '../../utils/playback/chunkedPlayback'
 import { attachPlaybackAndStart } from '../../utils/playback/playbackAttach'
 import { buildDecodePayload, buildStreamOptions, getOutputPath } from '../../utils/playback/decodeHelpers'
 import type { ChunkSessionState, DecodeDeps } from '../../types/decodePlayback'
-const API_BASE_URL=import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 export function useDecodeAndPlay({
   selectedFile,
   outputFormat,
@@ -22,7 +22,6 @@ export function useDecodeAndPlay({
   setIsChunkedStreaming,
   setChunkSeekHandler,
   wavesurferRef,
-  isWaveformReady,
   audioRef
 }: DecodeDeps) {
   const chunkSessionRef = useRef<ChunkSessionState>({})
@@ -87,7 +86,7 @@ export function useDecodeAndPlay({
       }
 
       const { liveOptions, fileOptions, chunkedOutputFormat } = buildStreamOptions(targetFile, outputFormat, useChunkedStreaming)
-   
+
 
       let session: any
       try {
@@ -132,7 +131,6 @@ export function useDecodeAndPlay({
         audioUrl,
         audioRef,
         wavesurferRef,
-        isWaveformReady,
         wantsLiveTranscode,
         toastId
       })
@@ -144,7 +142,6 @@ export function useDecodeAndPlay({
     }
   }, [
     audioRef,
-    isWaveformReady,
     loadFiles,
     outputFormat,
     selectedFile,

@@ -14,7 +14,6 @@ export interface DecodeDeps {
   setIsChunkedStreaming: (next: boolean) => void
   setChunkSeekHandler: (handler: ((time: number) => void) | null) => void
   wavesurferRef: React.MutableRefObject<any>
-  isWaveformReady: boolean
   audioRef: React.RefObject<HTMLAudioElement | null>
 }
 

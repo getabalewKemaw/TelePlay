@@ -1,6 +1,6 @@
 import { fetchStreamingChunkByTime, fetchStreamingChunkPeaks, fetchStreamingChunks, fetchStreamingSegments } from '../../api/api'
 import type { StartChunkedPlaybackArgs } from '../../types/chunkingtypes';
-const API_BASE_URL=import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 export const clamp = (time: number, duration: number) => Math.min(Math.max(time, 0), duration || 0)
 export async function startChunkedPlayback({
   sessionId,
@@ -34,7 +34,7 @@ export async function startChunkedPlayback({
     seekTime: 0
   }
 
-// find which chunk containg the given timestamp(segmentation)
+  // find which chunk containg the given timestamp(segmentation)
   const getChunkIndexForTime = (time: number) => {
     const safeTime = clamp(time, totalDuration)
     const indexFromChunks = chunks.findIndex((c: any) => c.startTime <= safeTime && c.endTime > safeTime)
@@ -73,7 +73,7 @@ export async function startChunkedPlayback({
 
     if (!audioRef.current) return
     audioRef.current.src = mediaUrl
-    audioRef.current.play().catch(() => undefined)
+    // Don't call play() here — wait for first chunk to be appended to avoid MSE race condition
 
     mediaSource.addEventListener('sourceopen', async () => {
       try {
@@ -118,12 +118,13 @@ export async function startChunkedPlayback({
             return
           }
 
-          fetchStreamingChunkPeaks(sessionId, index, binsPerChunk).then((peaks) => {
+          const chunkIdx = index // capture by value — index is mutated before the async callback resolves
+          fetchStreamingChunkPeaks(sessionId, chunkIdx, binsPerChunk).then((peaks) => {
             if (Array.isArray(peaks)) {
               setStreamingPeaks((prev: number[] | null) => {
                 if (!prev) return prev
                 const next = prev.slice()
-                const offset = index * binsPerChunk
+                const offset = chunkIdx * binsPerChunk
                 for (let i = 0; i < binsPerChunk; i++) {
                   next[offset + i] = peaks[i] ?? Number.NaN
                 }
@@ -147,11 +148,13 @@ export async function startChunkedPlayback({
               firstChunkAppended = true
               const boundedSeek = clamp(streamState.seekTime, totalDuration || streamState.seekTime)
               try {
-                audioRef.current.currentTime = Math.max(0.01, boundedSeek)
-                audioRef.current.play().catch(() => undefined)
+                // Seek to at least baseChunkStart — no data exists before this point in the new MediaSource
+                audioRef.current.currentTime = Math.max(baseChunkStart, boundedSeek)
               } catch {
                 // ignore seek errors during init
               }
+              // Only play() AFTER data is in the buffer and currentTime is positioned
+              audioRef.current.play().catch(() => undefined)
             }
             index += 1
             appendChunk().catch(() => undefined)
@@ -169,6 +172,23 @@ export async function startChunkedPlayback({
     if (seekDebounceRef.current) {
       clearTimeout(seekDebounceRef.current)
     }
+
+    // Fast path: if the target time is already in the MSE buffer, seek instantly
+    // without tearing down and rebuilding the pipeline
+    if (audioRef.current && audioRef.current.buffered.length > 0) {
+      const buf = audioRef.current.buffered
+      for (let i = 0; i < buf.length; i++) {
+        if (time >= buf.start(i) && time <= buf.end(i)) {
+          audioRef.current.currentTime = time
+          if (audioRef.current.paused) {
+            audioRef.current.play().catch(() => undefined)
+          }
+          return
+        }
+      }
+    }
+
+    // Slow path: target time is not buffered — rebuild pipeline from the correct chunk
     seekDebounceRef.current = setTimeout(() => {
       const fallbackIndex = getChunkIndexForTime(time)
       fetchStreamingChunkByTime(sessionId, time)
@@ -179,7 +199,7 @@ export async function startChunkedPlayback({
         .catch(() => {
           startChunkPipeline(fallbackIndex, time)
         })
-    }, 180)
+    }, 150)
   })
 
   startChunkPipeline(0, 0)

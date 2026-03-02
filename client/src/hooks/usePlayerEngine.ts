@@ -21,7 +21,6 @@ export function usePlayerEngine() {
     outputFormat,
     convertFormat,
     chunkSeekHandler,
-    isWaveformReady: storeWaveformReady,
     currentTime: storeCurrentTime,
     duration: storeDuration,
     streamingDuration,
@@ -51,7 +50,6 @@ export function usePlayerEngine() {
     outputFormat: state.outputFormat,
     convertFormat: state.convertFormat,
     chunkSeekHandler: state.chunkSeekHandler,
-    isWaveformReady: state.isWaveformReady,
     currentTime: state.currentTime,
     duration: state.duration,
     streamingDuration: state.streamingDuration,
@@ -69,7 +67,7 @@ export function usePlayerEngine() {
     setIsChunkedStreaming: state.setIsChunkedStreaming,
     setChunkSeekHandler: state.setChunkSeekHandler,
     setIsConverting: state.setIsConverting
-  })))
+  })));
 
   const {
     nativeTime: nativeTimeLocal,
@@ -177,7 +175,6 @@ export function usePlayerEngine() {
     setIsChunkedStreaming,
     setChunkSeekHandler,
     wavesurferRef,
-    isWaveformReady: storeWaveformReady,
     audioRef
   })
 
@@ -193,7 +190,7 @@ export function usePlayerEngine() {
       wavesurferRef.current.setOptions({ media: audioRef.current })
     } catch (error) {
       console.warn('Waveform: Failed to sync external media', error)
-     
+
     }
   }, [audioRef, useExternalAudio, wavesurferRef])
 

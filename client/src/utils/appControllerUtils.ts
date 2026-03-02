@@ -7,8 +7,10 @@ export function isDirectPlayable(file: MediaFile) {
 }
 
 export function isLargeFile(file: MediaFile) {
+  // Duration guard: files over 2 hours can crash WaveSurfer's in-memory decoder
+  if (file.duration > 7200) return true
   const size = typeof file.fileSize === 'string' ? parseInt(file.fileSize, 10) : (file.fileSize as any)
-  return Number.isFinite(size) && size > 200 * 1024 * 1024
+  return Number.isFinite(size) && size > 100 * 1024 * 1024
 }
 
 export function getDecodedFormat(file: MediaFile) {

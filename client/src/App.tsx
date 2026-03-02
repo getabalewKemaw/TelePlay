@@ -78,10 +78,11 @@ export default function App() {
   }, [loadFiles]);
 
   useEffect(() => {
-    if (page !== 1) {
+    const currentPage = useFileStore.getState().page
+    if (currentPage !== 1) {
       setPage(1)
     }
-  }, [debouncedSearchTerm, filterDecoded, sortDir, sortKey, setPage, page])
+  }, [debouncedSearchTerm, filterDecoded, sortDir, sortKey, setPage])
 
   useEffect(() => {
     if (!selectedFile || !playerSectionRef.current) return
@@ -94,7 +95,7 @@ export default function App() {
 
   return (
     <div
-  
+
       data-theme={isDarkMode ? 'dark' : 'light'}
       className="flex h-screen bg-coffee-50 text-coffee-Dark font-sans selection:bg-coffee-200 overflow-hidden transition-colors duration-300"
     >
@@ -152,7 +153,7 @@ export default function App() {
                     <button
                       className="px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                       onClick={() => setPage(Math.max(1, page - 1))}
-                      disabled={page <=1}
+                      disabled={page <= 1}
                     >
                       Prev
                     </button>

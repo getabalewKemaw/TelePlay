@@ -12,8 +12,8 @@ export interface MediaFile {
     originalPath: string;
     decodedPath?: string;
     status: string;
-    decodeProgress?: number;
     duration: number;
+    decodeProgress?: number;
     format?: string;
     codec?: string;
     bitrate?: number;
@@ -60,13 +60,13 @@ export const decodeFile = async (data: {
     } catch (error: any) {
         const status = error?.response?.status;
         const payload = error?.response?.data;
+        //if 409 with outpath so the server detects a conflict and so it is aleadly decoded so we can return it 
         if (status === 409 && payload?.data?.outputPath) {
             return { outputPath: payload.data.outputPath, alreadyDecoded: true };
         }
         throw error;
     }
 };
-
 export const transcodeFile = async (data: {
     fileId?: string;
     input: { path: string; format?: string };

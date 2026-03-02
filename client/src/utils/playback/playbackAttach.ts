@@ -6,7 +6,6 @@ interface AttachPlaybackArgs {
   audioUrl: string
   audioRef: React.RefObject<HTMLAudioElement | null>
   wavesurferRef: React.MutableRefObject<any>
-  isWaveformReady: boolean
   wantsLiveTranscode: boolean
   toastId: string
 }
@@ -16,7 +15,6 @@ export async function attachPlaybackAndStart({
   audioUrl,
   audioRef,
   wavesurferRef,
-  isWaveformReady,
   wantsLiveTranscode,
   toastId
 }: AttachPlaybackArgs) {
@@ -34,11 +32,13 @@ export async function attachPlaybackAndStart({
   const waitForWaveform = () => new Promise<void>((resolve, reject) => {
     const start = Date.now()
     const tick = () => {
-      if (wavesurferRef.current && isWaveformReady) {
+      // Check wavesurferRef directly — it's a mutable ref that always reflects the latest value.
+      // Don't rely on the `isWaveformReady` boolean which is captured as a stale closure.
+      if (wavesurferRef.current) {
         resolve()
         return
       }
-      if (Date.now() - start > 2000) {
+      if (Date.now() - start > 3000) {
         reject(new Error('Waveform not ready'))
         return
       }
