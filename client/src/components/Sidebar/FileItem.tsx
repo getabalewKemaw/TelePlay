@@ -1,5 +1,6 @@
 import { FileAudio, CheckCircle2 } from 'lucide-react'
-import type { MediaFile } from '../../api/api'
+import type { MediaFile } from '../../types/fileTypes'
+
 import { cn, getDisplayFilename } from '../../utils/utils'
 interface FileItemProps {
     file: MediaFile

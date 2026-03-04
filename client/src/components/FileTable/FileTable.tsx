@@ -1,27 +1,9 @@
 import { ArrowUpDown, CheckCircle2, FileAudio, Timer } from 'lucide-react'
-import type { MediaFile } from '../../api/api'
 import { cn, formatTime, getDisplayFilename } from '../../utils/utils'
-
+import { headers } from '../../utils/utUtils'
+import type { FileTableProps } from '../../types/uiTypes'
 export type SortKey = 'filename' | 'codec' | 'format' | 'duration' | 'status'
 export type SortDir = 'asc' | 'desc'
-
-interface FileTableProps {
-  files: MediaFile[]
-  selectedId?: string | null
-  sortKey: SortKey
-  sortDir: SortDir
-  onSortChange: (key: SortKey) => void
-  onSelect: (file: MediaFile) => void
-}
-
-const headers: Array<{ key: SortKey; label: string; align?: 'left' | 'right' }> = [
-  { key: 'filename', label: 'Signal' },
-  { key: 'codec', label: 'Codec' },
-  { key: 'format', label: 'Format' },
-  { key: 'duration', label: 'Duration', align: 'right' },
-  { key: 'status', label: 'Status' }
-]
-
 export function FileTable({
   files,
   selectedId,
@@ -62,8 +44,8 @@ export function FileTable({
                 key={file.id}
                 onClick={() => onSelect(file)}
                 className={cn(
-                  'text-sm hover:bg-coffee-50/70 transition-colors cursor-pointer',
-                  isSelected && 'bg-coffee-600 text-white'
+                  'text-sm hover:bg-coffee-100 transition-colors cursor-pointer',
+                  isSelected && 'bg-coffee-600 text-white hover:bg-coffee-600'
                 )}
               >
                 <td className="px-6 py-4">

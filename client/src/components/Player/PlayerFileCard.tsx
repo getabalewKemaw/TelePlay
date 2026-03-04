@@ -6,27 +6,11 @@ import {
   MoreVertical,
   Music,
   Play,
-  Zap
+  Zap 
 } from 'lucide-react'
-import type { MediaFile } from '../../api/api'
+import type { PlayerFileCardProps } from '../../types/uiTypes'
 import { cn, formatTime, getDisplayFilename } from '../../utils/utils'
 import { Badge } from '../ui/Badge'
-
-interface PlayerFileCardProps {
-  selectedFile: MediaFile
-  isPlaying: boolean
-  isDecoding: boolean
-  outputFormat: 'wav' | 'mp3'
-  convertFormat: 'aac' | 'ogg' | 'mp3' | 'wav'
-  canDirectPlay: boolean
-  isConverting: boolean
-  onDecodeAndPlay: () => void
-  onDownload: () => void
-  onConvertAndDownload: () => void
-  onOutputFormatChange: (format: 'wav' | 'mp3') => void
-  onConvertFormatChange: (format: 'aac' | 'ogg' | 'mp3' | 'wav') => void
-}
-
 export function PlayerFileCard({
   selectedFile,
   isPlaying,
@@ -167,7 +151,7 @@ export function PlayerFileCard({
                   onClick={() => onOutputFormatChange(fmt)}
                   className={cn(
                     "flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all",
-                    outputFormat === fmt ? "bg-white text-coffee-800 shadow-sm" : "text-coffee-400"
+                    outputFormat === fmt ? "bg-white text-coffee-800 shadow-sm border" : "text-coffee-400"
                   )}
                 >
                   {fmt}
@@ -185,7 +169,7 @@ export function PlayerFileCard({
                   onClick={() => onConvertFormatChange(fmt)}
                   className={cn(
                     "flex-1 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all",
-                    convertFormat === fmt ? "bg-white text-coffee-800 shadow-sm" : "text-coffee-400"
+                    convertFormat === fmt ? "bg-white text-coffee-800 shadow-sm border" : "text-coffee-400"
                   )}
                 >
                   {fmt}

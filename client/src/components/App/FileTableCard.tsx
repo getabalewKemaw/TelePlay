@@ -10,7 +10,7 @@ interface FileTableCardProps {
 
 export function FileTableCard({ fileCount, isOpen, onToggle, children }: FileTableCardProps) {
   return (
-    <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-coffee-200/40 overflow-hidden">
+    <div className="bg-white/70 backdrop-blur-xl rounded-4xl shadow-2xl shadow-coffee-200/40 overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-coffee-Dark text-white flex items-center justify-center shadow-lg">
@@ -23,7 +23,7 @@ export function FileTableCard({ fileCount, isOpen, onToggle, children }: FileTab
         </div>
         <button
           onClick={onToggle}
-          className="text-[10px] uppercase font-black tracking-widest px-3 py-2  border-1 bg-white/60 hover:bg-white transition-colors text-coffee-500 shadow-sm"
+          className="text-[10px] uppercase font-black tracking-widest px-3 py-2  border bg-white/60 hover:bg-coffee-600 hover:text-white transition-colors text-coffee-500 shadow-sm cursor-pointer"
         >
           {isOpen ? 'Collapse' : 'Expand'}
         </button>

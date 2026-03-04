@@ -1,17 +1,6 @@
-import React from 'react'
-import { StreamingWaveform } from './StreamingWaveform'
 
-interface WaveformPanelProps {
-  useNativeAudio?: boolean
-  audioRef?: React.RefObject<HTMLAudioElement | null>
-  waveformRef: React.RefObject<HTMLDivElement | null>
-  currentTime: number
-  duration: number
-  attachHiddenAudio?: boolean
-  streamingPeaks?: number[]
-  streamingDuration?: number
-  showStreamingWaveform?: boolean
-}
+import { StreamingWaveform } from './StreamingWaveform'
+import type { WaveformPanelProps } from '../../types/uiTypes'
 
 export function WaveformPanel({
   useNativeAudio,

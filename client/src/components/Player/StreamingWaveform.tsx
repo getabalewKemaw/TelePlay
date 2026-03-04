@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
-interface StreamingWaveformProps {
-  peaks: number[]
-  duration: number
-  currentTime: number
-  baseColor?: string
-  progressColor?: string
-  backgroundColor?: string
-}
-
+import type { StreamingWaveformProps } from '../../types/uiTypes'
 export function StreamingWaveform({
   peaks,
   duration,

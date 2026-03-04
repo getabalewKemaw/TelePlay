@@ -1,5 +1,6 @@
+import type { MediaFile } from './fileTypes';
 import type React from 'react'
-import type { MediaFile } from '../api/api'
+
 export interface DecodeDeps {
   selectedFile: MediaFile | null
   outputFormat: 'wav' | 'mp3'

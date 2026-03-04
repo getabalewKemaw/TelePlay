@@ -1,19 +1,7 @@
 import { useState } from 'react'
 import { Pause, Play, RotateCcw, RotateCw, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import { cn, formatTime } from '../../utils/utils'
-
-interface PlayerTransportProps {
-  currentTime: number
-  duration: number
-  isPlaying: boolean
-  volume: number
-  onPlayPause: () => void
-  onNext: () => void
-  onPrev: () => void
-  onSkip: (delta: number) => void
-  onVolumeChange: (volume: number) => void
-}
-
+import type { PlayerTransportProps } from '../../types/uiTypes'
 export function PlayerTransport({
   currentTime,
   duration,
