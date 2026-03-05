@@ -11,6 +11,7 @@ import { useShallow } from 'zustand/shallow'
 import { useFileStore } from './stores/useFileStore'
 import { useFileActions } from './hooks/useFileActions'
 import { useFileDerivedSync } from './hooks/useFileDerivedSync'
+import { checkServerHealth, onApiNetworkStatusChange } from './api/api'
 export default function App() {
   useFileDerivedSync()
   const playerSectionRef = useRef<HTMLDivElement | null>(null)
@@ -57,16 +58,22 @@ export default function App() {
     isTableOpen,
     isSidebarCollapsed,
     isDarkMode,
+    networkIssue,
     toggleSidebar,
     toggleTable,
-    toggleTheme
+    toggleTheme,
+    setNetworkIssue,
+    clearNetworkIssue
   } = useUIStore(useShallow((state) => ({
     isTableOpen: state.isTableOpen,
     isSidebarCollapsed: state.isSidebarCollapsed,
     isDarkMode: state.isDarkMode,
+    networkIssue: state.networkIssue,
     toggleSidebar: state.toggleSidebar,
     toggleTable: state.toggleTable,
-    toggleTheme: state.toggleTheme
+    toggleTheme: state.toggleTheme,
+    setNetworkIssue: state.setNetworkIssue,
+    clearNetworkIssue: state.clearNetworkIssue
   })));
 
   useEffect(() => {
@@ -89,9 +96,54 @@ export default function App() {
     playerSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [selectedFile?.id])
 
+  useEffect(() => {
+    if (!import.meta.env.PROD) return
+
+    const unsub = onApiNetworkStatusChange((issue) => {
+      if (issue === 'NONE') {
+        clearNetworkIssue()
+        return
+      }
+      setNetworkIssue(issue)
+    })
+
+    const onOnline = async () => {
+      const healthy = await checkServerHealth()
+      if (healthy) {
+        clearNetworkIssue()
+      } else {
+        setNetworkIssue('SERVER_UNREACHABLE')
+      }
+    }
+    const onOffline = () => setNetworkIssue('NETWORK_OFFLINE')
+
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+
+    if (!navigator.onLine) {
+      setNetworkIssue('NETWORK_OFFLINE')
+    }
+
+    return () => {
+      unsub()
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [clearNetworkIssue, setNetworkIssue])
+
   const totalPages = Math.max(1, Math.ceil(total / limit))
   const startIndex = total === 0 ? 0 : (page - 1) * limit + 1
   const endIndex = total === 0 ? 0 : Math.min(page * limit, total)
+  const showNetworkBanner = import.meta.env.PROD && networkIssue !== 'NONE'
+  const networkMessage = networkIssue === 'NETWORK_OFFLINE'
+    ? 'No internet connection. Please reconnect to continue.'
+    : networkIssue === 'REQUEST_TIMEOUT'
+      ? 'Network timeout. The server took too long to respond.'
+      : networkIssue === 'SERVER_UNREACHABLE'
+        ? 'Cannot reach server. Please check network or server status.'
+        : networkIssue === 'HTTP_5XX'
+          ? 'Server is unavailable right now. Please retry shortly.'
+          : ''
 
   return (
     <div
@@ -126,6 +178,11 @@ export default function App() {
       />
 
       <main className="flex-1 flex flex-col relative overflow-hidden">
+        {showNetworkBanner && (
+          <div className="mx-4 mt-3 md:mx-12 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+            {networkMessage}
+          </div>
+        )}
         <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-coffee-300/10 blur-[100px] -z-10 rounded-full translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-coffee-accent/5 blur-[100px] -z-10 rounded-full -translate-x-1/2 translate-y-1/2" />
 

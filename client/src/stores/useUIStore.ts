@@ -1,11 +1,15 @@
 import { create } from 'zustand'
+import type { NetworkIssueCode } from '../api/networkError'
 interface UIState {
   isSidebarCollapsed: boolean
   isTableOpen: boolean
   isDarkMode: boolean
+  networkIssue: NetworkIssueCode
   toggleSidebar: () => void
   toggleTable: () => void
   toggleTheme: () => void
+  setNetworkIssue: (issue: NetworkIssueCode) => void
+  clearNetworkIssue: () => void
 }
 
 const getInitialSidebar = () => {
@@ -30,6 +34,7 @@ export const useUIStore = create<UIState>((set) => ({
   isTableOpen: true,
 
   isDarkMode: getInitialTheme(),
+  networkIssue: 'NONE',
   toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   toggleTable: () => set((state) => ({ isTableOpen: !state.isTableOpen })),
   toggleTheme: () => set((state) => {
@@ -38,5 +43,7 @@ export const useUIStore = create<UIState>((set) => ({
       window.localStorage.setItem('theme', next ? 'dark' : 'light')
     }
     return { isDarkMode: next }
-  })
+  }),
+  setNetworkIssue: (issue) => set({ networkIssue: issue }),
+  clearNetworkIssue: () => set({ networkIssue: 'NONE' })
 }))
