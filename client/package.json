@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/geist-sans": "^5.2.5",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.4",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.35.2",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^7.13.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
     "wavesurfer.js": "^7.12.1",

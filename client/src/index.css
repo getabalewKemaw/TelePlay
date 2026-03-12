@@ -1,8 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap');
+@import "@fontsource/geist-sans";
 @import "tailwindcss";
 
 @theme {
-    --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-sans: "Geist Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
     --color-coffee-50: #FDF8F5;
     --color-coffee-100: #F3E5D8;
@@ -95,7 +96,7 @@
 
 @layer base {
     body {
-        @apply antialiased overflow-hidden;
+        @apply antialiased;
     }
 }
 
