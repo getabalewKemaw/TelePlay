@@ -140,7 +140,6 @@ export const streamChunk = async (req: Request<{ sessionId: string; index: strin
         if (!chunk) {
             return res.status(404).json({ success: false, message: 'Chunk not found' });
         }
-
         const requestedFormat = typeof req.query.format === 'string' ? req.query.format : undefined;
         streamingChunkService.streamChunk(session, chunk, requestedFormat, res);
     } catch (error) {

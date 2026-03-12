@@ -15,15 +15,15 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
+          <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
           transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 overflow-hidden"
+          className="fixed inset-0 z-[100] bg-coffee-50 flex flex-col items-center justify-center p-6 overflow-hidden transition-colors duration-500"
         >
           {/* Background Technical Pattern */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-            style={{ backgroundImage: 'radial-gradient(#3D344E 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+          <div className="absolute inset-0 opacity-[0.05] pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}

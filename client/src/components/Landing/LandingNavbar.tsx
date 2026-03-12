@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { Github, ArrowRight, Star } from 'lucide-react'
+import { Github, ArrowRight, Star, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../../hooks/useTheme.tsx'
 
 const NAV_LINKS = [
   { label: 'Features', id: 'features' },
@@ -10,6 +11,7 @@ const NAV_LINKS = [
 
 export function LandingNavbar() {
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
@@ -62,8 +64,19 @@ export function LandingNavbar() {
           </nav>
         </div>
 
-        {/* Action Area */}
         <div className="flex items-center gap-6 relative z-10">
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 bg-white/50 border border-coffee-200/50 rounded-full shadow-sm hover:shadow-md transition-all group text-primary hover:text-coffee-600"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun size={18} className="transition-transform group-hover:rotate-45" />
+            ) : (
+              <Moon size={18} className="transition-transform group-hover:-rotate-12" />
+            )}
+          </button>
+
           <div className="flex items-center gap-4 bg-white/50 border border-coffee-200/50 px-3 py-1.5 rounded-full shadow-sm hover:shadow-md transition-all group">
             <a href="https://github.com/getabalewKemaw/I-Player" target="_blank" rel="noreferrer" className="text-primary hover:text-coffee-600 transition-colors flex items-center gap-2">
               <Github size={18} />

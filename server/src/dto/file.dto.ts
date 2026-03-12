@@ -14,7 +14,6 @@ export interface FileMetadataDto {
     createdAt: string | Date;
     updatedAt: string | Date;
 }
-
 export interface ListFilesRequestDto {
     query?: string;
     sort?: string;

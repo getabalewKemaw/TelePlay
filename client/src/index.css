@@ -64,35 +64,64 @@
 }
 
 [data-theme="dark"] {
-    --color-coffee-50: #0b1118;
-    --color-coffee-100: #121a24;
-    --color-coffee-200: #1a2432;
-    --color-coffee-300: #273246;
-    --color-coffee-400: #c9d2df;
-    --color-coffee-500: #e6ebf2;
-    --color-coffee-600: #f0c98a;
-    --color-coffee-Dark: #f8fafc;
+    --color-coffee-50: #080808;
+    --color-coffee-100: #121212;
+    --color-coffee-200: #1a1a1a;
+    --color-coffee-300: #2d2d2d;
+    --color-coffee-400: #d1d1d1;
+    --color-coffee-500: #e5e5e5;
+    --color-coffee-600: #f0c98a; /* Keeping gold accent for premium feel */
+    --color-coffee-Dark: #ffffff;
     --color-coffee-accent: #f3d3a1;
+    --color-primary: #e1e1e1;
 }
 
-[data-theme="dark"] .bg-white {
-    background-color: var(--color-coffee-100) !important;
+/* Explicit Industrial Borders for Dark Mode */
+[data-theme="dark"] .border-x, 
+[data-theme="dark"] .border-t-2, 
+[data-theme="dark"] .border-b-2,
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-y,
+[data-theme="dark"] .border-white\/80 {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    border-width: 1.5px !important;
 }
 
+/* Navbar specific for dark mode - Deep Charcoal */
+[data-theme="dark"] header > div {
+    background-color: rgba(5, 5, 5, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .text-primary {
+    color: var(--color-coffee-400) !important;
+}
+
+/* Glassmorphism Cards for Dark Mode */
+[data-theme="dark"] .bg-white\/60,
+[data-theme="dark"] .bg-white\/30,
+[data-theme="dark"] .bg-white\/50,
 [data-theme="dark"] .bg-white\/80 {
-    background-color: rgba(18, 23, 32, 0.8) !important;
-}
-
-[data-theme="dark"] .bg-white\/70 {
     background-color: rgba(18, 23, 32, 0.7) !important;
+    backdrop-filter: blur(20px) !important;
 }
 
-[data-theme="dark"] .bg-white\/60 {
-    background-color: rgba(18, 23, 32, 0.6) !important;
+/* Bulky Glowing Hover for Dark Mode Buttons */
+[data-theme="dark"] button.bg-coffee-600:hover {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
 }
 
-[data-theme="dark"] .bg-white\/50 {
-    background-color: rgba(18, 23, 32, 0.5) !important;
+[data-theme="dark"] button.bg-coffee-Dark:hover {
+    background-color: var(--color-coffee-600) !important;
+    box-shadow: 0 0 20px rgba(240, 201, 138, 0.3);
+}
+
+* {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 @layer base {

@@ -1,12 +1,9 @@
 import os from 'os';
 import path from 'path';
-
-
 type PathPolicyOptions = {
   allowTemp?: boolean;
   allowNonExisting?: boolean;
 };
-
 function isInsideRoot(candidate: string, root: string): boolean {
   const normalizedCandidate = path.normalize(candidate).toLowerCase();
   const normalizedRoot = path.normalize(root).toLowerCase();

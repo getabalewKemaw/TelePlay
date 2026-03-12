@@ -41,7 +41,7 @@ export const upsertWithMetadata = async (
     create: {
       filename,
       originalPath: normalizedPath,
-      duration: metadataResult.duration,
+      duration: metadataResult.duration ?? 0,
       fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
       format: metadataResult.format,
       codec: metadataResult.codec,
@@ -51,7 +51,7 @@ export const upsertWithMetadata = async (
     },
     update: {
       filename,
-      duration: metadataResult.duration,
+      duration: metadataResult.duration ?? 0,
       fileSize: metadataResult.fileSize ? BigInt(metadataResult.fileSize) : null,
       format: metadataResult.format,
       codec: metadataResult.codec,

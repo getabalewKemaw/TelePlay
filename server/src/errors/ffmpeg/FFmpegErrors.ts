@@ -83,9 +83,6 @@ export const ffmpegFileError = (
 );
 
 /**
- * Codec error - thrown when codec is not supported or unavailable
- */
-/**
  * Timeout error - thrown when FFmpeg operation exceeds time limit
  */
 export const ffmpegTimeoutError = (
@@ -94,19 +91,15 @@ export const ffmpegTimeoutError = (
 ): FFmpegTimeoutError => (
   ffmpegBaseError('FFmpegTimeoutError', message, 'TIMEOUT_ERROR', { timeout })
 );
-
 export const isFFmpegValidationError = (err: unknown): err is FFmpegValidationError => (
   isNamedFFmpegError(err, 'FFmpegValidationError')
 );
-
 export const isFFmpegExecutionError = (err: unknown): err is FFmpegExecutionError => (
   isNamedFFmpegError(err, 'FFmpegExecutionError')
 );
-
 export const isFFmpegTimeoutError = (err: unknown): err is FFmpegTimeoutError => (
   isNamedFFmpegError(err, 'FFmpegTimeoutError')
 );
-
 export const isFFmpegFileError = (err: unknown): err is FFmpegFileError => (
   isNamedFFmpegError(err, 'FFmpegFileError')
 );

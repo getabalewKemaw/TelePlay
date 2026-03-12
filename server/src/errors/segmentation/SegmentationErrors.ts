@@ -7,7 +7,6 @@ export type SegmentationError = Error & {
 export type SegmentationValidationError = SegmentationError & {
   field?: string;
 };
-
 export type SegmentationStrategyError = SegmentationError & {
   strategy: string;
 };
