@@ -41,7 +41,7 @@ export function LandingHero() {
         </button>
         <button
           onClick={() => navigate('/app')}
-          className="ml-7 px-12 py-5 bg-coffee-50 text-coffee-Dark font-bold text-xs tracking-[0.3em] hover:bg-coffee-Dark hover:text-white transition-all shadow-xl shadow-coffee-Dark/10 flex items-center gap-3 group rounded-none uppercase border whitespace-nowrap"
+          className="ml-7 px-12 py-5 bg-coffee-50 text-coffee-Dark font-bold text-xs tracking-[0.3em] hover:bg-coffee-Dark hover:text-white dark:hover:bg-coffee-Dark dark:hover:text-white transition-all shadow-xl shadow-coffee-Dark/10 flex items-center gap-3 group rounded-none uppercase border whitespace-nowrap"
         >
           View Docs
         </button>

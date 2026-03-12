@@ -27,7 +27,7 @@ export function LandingFooter() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-coffee-200/20 gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-coffee-300 gap-8">
           <div className="flex items-center gap-6">
             <a href="#" className="text-primary/40 hover:text-primary transition-colors"><Twitter size={16} /></a>
             <a href="#" className="text-primary/40 hover:text-primary transition-colors"><Linkedin size={16} /></a>
