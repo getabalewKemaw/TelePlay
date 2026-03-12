@@ -4,7 +4,6 @@ import {
   ChevronDown,
   Download,
   MoreVertical,
-  Music,
   Play,
   Zap 
 } from 'lucide-react'
@@ -38,8 +37,8 @@ export function PlayerFileCard({
       "bg-transparent md:bg-white/70 backdrop-blur-xl p-0 md:p-8 rounded-[2.5rem] md:shadow-2xl md:shadow-coffee-200/40 flex flex-col md:flex-row gap-6 md:gap-8 items-center relative overflow-visible md:overflow-hidden group transition-all",
       showMobileMenu ? "z-60" : "z-10"
     )}>
-      <div className="absolute top-0 right-0 p-8 opacity-5 hidden md:block">
-        <Music size={120} className='border-4' />
+      <div className="absolute top-0 right-0 p-8 opacity-5 hidden md:block w-40 h-40">
+        <img src="/logo.png" alt="Teleplay Logo" className="w-full h-full object-contain filter grayscale" />
       </div>
       <div className="w-28 h-28 md:w-40 md:h-40 bg-coffee-100/50 rounded-3xl flex items-center justify-center text-coffee-600 relative overflow-hidden shadow-inner shrink-0 group-hover:scale-105 transition-transform duration-500">
         {isPlaying ? (
@@ -56,7 +55,7 @@ export function PlayerFileCard({
             ))}
           </div>
         ) : (
-          <Music size={80} className="relative z-10 text-coffee-400" />
+          <img src="/logo.png" alt="Teleplay Logo" className="w-20 h-20 object-contain opacity-50" />
         )}
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent" />
       </div>

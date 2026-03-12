@@ -4,6 +4,7 @@ import { LandingFeatures } from '../components/Landing/LandingFeatures'
 import { LandingHowItWorks } from '../components/Landing/LandingHowItWorks'
 import { LandingTechnicalSpecs } from '../components/Landing/LandingTechnicalSpecs'
 import { LandingWhatItSolves } from '../components/Landing/LandingWhatItSolves'
+import { LandingFAQ } from '../components/Landing/LandingFAQ'
 import { LandingCTA } from '../components/Landing/LandingCTA'
 import { LandingFooter } from '../components/Landing/LandingFooter'
 
@@ -21,6 +22,7 @@ export default function LandingPage() {
       <LandingTechnicalSpecs />
       <LandingHowItWorks />
       <LandingWhatItSolves />
+      <LandingFAQ />
       <LandingCTA />
       <LandingFooter />
     </div>

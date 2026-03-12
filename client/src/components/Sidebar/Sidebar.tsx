@@ -1,4 +1,4 @@
-import { FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen, Music } from 'lucide-react'
+import { FolderOpen, AudioLines, Search, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import type { MediaFile } from '../../api/api'
 import { FileItem } from './FileItem'
@@ -55,8 +55,8 @@ export function Sidebar({
                 "flex items-center justify-between",
                 collapsed ? "p-4" : "p-6"
             )}>
-                <div className="w-10 h-10 bg-coffee-600  flex items-center justify-center shadow-lg shadow-coffee-600/20">
-                    <Music className="text-white w-6 h-6" />
+                <div className="w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
+                    <img src="/logo.png" alt="Teleplay Logo" className="w-full h-full object-contain" />
                 </div>
                 <button
                     onClick={onToggleCollapsed}
