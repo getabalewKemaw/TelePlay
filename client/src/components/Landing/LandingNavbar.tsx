@@ -1,12 +1,12 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Github, ArrowRight, Star, Sun, Moon } from 'lucide-react'
 import { useTheme } from '../../hooks/useTheme.tsx'
 
 const NAV_LINKS = [
-  { label: 'Features', id: 'features' },
-  { label: 'How it works', id: 'how-it-works' },
-  { label: 'Why Teleplay', id: 'what-it-solves' },
-  { label: 'FAQ', id: 'faq' },
+  { label: 'Perks', id: 'features' },
+  { label: 'Tour', id: 'how-it-works' },
+  { label: 'Impact', id: 'what-it-solves' },
+  { label: 'Support', id: 'faq' },
 ]
 
 export function LandingNavbar() {
@@ -55,7 +55,7 @@ export function LandingNavbar() {
               <button
                 key={idx}
                 onClick={() => scrollToSection(link.id)}
-                className="hover:text-primary-600 transition-colors relative group"
+                className="hover:text-primary-600 transition-colors relative group uppercase"
               >
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
@@ -65,6 +65,13 @@ export function LandingNavbar() {
         </div>
 
         <div className="flex items-center gap-6 relative z-10">
+          <Link
+            to="/docs"
+            className="hidden md:inline-flex px-4 py-2 text-[10px] font-black tracking-widest uppercase text-primary hover:text-coffee-600 transition-colors"
+          >
+            Docs
+          </Link>
+
           <button
             onClick={toggleTheme}
             className="p-2.5 bg-white/50 border border-coffee-200/50 rounded-full shadow-sm hover:shadow-md transition-all group text-primary hover:text-coffee-600"
@@ -92,7 +99,7 @@ export function LandingNavbar() {
             onClick={() => navigate('/app')}
             className="px-6 py-2.5 text-xs font-black tracking-widest transition-all shadow-xl shadow-coffee-Dark/20 flex items-center gap-3 group uppercase bg-coffee-600 text-white hover:bg-coffee-Dark hover:scale-105 whitespace-nowrap"
           >
-            Launch app
+            Launch App
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform flex-shrink-0" />
           </button>
         </div>

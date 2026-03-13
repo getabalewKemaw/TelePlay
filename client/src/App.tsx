@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import PlayerDashboard from './pages/PlayerDashboard'
+import DocsPage from './pages/DocsPage'
 import { Preloader } from './components/ui/Preloader'
 import { ThemeProvider } from './hooks/useTheme.tsx'
 
@@ -24,6 +25,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/app" element={<PlayerDashboard />} />
+                <Route path="/docs" element={<DocsPage />} />
               </Routes>
             </motion.div>
           )}

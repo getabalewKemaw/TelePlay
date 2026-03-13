@@ -8,6 +8,7 @@ import { LandingFAQ } from '../components/Landing/LandingFAQ'
 import { LandingCTA } from '../components/Landing/LandingCTA'
 import { LandingFooter } from '../components/Landing/LandingFooter'
 import { useTheme } from '../hooks/useTheme.tsx'
+import { ScrollToTop } from '../components/ui/ScrollToTop'
 
 export default function LandingPage() {
   const { theme } = useTheme()
@@ -34,6 +35,7 @@ export default function LandingPage() {
       <LandingFAQ />
       <LandingCTA />
       <LandingFooter />
+      <ScrollToTop />
     </div>
   )
 }
