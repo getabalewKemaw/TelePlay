@@ -4,10 +4,35 @@ Custom media player for telecom/raw codecs with decoding, streaming, and wavefor
 
 ## Project Summary
 I-Player is a custom media player that supports non-standard telecom codecs (G711, G726, G728) and enables:
-- decoding to WAV/MP3
-- instant playback via live chunked streaming
-- stable file-based playback with waveform
-- server-generated waveform for live streams
+- Decoding to WAV/MP3
+- Instant playback via live chunked streaming
+- Stable file-based playback with waveform
+- Server-generated waveform for live streams
+
+## Visual Overview
+
+### 🖥️ Main Dashboard
+![Main App](client/public/docs/main-app.png)
+*High-fidelity engineering dashboard for real-time signal processing and archive management.*
+
+### 📱 Mobile Interface
+![Mobile App](client/public/docs/main-app-mobile.png)
+*Fully responsive mobile architecture for remote telemetry monitoring.*
+
+### 📖 Documentation Portal
+![Documentation - Dark](client/public/docs/docs.png)
+*Premium dark-theme documentation system.*
+
+![Documentation - Light](client/public/docs/docs-light.png)
+*High-contrast light-theme documentation.*
+
+### ⚡ Technical Capabilities
+![Features](client/public/docs/features.png)
+*Core system architecture and codec compatibility modules.*
+
+### 🎨 Identity & Branding
+![Hero](client/public/docs/hero.png)
+*Industrial core design language and system identity.*
 
 ## Tech Stack
 
@@ -43,34 +68,33 @@ cd I-Player
 
 ### 1) Install Dependencies
 ```
-cd C:\Users\Hp\Desktop\I-Player\I-Player\client
+cd client
 npm install
 
-cd C:\Users\Hp\Desktop\I-Player\I-Player\server
+cd ../server
 npm install
 ```
-create .env file in the root of the server folder and create like 
+Create a `.env` file in the root of the `server/` folder:
 
 ```
 DATABASE_URL="postgresql://Username:Password@localhost:Port/Dbname?schema=public"
-PORT=
+PORT=3000
 FFMPEG_PATH=
 FFPROBE_PATH=
 UPLOADS_DIR=./uploads
 PROCESSED_DIR=./processed
 TEMP_DIR=./temp
-
-
 ```
+
 ### 2) Start the Server
 ```
-cd C:\Users\Hp\Desktop\I-Player\I-Player\server
+cd server
 npm run dev
 ```
 
 ### 3) Start the Client
 ```
-cd C:\Users\Hp\Desktop\I-Player\I-Player\client
+cd client
 npm run dev
 ```
 
@@ -81,7 +105,7 @@ http://localhost:5173
 
 ## What We Built
 
-**Core features**
+**Core Features**
 - Decode telecom codecs to WAV/MP3
 - File-based streaming with HTTP Range
 - Live chunked streaming with MSE for instant playback
@@ -89,7 +113,7 @@ http://localhost:5173
 - Seamless switch to file-based playback after decode
 - Playback controls: play/pause, seek, skip, volume, rate
 
-**Operational flow**
+**Operational Flow**
 - File discovery and metadata extraction
 - Store metadata in Prisma DB
 - Stream from `uploads/` (live) or `processed/` (file-based)
@@ -102,245 +126,5 @@ server/        # Express API + ffmpeg + chunking
 docs/          # Architecture and implementation docs
 ```
 
-## File Tree (Full)
-
-# File Tree: I-Player
-
-**Generated:** 2/9/2026, 10:26:48 PM
-**Root Path:** `c:\Users\Hp\Desktop\I-Player\I-Player`
-
-```
-📁 client
-   📁 public
-      🖼 vite.svg
-   📁 src
-      📁 api
-         📄 api.ts
-      📁 assets
-         🖼 react.svg
-      📁 components
-         📁 App
-            📄 AppHeader.tsx
-            📄 EmptyState.tsx
-            📄 FileTableCard.tsx
-         📁 FileTable
-            📄 FileTable.tsx
-         📁 Player
-            📄 MobileSeekBar.tsx
-            📄 Player.tsx
-            📄 PlayerControlGrid.tsx
-            📄 PlayerFileCard.tsx
-            📄 PlayerHeader.tsx
-            📄 PlayerTransport.tsx
-            📄 StreamingWaveform.tsx
-            📄 WaveformPanel.tsx
-         📁 Sidebar
-            📄 FileItem.tsx
-            📄 Sidebar.tsx
-         📁 ui
-             📄 ActionCard.tsx
-             📄 Badge.tsx
-      📁 hooks
-         📁 playback
-            📄 useDecodeAndPlay.ts
-            📄 useDownloadActions.ts
-            📄 useNativeAudioState.ts
-            📄 useTransportControls.ts
-            📄 useWaveformState.ts
-         📄 useAppController.ts
-         📄 useFileState.ts
-         📄 usePlaybackState.ts
-         📄 useWaveSurfer.ts
-      📁 types
-         📄 player.ts
-      📁 utils
-         📄 appControllerFilters.ts
-         📄 appControllerUtils.ts
-         📄 utils.ts
-      🎨 App.css
-      📄 App.tsx
-      🎨 index.css
-      📄 main.tsx
-    .gitignore
-   📝 README.md
-   📄 eslint.config.js
-   🌐 index.html
-    package-lock.json
-    package.json
-    tsconfig.app.json
-    tsconfig.json
-    tsconfig.node.json
-   📄 vite.config.ts
-📁 docs
-   📝 ARCHITECTURE.md
-   📝 CURRENT_IMPLEMENTATION.md
-📁 server
-   📁 generated
-      📁 prisma
-          📁 internal
-             📄 class.ts
-             📄 prismaNamespace.ts
-             📄 prismaNamespaceBrowser.ts
-          📁 models
-          📄 browser.ts
-          📄 client.ts
-          📄 commonInputTypes.ts
-          📄 enums.ts
-          📄 models.ts
-   📁 prisma
-      📁 migrations
-         📁 0_init
-             📄 migration.sql
-      📄 schema.prisma
-   📁 src
-      📁 __test__
-         📁 chunking
-            📄 ChunkingService.test.ts
-            📄 FFprobeMetadataProvider.test.ts
-         📁 compression
-            📄 CompressionPresets.test.ts
-            📄 CompressionService.test.ts
-            📄 CompressionValidator.test.ts
-         📁 ffmpeg
-            📄 FFmpegExecutor.test.ts
-            📄 FFmpegService.integration.test.ts
-            📄 FFmpegService.test.ts
-            📄 FFmpegValidator.test.ts
-         📁 segmentation
-            📄 SegmentationService.test.ts
-            📄 SegmentationStrategies.test.ts
-         📁 streaming
-            📄 StreamingPreparationService.test.ts
-         📁 transcoding
-             📄 TranscodingService.test.ts
-      📁 constants
-         📁 ffmpeg
-             📄 index.ts
-      📁 controllers
-         📄 ChunkingController.ts
-         📄 CompressionController.ts
-         📄 FFmpegController.ts
-         📄 FileController.ts
-         📝 README.md
-         📄 SegmentationController.ts
-         📄 StreamingController.ts
-         📄 TranscodingController.ts
-      📁 dto
-         📄 base.dto.ts
-         📄 chunking.dto.ts
-         📄 compression.dto.ts
-         📄 ffmpeg.dto.ts
-         📄 file.dto.ts
-         📄 streaming.dto.ts
-      📁 errors
-         📁 chunking
-            📄 ChunkingErrors.ts
-         📁 compression
-            📄 CompressionErrors.ts
-         📁 ffmpeg
-            📄 FFmpegErrors.ts
-         📁 segmentation
-            📄 SegmentationErrors.ts
-         📁 streaming
-            📄 StreamingErrors.ts
-         📁 transcoding
-             📄 TranscodingErrors.ts
-      📁 interfaces
-         📁 chunking
-            📄 IChunkingService.ts
-            📄 IMediaMetadataProvider.ts
-         📁 compression
-            📄 ICompressionService.ts
-            📄 IFfmpegService.ts
-         📁 ffmpeg
-            📄 IFfmpegExecutor.ts
-            📄 IFfmpegService.ts
-         📁 file
-            📄 IFileService.ts
-         📁 segmentation
-            📄 ISegmentationService.ts
-         📁 streaming
-            📄 IStreamingPreparationService.ts
-         📁 transcoding
-             📄 IFfmpegService.ts
-             📄 ITranscodingService.ts
-      📁 lib
-         📄 prisma.ts
-      📁 middleware
-         📄 errorHandler.ts
-      📁 routes
-         📄 chunkingRoutes.ts
-         📄 compressionRoutes.ts
-         📄 ffmpegRoutes.ts
-         📄 fileRoutes.ts
-         📄 index.ts
-         📄 segmentationRoutes.ts
-         📄 streamingRoutes.ts
-         📄 transcodingRoutes.ts
-      📁 services
-         📁 chunking
-            📁 implementations
-               📄 FFprobeMetadataProvider.ts
-            📄 ChunkingService.ts
-         📁 compression
-            📁 presets
-               📄 CompressionPresets.ts
-            📄 CompressionService.ts
-         📁 ffmpeg
-            📁 implementations
-               📄 FFmpegExecutor.ts
-            📄 FFmpegService.ts
-         📁 file
-            📄 FileService.ts
-         📁 segmentation
-            📁 strategies
-               📄 AdaptiveSegmentationStrategy.ts
-               📄 ISegmentationStrategy.ts
-               📄 SegmentationStrategyFactory.ts
-            📄 SegmentationService.ts
-         📁 streaming
-            📄 StreamingPreparationService.ts
-         📁 transcoding
-             📄 TranscodingService.ts
-      📁 tests
-         📄 db_test.ts
-          postman_data.json
-         📄 prisma_test.ts
-      📁 types
-         📁 chunking
-            📄 ChunkingTypes.ts
-         📁 compression
-            📄 CompressionTypes.ts
-         📁 ffmpeg
-            📄 FFmpegTypes.ts
-         📁 segmentation
-            📄 SegmentationTypes.ts
-         📁 streaming
-            📄 StreamingTypes.ts
-         📁 transcoding
-             📄 TranscodingTypes.ts
-      📁 validator
-         📁 compression
-            📄 CompressionValidator.ts
-         📁 ffmpeg
-            📄 FFmpegValidator.ts
-         📁 segementation
-         📁 streaming
-         📁 transcoding
-      📄 index.ts
-    .gitignore
-    package-lock.json
-    package.json
-   📄 prisma.config.ts
-   📄 prisma_error.txt
-    tsconfig.json
-   📄 vitest.config.d.ts
-   📄 vitest.config.js
-   📄 vitest.config.ts
-.gitignore
-📝 Readme.md
- package-lock.json
-```
-
 ---
-*Generated by FileTree Pro Extension*
+*Generated by Telecom Signal Systems*
