@@ -1,6 +1,6 @@
 # I-Player
 
-Custom media player for telecom/raw codecs with decoding, streaming, and waveform playback.
+Custom media player for telecom/raw codecs with decoding, streaming, and waveform playbacks.
 
 ## Project Summary
 I-Player is a custom media player that supports non-standard telecom codecs (G711, G726, G728) and enables:
